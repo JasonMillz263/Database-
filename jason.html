@@ -3,159 +3,113 @@
 <div id="student-info" style="margin-bottom:20px;"></div>
 
 <div id="course-modules" style="max-width:600px;margin:auto;">
-
   <ul id="modules-list" style="list-style:none;padding:0;"></ul>
-
 </div>
 
 <p style="text-align:center;margin-top:20px;">
-
   Overall Progress: <span id="overall-progress">0</span>%
-
 </p>
 
 <button onclick="logout()" style="padding:10px;background:#FF4136;color:white;border:none;display:block;margin:20px auto;">
-
   Logout
-
 </button>
 
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
 <script>
+// ===== Firebase config =====
+const firebaseConfig = {
+  apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+  authDomain: "students-login-29409.firebaseapp.com",
+  projectId: "students-login-29409",
+  storageBucket: "students-login-29409.appspot.com",
+  messagingSenderId: "634331456872",
+  appId: "1:634331456872:web:6dae360c5e28d8356562dd"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
 // Modules for Food Business Course
-
 const modules = [
-
   "Introduction to Food Business",
-
   "Business Planning",
-
   "Food Safety & Hygiene",
-
   "Marketing Your Food Business",
-
   "Finance & Budgeting",
-
   "Scaling Your Food Business"
-
 ];
 
-// Reference to Firestore
-
-const ref = auth.currentUser ? db.collection("Students Login").doc(auth.currentUser.uid) : null;
-
-// Initialize page
-
+// Auth state listener
 auth.onAuthStateChanged(async (user) => {
+  if (!user) {
+    window.location.href = "index.html"; // redirect to login if not logged in
+    return;
+  }
 
-    if (!user) {
+  const studentRef = db.collection("students").doc(user.uid);
+  let doc = await studentRef.get();
 
-        window.location.href = "/p/login.html";
+  if (!doc.exists) {
+    // Create initial document if missing
+    await studentRef.set({
+      username: "Student",
+      modulesCompleted: [],
+      progress: 0,
+      createdAt: new Date()
+    });
+    doc = await studentRef.get();
+  }
 
-        return;
-
-    }
-
-    const studentRef = db.collection("Students Login").doc(user.uid);
-
-    let doc = await studentRef.get();
-
-    if (!doc.exists) {
-
-        // If document doesn’t exist, create initial progress
-
-        await studentRef.set({
-
-            username: "Student",
-
-            modulesCompleted: [],
-
-            progress: 0,
-
-            createdAt: new Date()
-
-        });
-
-        doc = await studentRef.get();
-
-    }
-
-    const data = doc.data();
-
-    document.getElementById("student-info").innerHTML = `<strong>Welcome, ${data.username}</strong>`;
-
-    renderModules(data.modulesCompleted || []);
-
+  const data = doc.data();
+  document.getElementById("student-info").innerHTML = `<strong>Welcome, ${data.username}</strong>`;
+  renderModules(data.modulesCompleted || []);
 });
 
 // Render modules list
-
 function renderModules(completedModules) {
+  const list = document.getElementById("modules-list");
+  list.innerHTML = "";
 
-    const list = document.getElementById("modules-list");
+  modules.forEach((module) => {
+    const li = document.createElement("li");
+    li.style.marginBottom = "10px";
+    li.style.padding = "10px";
+    li.style.border = "1px solid #ccc";
+    li.style.borderRadius = "5px";
+    li.style.background = completedModules.includes(module) ? "#8A2BE2" : "#f4f4f4";
+    li.style.color = completedModules.includes(module) ? "white" : "black";
+    li.style.cursor = "pointer";
+    li.innerText = module;
 
-    list.innerHTML = "";
+    li.onclick = async () => {
+      if (!completedModules.includes(module)) {
+        completedModules.push(module);
+        const progress = Math.round((completedModules.length / modules.length) * 100);
+        await db.collection("students").doc(auth.currentUser.uid).update({
+          modulesCompleted: completedModules,
+          progress: progress
+        });
+        document.getElementById("overall-progress").innerText = progress;
+        renderModules(completedModules);
+      }
+    };
 
-    modules.forEach((module, index) => {
+    list.appendChild(li);
+  });
 
-        const li = document.createElement("li");
-
-        li.style.marginBottom = "10px";
-
-        li.style.padding = "10px";
-
-        li.style.border = "1px solid #ccc";
-
-        li.style.borderRadius = "5px";
-
-        li.style.background = completedModules.includes(module) ? "#8A2BE2" : "#f4f4f4";
-
-        li.style.color = completedModules.includes(module) ? "white" : "black";
-
-        li.style.cursor = "pointer";
-
-        li.innerText = module;
-
-        li.onclick = async () => {
-
-            if (!completedModules.includes(module)) {
-
-                completedModules.push(module);
-
-                await db.collection("Students Login").doc(auth.currentUser.uid).update({
-
-                    modulesCompleted: completedModules,
-
-                    progress: Math.round((completedModules.length / modules.length) * 100)
-
-                });
-
-                document.getElementById("overall-progress").innerText = Math.round((completedModules.length / modules.length) * 100);
-
-                renderModules(completedModules);
-
-            }
-
-        };
-
-        list.appendChild(li);
-
-    });
-
-    // Update overall progress
-
-    document.getElementById("overall-progress").innerText = Math.round((completedModules.length / modules.length) * 100);
-
+  // Update overall progress
+  document.getElementById("overall-progress").innerText = Math.round((completedModules.length / modules.length) * 100);
 }
 
 // Logout function
-
 function logout() {
-
-    auth.signOut();
-
-    window.location.href = "/p/login.html";
-
+  auth.signOut();
+  window.location.href = "index.html"; // redirect to login
 }
-
-</script>
+      </script>
