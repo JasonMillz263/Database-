@@ -6,15 +6,16 @@
 <body>
 
 <h2>Welcome Student</h2>
-<div id="info">Loading...</div>
+<div id="info">Loading your data...</div>
 <button onclick="logout()">Logout</button>
 
-<!-- Firebase COMPAT SDKs -->
+<!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain: "students-login-29409.firebaseapp.com",
@@ -24,30 +25,39 @@ const firebaseConfig = {
   appId: "1:634331456872:web:6dae360c5e28d8356562dd"
 };
 
+// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* 🔐 PROTECT PAGE */
+const infoDiv = document.getElementById("info");
+
+// Protect page & load student data dynamically
 auth.onAuthStateChanged(user => {
-  if (!user) {
+  if(!user){
+    // Not logged in → redirect to login
     window.location.href = "index.html";
   } else {
     db.collection("students").doc(user.uid).get()
       .then(doc => {
-        if (doc.exists) {
-          info.innerHTML = `
+        if(doc.exists){
+          infoDiv.innerHTML = `
             <p><b>Name:</b> ${doc.data().name}</p>
             <p><b>Class:</b> ${doc.data().class}</p>
           `;
         } else {
-          info.innerText = "No student data found.";
+          infoDiv.innerText = "No student data found!";
         }
+      })
+      .catch(err => {
+        infoDiv.innerText = "Error loading data!";
+        console.error(err);
       });
   }
 });
 
-function logout() {
+// Logout function
+function logout(){
   auth.signOut().then(() => {
     window.location.href = "index.html";
   });
