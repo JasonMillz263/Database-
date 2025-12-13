@@ -8,9 +8,10 @@
 <h2>Food Business Course Progress</h2>
 
 <div id="student-info"></div>
+
 <ul id="modules"></ul>
 
-<p>Progress: <span id="progress">0</span>%</p>
+<p>Overall Progress: <span id="progress">0</span>%</p>
 
 <button onclick="logout()">Logout</button>
 
@@ -22,7 +23,7 @@
 const firebaseConfig = {
   apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain: "students-login-29409.firebaseapp.com",
-  projectId: "students-login-29409",
+  projectId: "students-login-29409"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -31,12 +32,12 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 const modules = [
-  "Introduction",
-  "Planning",
-  "Food Safety",
-  "Marketing",
-  "Finance",
-  "Scaling"
+  "Introduction to Food Business",
+  "Business Planning",
+  "Food Safety & Hygiene",
+  "Marketing Your Food Business",
+  "Finance & Budgeting",
+  "Scaling Your Food Business"
 ];
 
 auth.onAuthStateChanged(async user => {
@@ -58,34 +59,61 @@ auth.onAuthStateChanged(async user => {
   }
 
   const data = doc.data();
-  student-info.innerHTML = `<b>Welcome ${data.username}</b>`;
-  render(data.modulesCompleted);
+  document.getElementById("student-info").innerHTML =
+    `<b>Welcome ${data.username}</b>`;
+
+  renderModules(data.modulesCompleted || []);
 });
 
-function render(done) {
-  modules.innerHTML = "";
-  modules.forEach(m => {
+function renderModules(completed) {
+  const list = document.getElementById("modules");
+  list.innerHTML = "";
+
+  modules.forEach(module => {
     const li = document.createElement("li");
-    li.innerText = m;
+    li.innerText = module;
     li.style.cursor = "pointer";
+    li.style.padding = "8px";
+    li.style.marginBottom = "6px";
+    li.style.border = "1px solid #ccc";
+    li.style.background = completed.includes(module)
+      ? "#4CAF50"
+      : "#f4f4f4";
+    li.style.color = completed.includes(module)
+      ? "white"
+      : "black";
+
     li.onclick = async () => {
-      if (!done.includes(m)) {
-        done.push(m);
-        const p = Math.round(done.length / modules.length * 100);
-        await db.collection("students").doc(auth.currentUser.uid).update({
-          modulesCompleted: done,
-          progress: p
-        });
-        progress.innerText = p;
-        render(done);
+      if (!completed.includes(module)) {
+        completed.push(module);
+
+        const progress = Math.round(
+          (completed.length / modules.length) * 100
+        );
+
+        await db.collection("students")
+          .doc(auth.currentUser.uid)
+          .update({
+            modulesCompleted: completed,
+            progress: progress
+          });
+
+        document.getElementById("progress").innerText = progress;
+        renderModules(completed);
       }
     };
-    modules.appendChild(li);
+
+    list.appendChild(li);
   });
+
+  document.getElementById("progress").innerText =
+    Math.round((completed.length / modules.length) * 100);
 }
 
 function logout() {
-  auth.signOut().then(() => location.href = "index.html");
+  auth.signOut().then(() => {
+    window.location.href = "index.html";
+  });
 }
 </script>
 
