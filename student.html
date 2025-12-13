@@ -2,24 +2,34 @@
 <html>
 <head>
   <title>Student Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
 
 <h2>Food Business Course Progress</h2>
 
-<div id="student-info"></div>
+<!-- Welcome message -->
+<div id="student-info" style="margin-bottom:15px;"></div>
 
-<ul id="modules"></ul>
+<!-- Modules -->
+<ul id="modules" style="list-style:none;padding:0;max-width:600px;margin:auto;"></ul>
 
-<p>Overall Progress: <span id="progress">0</span>%</p>
+<!-- Progress -->
+<p style="text-align:center;margin-top:15px;">
+  Overall Progress: <strong><span id="progress">0</span>%</strong>
+</p>
 
-<button onclick="logout()">Logout</button>
+<button onclick="logout()" style="display:block;margin:20px auto;padding:10px 20px;">
+  Logout
+</button>
 
+<!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
+/* ================= FIREBASE CONFIG ================= */
 const firebaseConfig = {
   apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain: "students-login-29409.firebaseapp.com",
@@ -31,6 +41,7 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+/* ================= COURSE MODULES ================= */
 const modules = [
   "Introduction to Food Business",
   "Business Planning",
@@ -40,66 +51,76 @@ const modules = [
   "Scaling Your Food Business"
 ];
 
-auth.onAuthStateChanged(async user => {
+/* ================= AUTH CHECK ================= */
+auth.onAuthStateChanged(async (user) => {
   if (!user) {
     window.location.href = "index.html";
     return;
   }
 
-  const ref = db.collection("students").doc(user.uid);
-  let doc = await ref.get();
+  const studentRef = db.collection("students").doc(user.uid);
+  let doc = await studentRef.get();
 
+  // Create student document if it does not exist
   if (!doc.exists) {
-    await ref.set({
+    await studentRef.set({
       username: "Student",
       modulesCompleted: [],
-      progress: 0
+      progress: 0,
+      createdAt: new Date()
     });
-    doc = await ref.get();
+    doc = await studentRef.get();
   }
 
   const data = doc.data();
-  document.getElementById("student-info").innerHTML =
-    `<b>Welcome ${data.username}</b>`;
+
+  // Welcome message with student name
+  document.getElementById("student-info").innerHTML = `
+    <h3>Welcome back, ${data.username}! 👋</h3>
+    <p>Continue your Food Business learning journey.</p>
+  `;
 
   renderModules(data.modulesCompleted || []);
 });
 
-function renderModules(completed) {
+/* ================= RENDER MODULES ================= */
+function renderModules(completedModules) {
   const list = document.getElementById("modules");
   list.innerHTML = "";
 
-  modules.forEach(module => {
+  modules.forEach((module) => {
     const li = document.createElement("li");
     li.innerText = module;
-    li.style.cursor = "pointer";
-    li.style.padding = "8px";
-    li.style.marginBottom = "6px";
+
+    li.style.padding = "10px";
+    li.style.marginBottom = "8px";
     li.style.border = "1px solid #ccc";
-    li.style.background = completed.includes(module)
+    li.style.borderRadius = "5px";
+    li.style.cursor = "pointer";
+    li.style.background = completedModules.includes(module)
       ? "#4CAF50"
       : "#f4f4f4";
-    li.style.color = completed.includes(module)
-      ? "white"
-      : "black";
+    li.style.color = completedModules.includes(module)
+      ? "#fff"
+      : "#000";
 
     li.onclick = async () => {
-      if (!completed.includes(module)) {
-        completed.push(module);
+      if (!completedModules.includes(module)) {
+        completedModules.push(module);
 
         const progress = Math.round(
-          (completed.length / modules.length) * 100
+          (completedModules.length / modules.length) * 100
         );
 
         await db.collection("students")
           .doc(auth.currentUser.uid)
           .update({
-            modulesCompleted: completed,
+            modulesCompleted: completedModules,
             progress: progress
           });
 
         document.getElementById("progress").innerText = progress;
-        renderModules(completed);
+        renderModules(completedModules);
       }
     };
 
@@ -107,9 +128,10 @@ function renderModules(completed) {
   });
 
   document.getElementById("progress").innerText =
-    Math.round((completed.length / modules.length) * 100);
+    Math.round((completedModules.length / modules.length) * 100);
 }
 
+/* ================= LOGOUT ================= */
 function logout() {
   auth.signOut().then(() => {
     window.location.href = "index.html";
