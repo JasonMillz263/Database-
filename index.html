@@ -10,7 +10,8 @@
 <input type="email" id="email" placeholder="Email"><br><br>
 <input type="password" id="password" placeholder="Password"><br><br>
 
-<button id="loginBtn">Login</button>
+<button onclick="login()">Login</button>
+
 <p id="msg"></p>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -22,30 +23,26 @@ const firebaseConfig = {
   apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain: "students-login-29409.firebaseapp.com",
   projectId: "students-login-29409",
-  storageBucket: "students-login-29409.appspot.com",
-  messagingSenderId: "634331456872",
-  appId: "1:634331456872:web:6dae360c5e28d8356562dd"
 };
 
 firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
-const db = firebase.firestore();
 
-document.getElementById("loginBtn").onclick = () => {
-  const email = email.value;
-  const password = password.value;
-  msg.innerText = "Logging in...";
+function login() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  document.getElementById("msg").innerText = "Logging in...";
 
   auth.signInWithEmailAndPassword(email, password)
-    .then(user => {
-      console.log("UID:", user.user.uid);
+    .then(() => {
       window.location.href = "student.html";
     })
     .catch(err => {
-      msg.innerText = err.message;
+      document.getElementById("msg").innerText = err.message;
     });
-};
+}
 </script>
 
 </body>
