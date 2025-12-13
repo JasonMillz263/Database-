@@ -13,13 +13,13 @@
 <button id="loginBtn">Login</button>
 <p id="msg"></p>
 
-<!-- Firebase COMPAT SDKs for Blogger/GitHub -->
+<!-- Firebase COMPAT SDKs -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
-// ===== Firebase config =====
+// ===== Firebase configuration =====
 const firebaseConfig = {
   apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain: "students-login-29409.firebaseapp.com",
@@ -34,46 +34,46 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// ===== LOGIN FUNCTION WITH DYNAMIC REDIRECT =====
+// ===== Login function with dynamic redirect =====
 function login() {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
-
-  document.getElementById("msg").innerText = "Logging in...";
+  const msg = document.getElementById("msg");
+  msg.innerText = "Logging in...";
 
   auth.signInWithEmailAndPassword(email, password)
     .then(userCredential => {
       const uid = userCredential.user.uid;
+      console.log("Logged in UID:", uid);
 
-      // Get student's unique page from Firestore
+      // Fetch student document from Firestore
       db.collection("students").doc(uid).get()
         .then(doc => {
-          if (doc.exists) {
-            // If you use one dynamic page for all, just redirect to student.html
-            // const studentPage = "student.html"; 
+          if(doc.exists) {
+            console.log("Student data:", doc.data());
 
-            // OR if you want individual pages per student:
-            const studentPage = doc.data().page; // Example: 'tony.html'
-            if(studentPage) {
-              window.location.href = studentPage;
-            } else {
-              // Fallback to generic dashboard
-              window.location.href = "student.html";
-            }
+            // Redirect to student's page if set, else default student.html
+            const studentPage = doc.data().page || "student.html";
+            console.log("Redirecting to:", studentPage);
+            window.location.href = studentPage;
           } else {
-            document.getElementById("msg").innerText = "Student data not found!";
+            msg.innerText = "Student data not found!";
+            console.warn("Firestore doc not found for UID:", uid);
           }
         })
         .catch(error => {
-          document.getElementById("msg").innerText = error.message;
+          msg.innerText = "Error fetching student data!";
+          console.error(error);
         });
+
     })
     .catch(error => {
-      document.getElementById("msg").innerText = error.message;
+      msg.innerText = error.message;
+      console.error("Login error:", error);
     });
 }
 
-// ===== BUTTON CLICK =====
+// ===== Attach login function to button =====
 document.getElementById("loginBtn").addEventListener("click", login);
 </script>
 
