@@ -4,11 +4,16 @@
   <title>Student Dashboard</title>
 </head>
 <body>
-<h2>Welcome Student</h2>
-<div id="info">Loading your data...</div>
+
+<h2>Food Business Course Progress</h2>
+
+<div id="student-info"></div>
+<ul id="modules"></ul>
+
+<p>Progress: <span id="progress">0</span>%</p>
+
 <button onclick="logout()">Logout</button>
 
-<!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -18,43 +23,69 @@ const firebaseConfig = {
   apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain: "students-login-29409.firebaseapp.com",
   projectId: "students-login-29409",
-  storageBucket: "students-login-29409.appspot.com",
-  messagingSenderId: "634331456872",
-  appId: "1:634331456872:web:6dae360c5e28d8356562dd"
 };
 
 firebase.initializeApp(firebaseConfig);
+
 const auth = firebase.auth();
 const db = firebase.firestore();
-const infoDiv = document.getElementById("info");
 
-// Load student data dynamically
-auth.onAuthStateChanged(user => {
-  if(!user){
+const modules = [
+  "Introduction",
+  "Planning",
+  "Food Safety",
+  "Marketing",
+  "Finance",
+  "Scaling"
+];
+
+auth.onAuthStateChanged(async user => {
+  if (!user) {
     window.location.href = "index.html";
-  } else {
-    db.collection("students").doc(user.uid).get()
-      .then(doc => {
-        if(doc.exists){
-          infoDiv.innerHTML = `
-            <p><b>Name:</b> ${doc.data().name}</p>
-            <p><b>Class:</b> ${doc.data().class}</p>
-          `;
-        } else {
-          infoDiv.innerText = "Student data not found!";
-        }
-      })
-      .catch(err => {
-        infoDiv.innerText = "Error loading student data.";
-        console.error(err);
-      });
+    return;
   }
+
+  const ref = db.collection("students").doc(user.uid);
+  let doc = await ref.get();
+
+  if (!doc.exists) {
+    await ref.set({
+      username: "Student",
+      modulesCompleted: [],
+      progress: 0
+    });
+    doc = await ref.get();
+  }
+
+  const data = doc.data();
+  student-info.innerHTML = `<b>Welcome ${data.username}</b>`;
+  render(data.modulesCompleted);
 });
 
-function logout(){
-  auth.signOut().then(() => {
-    window.location.href = "index.html";
+function render(done) {
+  modules.innerHTML = "";
+  modules.forEach(m => {
+    const li = document.createElement("li");
+    li.innerText = m;
+    li.style.cursor = "pointer";
+    li.onclick = async () => {
+      if (!done.includes(m)) {
+        done.push(m);
+        const p = Math.round(done.length / modules.length * 100);
+        await db.collection("students").doc(auth.currentUser.uid).update({
+          modulesCompleted: done,
+          progress: p
+        });
+        progress.innerText = p;
+        render(done);
+      }
+    };
+    modules.appendChild(li);
   });
+}
+
+function logout() {
+  auth.signOut().then(() => location.href = "index.html");
 }
 </script>
 
