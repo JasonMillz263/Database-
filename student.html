@@ -1,227 +1,191 @@
-
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Student Progress | Food Business Academy</title>
+<title>Student Dashboard | Food Business Academy</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-
 <style>
-* { box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-body { margin: 0; background: #f3f6ff; }
-
-/* HEADER */
-.header {
-  background: linear-gradient(135deg, #0074D9, #8A2BE2);
-  color: #fff;
-  padding: 20px;
-  text-align: center;
-}
-
-.header h2 { margin: 0; }
-.header p { font-size: 13px; opacity: 0.9; }
-
-/* CONTAINER */
-.container { max-width: 900px; margin: -40px auto 30px; padding: 0 15px; }
-
-/* STUDENT NAME CARD */
-.student-name-card {
-  text-align: center;
-  background: linear-gradient(135deg,#0074D9,#8A2BE2);
-  color:#fff;
-  font-size:20px;
-  font-weight:600;
-  padding:15px;
-  margin-bottom:25px;
-  border-radius:16px;
-}
-
-/* CARD */
-.card { background: #fff; border-radius: 16px; padding: 25px; box-shadow: 0 15px 30px rgba(0,0,0,0.1); margin-bottom: 25px; }
-.welcome h3 { margin-top: 0; color: #333; }
-
-/* PROGRESS BAR */
-.progress-wrap { margin-top: 15px; }
-.progress-bar { height: 14px; background: #e6e9f5; border-radius: 20px; overflow: hidden; }
-.progress-fill { height: 100%; width: 0%; background: linear-gradient(135deg, #0074D9, #8A2BE2); transition: width 0.5s ease; }
-.progress-text { margin-top: 8px; font-size: 14px; font-weight: 600; color: #555; }
-
-/* MODULES */
-.modules { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; }
-.module {
-  border: 1px solid #e0e4ff;
-  border-radius: 14px;
-  padding: 18px;
-  cursor: pointer;
-  transition: 0.3s;
-  position: relative;
-}
-.module.completed { background: linear-gradient(135deg, #0074D9, #8A2BE2); color: #fff; }
-.module.completed::after { content: "✔ Completed"; position: absolute; top: 12px; right: 15px; font-size: 11px; font-weight: 600; }
-.module.locked { background: #f4f4f4; color: #aaa; cursor: not-allowed; }
-
-.module:hover:not(.locked):not(.completed) { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-
-/* BUTTONS */
-.logout-btn, .cert-btn, .print-btn {
-  display: block; margin: 20px auto 0; padding: 12px 25px; border: none; border-radius: 12px;
-  background: linear-gradient(135deg, #0074D9, #8A2BE2); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer;
-}
-
-/* RESPONSIVE */
-@media(max-width:600px){ .container { margin-top: -20px; } }
+*{box-sizing:border-box;font-family:'Poppins',sans-serif}
+body{margin:0;background:#f3f6ff}
+.header{background:linear-gradient(135deg,#0074D9,#8A2BE2);color:#fff;padding:20px;text-align:center}
+.container{max-width:1100px;margin:-40px auto 30px;padding:0 15px}
+.card{background:#fff;border-radius:16px;padding:25px;box-shadow:0 15px 30px rgba(0,0,0,.1);margin-bottom:25px}
+.student-name-card{text-align:center;background:linear-gradient(135deg,#0074D9,#8A2BE2);color:#fff;font-size:20px;font-weight:600;padding:15px;margin-bottom:25px;border-radius:16px}
+.progress-bar{height:14px;background:#e6e9f5;border-radius:20px;overflow:hidden}
+.progress-fill{height:100%;width:0%;background:linear-gradient(135deg,#0074D9,#8A2BE2)}
+.modules,.courses{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px}
+.module,.course{border:1px solid #e0e4ff;border-radius:14px;padding:18px;cursor:pointer;transition:.3s;position:relative}
+.module.completed{background:linear-gradient(135deg,#0074D9,#8A2BE2);color:#fff}
+.module.locked{background:#f4f4f4;color:#aaa;cursor:not-allowed}
+.module.completed::after{content:"✔ Completed";position:absolute;top:10px;right:12px;font-size:11px}
+.course button{margin-top:10px;padding:8px 14px;border:none;border-radius:10px;background:#0074D9;color:#fff;cursor:pointer}
+.quiz-question{margin:12px 0}
+button.main{display:block;margin:20px auto 0;padding:12px 25px;border:none;border-radius:12px;background:linear-gradient(135deg,#0074D9,#8A2BE2);color:#fff;font-weight:600;cursor:pointer}
+.badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;background:#eee;margin-left:6px}
+@media(max-width:600px){.container{margin-top:-20px}}
 </style>
 </head>
-
 <body>
-
-<!-- HEADER -->
-<div class="header">
-  <h2>Food Business Academy</h2>
-  <p>Student Progress Dashboard</p>
-</div>
-
+<div class="header"><h2>Food Business Academy</h2><p>Student Dashboard</p></div>
 <div class="container">
+<div class="student-name-card" id="displayName">Student</div><!-- COURSE CATALOGUE --><div class="card">
+<h3>Course Catalogue</h3>
+<select id="categoryFilter" onchange="renderCourses()">
+<option value="all">All Categories</option>
+<option value="Dairy">Dairy</option>
+<option value="Dried Fruits">Dried Fruits</option>
+<option value="Marketing">Marketing</option>
+</select>
+<div class="courses" id="courseList"></div>
+</div><!-- COURSE PREVIEW --><div class="card" id="coursePreview" style="display:none"></div><!-- ENROLLED COURSE PROGRESS --><div class="card">
+<h3>Course Progress</h3>
+<div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+<p><span id="progress">0</span>% completed</p>
+</div><!-- MODULES WITH DRIP RELEASE --><div class="card">
+<h3>Course Modules <span class="badge">Drip Content</span></h3>
+<p style="font-size:13px;color:#666">Modules unlock sequentially.</p>
+<div class="modules" id="modules"></div>
+</div><!-- GRADED QUIZ & ASSESSMENT (ADMIN CONTROLLED) --><div class="card" id="quizCard" style="display:none">
+<h3>Graded Assessment</h3>
+<div id="quizArea"></div>
+<button class="main" onclick="submitDynamicQuiz()">Submit Assessment</button>
+<p id="quizResult"></p>
+</div><!-- CERTIFICATE --><button class="main" id="certBtn" style="display:none" onclick="downloadCertificate()">Download Certificate</button> <button class="main" onclick="logout()">Logout</button>
 
-  <!-- STUDENT NAME -->
-  <div class="student-name-card">
-    <span id="displayName">Student Name</span>
-  </div>
-
-  <!-- WELCOME -->
-  <div class="card welcome" id="student-info"></div>
-
-  <!-- OVERALL PROGRESS -->
-  <div class="card">
-    <h3>Overall Course Progress</h3>
-    <div class="progress-wrap">
-      <div class="progress-bar">
-        <div class="progress-fill" id="progressFill"></div>
-      </div>
-      <div class="progress-text"><span id="progress">0</span>% completed</div>
-    </div>
-  </div>
-
-  <!-- MODULES -->
-  <div class="card">
-    <h3>Course Modules</h3>
-    <p style="font-size:13px;color:#666;">Modules unlock sequentially. Click to mark as completed.</p>
-    <div class="modules" id="modules"></div>
-  </div>
-
-  <!-- BUTTONS -->
-  <button class="cert-btn" id="certBtn" style="display:none;" onclick="downloadCertificate()">Download Certificate</button>
-  <button class="print-btn" onclick="printReport()">Print Progress Report</button>
-  <button class="logout-btn" onclick="logout()">Logout</button>
-</div>
-
-<!-- Firebase & jsPDF -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
-  authDomain: "students-login-29409.firebaseapp.com",
-  projectId: "students-login-29409"
-};
+</div><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script>
+const firebaseConfig={apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",authDomain:"students-login-29409.firebaseapp.com",projectId:"students-login-29409"};
 firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+const auth=firebase.auth();
+const db=firebase.firestore();
 
-const modulesList = [
-  "Introduction to Food Business",
-  "Business Planning",
-  "Food Safety & Hygiene",
-  "Marketing Your Food Business",
-  "Finance & Budgeting",
-  "Scaling Your Food Business"
-];
-
-auth.onAuthStateChanged(async user => {
-  if(!user){ window.location.href="index.html"; return; }
-  const ref = db.collection("students").doc(user.uid);
-  let snap = await ref.get();
-  if(!snap.exists){
-    await ref.set({username:"Student", modulesCompleted:[], progress:0, createdAt:new Date()});
-    snap = await ref.get();
+const courses=[
+  {
+    name:"Food Business Basics",
+    category:"Dairy",
+    modules:["Intro","Planning","Safety","Operations"],
+    quiz:[
+      {q:"Why is food safety important?",options:["Protects consumers","Not important"],correct:0},
+      {q:"Business planning helps to?",options:["Guide growth","Waste money"],correct:0}
+    ]
+  },
+  {
+    name:"Food Marketing Mastery",
+    category:"Marketing",
+    modules:["Branding","Sales","Digital Marketing"],
+    quiz:[
+      {q:"Marketing mainly aims to?",options:["Increase sales","Confuse customers"],correct:0}
+    ]
   }
-  const data = snap.data();
-  // Display student name
-  document.getElementById("displayName").innerText = data.username;
-  document.getElementById("student-info").innerHTML = `<h3>Welcome, ${data.username} 👋</h3><p>Track your learning progress below.</p>`;
-  renderModules(data.modulesCompleted || []);
+];
+let currentCourse=null;let completedModules=[];
+
+auth.onAuthStateChanged(async user=>{
+if(!user){location.href='index.html';return}
+const ref=db.collection('students').doc(user.uid);
+const snap=await ref.get();
+if(!snap.exists){await ref.set({username:'Student',completedModules:[],course:null,progress:0})}
+const data=(await ref.get()).data();
+document.getElementById('displayName').innerText=data.username;
+completedModules=data.completedModules||[];currentCourse=data.course;
+if(currentCourse){renderModules(currentCourse.modules)}
+updateProgress();renderCourses();});
+
+function renderCourses(){
+const cat=document.getElementById('categoryFilter').value;
+const list=document.getElementById('courseList');list.innerHTML='';
+courses.filter(c=>cat==='all'||c.category===cat).forEach(c=>{
+const div=document.createElement('div');div.className='course';
+div.innerHTML=`<h4>${c.name}</h4><p>${c.category}</p><button onclick='previewCourse("${c.name}")'>Preview</button>`;
+list.appendChild(div);});}
+
+function previewCourse(name){
+const c=courses.find(x=>x.name===name);
+document.getElementById('coursePreview').style.display='block';
+document.getElementById('coursePreview').innerHTML=`<h3>${c.name}</h3><p>Curriculum: ${c.modules.join(', ')}</p><button onclick='enroll("${c.name}")'>Enroll</button>`;}
+
+async function enroll(name){
+currentCourse=courses.find(c=>c.name===name);
+completedModules=[];
+await db.collection('students').doc(auth.currentUser.uid).update({course:currentCourse,completedModules:[],progress:0});
+renderModules(currentCourse.modules);renderQuiz();updateProgress();}
+
+function renderModules(mods){
+const m=document.getElementById('modules');m.innerHTML='';
+mods.forEach((x,i)=>{
+const d=document.createElement('div');d.className='module';d.innerText=x;
+if(completedModules.includes(x))d.classList.add('completed');
+else if(i>0&&!completedModules.includes(mods[i-1]))d.classList.add('locked');
+d.onclick=async()=>{
+if(d.classList.contains('locked')||d.classList.contains('completed'))return;
+completedModules.push(x);
+await db.collection('students').doc(auth.currentUser.uid).update({completedModules});
+renderModules(mods);updateProgress();};
+m.appendChild(d);});}
+
+async function updateProgress(){
+  if(!currentCourse)return;
+  const ref=db.collection('students').doc(auth.currentUser.uid);
+  const snap=await ref.get();
+  const data=snap.data();
+  const quizPassed=data.quiz && data.quiz.passed===true;
+
+  const p=Math.round((completedModules.length/currentCourse.modules.length)*100)||0;
+  document.getElementById('progress').innerText=p;
+  document.getElementById('progressFill').style.width=p+'%';
+
+  await ref.update({progress:p});
+
+  // Certificate unlock rule: 100% progress + quiz passed
+  document.getElementById('certBtn').style.display=(p===100 && quizPassed)?'block':'none';
 });
+document.getElementById('certBtn').style.display=p===100?'block':'none';}
 
-function renderModules(completed){
-  const container = document.getElementById("modules");
-  container.innerHTML="";
-  modulesList.forEach((module,i)=>{
-    const div=document.createElement("div");
-    div.className="module"; div.innerText=module;
-    if(completed.includes(module)) div.classList.add("completed");
-    else if(i>0 && !completed.includes(modulesList[i-1])) div.classList.add("locked");
-    div.onclick=async ()=>{
-      if(div.classList.contains("locked")||div.classList.contains("completed")) return;
-      completed.push(module);
-      const progress=Math.round((completed.length/modulesList.length)*100);
-      await db.collection("students").doc(auth.currentUser.uid).update({modulesCompleted:completed, progress:progress});
-      updateProgress(progress);
-      renderModules(completed);
-    };
-    container.appendChild(div);
+async function renderQuiz(){
+  if(!currentCourse || !currentCourse.quiz)return;
+  const area=document.getElementById('quizArea');
+  area.innerHTML='';
+  currentCourse.quiz.forEach((q,i)=>{
+    let html=`<div class='quiz-question'>${i+1}. ${q.q}<br>`;
+    q.options.forEach((opt,idx)=>{
+      html+=`<label><input type='radio' name='q${i}' value='${idx}'> ${opt}</label><br>`;
+    });
+    html+='</div>';
+    area.innerHTML+=html;
   });
-  const progress = Math.round((completed.length/modulesList.length)*100);
-  updateProgress(progress);
+  document.getElementById('quizCard').style.display='block';
 }
 
-function updateProgress(value){
-  document.getElementById("progress").innerText=value;
-  document.getElementById("progressFill").style.width=value+"%";
-  document.getElementById("certBtn").style.display = value===100 ? "block":"none";
-}
-
-/* CERTIFICATE DOWNLOAD */
-async function downloadCertificate(){
-  const snap = await db.collection("students").doc(auth.currentUser.uid).get();
-  const name = snap.data().username || "Student";
-  const today = new Date().toLocaleDateString();
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  doc.setFontSize(22);
-  doc.text("Food Business Academy", 105, 40, null, null, "center");
-  doc.setFontSize(18);
-  doc.text("Certificate of Completion",105,60,null,null,"center");
-  doc.setFontSize(14);
-  doc.text(`This certifies that ${name}`,105,80,null,null,"center");
-  doc.text("has successfully completed the Food Business Course.",105,90,null,null,"center");
-  doc.text(`Date: ${today}`,105,110,null,null,"center");
-  doc.save("Certificate.pdf");
-}
-
-/* PRINT REPORT */
-async function printReport(){
-  const snap = await db.collection("students").doc(auth.currentUser.uid).get();
-  const data = snap.data();
-  let report = `<h2>${data.username}'s Progress Report</h2>`;
-  report += `<p>Overall Progress: ${data.progress}%</p>`;
-  report += `<ul>`;
-  modulesList.forEach(module=>{
-    report += `<li>${module} - ${data.modulesCompleted.includes(module) ? "Completed":"Pending"}</li>`;
+async function submitDynamicQuiz(){
+  let score=0;
+  currentCourse.quiz.forEach((q,i)=>{
+    const ans=document.querySelector(`input[name='q${i}']:checked`);
+    if(ans && parseInt(ans.value)===q.correct) score++;
   });
-  report += `</ul>`;
-  const w = window.open();
-  w.document.write(report);
-  w.document.close();
-  w.print();
+  const percent=Math.round((score/currentCourse.quiz.length)*100);
+  const passed=percent>=50;
+
+  const ref=db.collection('students').doc(auth.currentUser.uid);
+  await ref.update({quiz:{score:percent,passed:passed,submittedAt:new Date()}});
+
+  document.getElementById('quizResult').innerHTML=
+    passed ? `✅ Passed (${percent}%)` : `❌ Failed (${percent}%) – retry allowed`;
+
+  updateProgress();
+}
+  const score=parseInt(q1.value)+parseInt(q2.value);
+  const percent=Math.round((score/2)*100);
+  const passed=percent>=50;
+
+  const ref=db.collection('students').doc(auth.currentUser.uid);
+  await ref.update({
+    quiz:{score:percent,passed:passed,submittedAt:new Date()}
+  });
+
+  document.getElementById('quizResult').innerHTML=
+    passed ? `✅ Passed (${percent}%)` : `❌ Failed (${percent}%) – try again`;
 }
 
-function logout(){ auth.signOut().then(()=>{ window.location.href="index.html"; }); }
-</script>
-
-</body>
-  </html>
+function downloadCertificate(){const{jsPDF}=window.jspdf;const doc=new jsPDF();doc.text('Food Business Academy',105,40,null,null,'center');doc.text('Certificate of Completion',105,60,null,null,'center');doc.text('Awarded to '+document.getElementById('displayName').innerText,105,80,null,null,'center');doc.save('certificate.pdf')}
+function logout(){auth.signOut().then(()=>location.href='index.html')}
+</script></body>
+</html>
