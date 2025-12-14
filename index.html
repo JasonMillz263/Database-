@@ -1,19 +1,168 @@
+
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Student Login</title>
+<meta charset="UTF-8">
+<title>Food Business Academy | Login</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+* {
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  background: linear-gradient(135deg, #0074D9, #8A2BE2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-box {
+  background: #ffffff;
+  width: 100%;
+  max-width: 420px;
+  padding: 40px;
+  border-radius: 18px;
+  box-shadow: 0 20px 45px rgba(0,0,0,0.25);
+}
+
+/* LOGO */
+.logo {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.logo img {
+  width: 70px;
+}
+
+/* ACADEMY NAME */
+.academy-title {
+  text-align: center;
+  font-size: 20px;
+  font-weight: 600;
+  color: #8A2BE2;
+  margin-bottom: 5px;
+}
+
+.login-box h2 {
+  text-align: center;
+  margin-bottom: 10px;
+  color: #222;
+}
+
+.login-box p {
+  text-align: center;
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 25px;
+}
+
+/* INPUTS */
+.input-field {
+  margin-bottom: 18px;
+}
+
+.input-field input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.input-field input:focus {
+  border-color: #8A2BE2;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(138,43,226,0.15);
+  transform: scale(1.01);
+}
+
+/* BUTTON */
+.login-btn {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #0074D9, #8A2BE2);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.login-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(138,43,226,0.35);
+}
+
+/* LINKS */
+.links {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.links a {
+  color: #0074D9;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.links a:hover {
+  text-decoration: underline;
+}
+
+/* MESSAGE */
+#msg {
+  margin-top: 15px;
+  text-align: center;
+  font-size: 13px;
+  color: #8A2BE2;
+}
+</style>
 </head>
+
 <body>
 
-<h2>Student Login</h2>
+<div class="login-box">
 
-<input type="email" id="email" placeholder="Email"><br><br>
-<input type="password" id="password" placeholder="Password"><br><br>
+  <!-- LOGO (replace src with your logo) -->
+  <div class="logo">
+    <img src="logo.png" alt="Food Business Academy Logo">
+  </div>
 
-<button onclick="login()">Login</button>
+  <div class="academy-title">Food Business Academy</div>
 
-<p id="msg"></p>
+  <h2>Student Login</h2>
+  <p>Access your learning dashboard</p>
 
+  <div class="input-field">
+    <input type="email" id="email" placeholder="Email address">
+  </div>
+
+  <div class="input-field">
+    <input type="password" id="password" placeholder="Password">
+  </div>
+
+  <button class="login-btn" onclick="login()">Sign In</button>
+
+  <div class="links">
+    <a href="#" onclick="resetPassword()">Forgot password?</a>
+  </div>
+
+  <p id="msg"></p>
+</div>
+
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -28,16 +177,51 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
+const db = firebase.firestore();
 
 function login() {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
 
-  document.getElementById("msg").innerText = "Logging in...";
+  document.getElementById("msg").innerText = "Signing in...";
 
   auth.signInWithEmailAndPassword(email, password)
+    .then((cred) => {
+      const uid = cred.user.uid;
+
+      // Get user role + username
+      db.collection("users").doc(uid).get().then(doc => {
+        if (doc.exists) {
+          const role = doc.data().role;
+          const username = doc.data().username;
+
+          localStorage.setItem("username", username);
+
+          if (role === "admin") {
+            window.location.href = "admin.html";
+          } else {
+            window.location.href = "student.html";
+          }
+        } else {
+          window.location.href = "student.html";
+        }
+      });
+    })
+    .catch(err => {
+      document.getElementById("msg").innerText = err.message;
+    });
+}
+
+function resetPassword() {
+  const email = document.getElementById("email").value;
+  if (!email) {
+    document.getElementById("msg").innerText = "Enter your email to reset password.";
+    return;
+  }
+
+  auth.sendPasswordResetEmail(email)
     .then(() => {
-      window.location.href = "student.html";
+      document.getElementById("msg").innerText = "Password reset email sent.";
     })
     .catch(err => {
       document.getElementById("msg").innerText = err.message;
@@ -46,4 +230,4 @@ function login() {
 </script>
 
 </body>
-</html>
+  </html>
