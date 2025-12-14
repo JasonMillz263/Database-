@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Food Business Academy | Login</title>
+<title>Food Business Academy | Student Login</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
@@ -23,38 +23,35 @@ body {
   justify-content: center;
 }
 
+/* CARD */
 .login-box {
   background: #ffffff;
   width: 100%;
-  max-width: 420px;
+  max-width: 400px;
   padding: 40px;
   border-radius: 18px;
   box-shadow: 0 20px 45px rgba(0,0,0,0.25);
+  animation: fadeIn 0.6s ease;
 }
 
-/* LOGO */
-.logo {
-  text-align: center;
-  margin-bottom: 10px;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.logo img {
-  width: 70px;
-}
-
-/* ACADEMY NAME */
+/* HEADINGS */
 .academy-title {
   text-align: center;
   font-size: 20px;
   font-weight: 600;
   color: #8A2BE2;
-  margin-bottom: 5px;
+  margin-bottom: 8px;
 }
 
 .login-box h2 {
   text-align: center;
   margin-bottom: 10px;
-  color: #222;
+  color: #1f1f1f;
 }
 
 .login-box p {
@@ -67,22 +64,46 @@ body {
 /* INPUTS */
 .input-field {
   margin-bottom: 18px;
+  position: relative;
 }
 
 .input-field input {
   width: 100%;
   padding: 14px 16px;
   border-radius: 12px;
-  border: 1px solid #ddd;
+  border: 1px solid #dcdcdc;
   font-size: 14px;
-  transition: all 0.3s ease;
+  transition: 0.3s;
 }
 
 .input-field input:focus {
-  border-color: #8A2BE2;
+  border-color: #0074D9;
   outline: none;
-  box-shadow: 0 0 0 3px rgba(138,43,226,0.15);
-  transform: scale(1.01);
+  box-shadow: 0 0 0 2px rgba(0,116,217,0.15);
+}
+
+/* SHOW PASSWORD */
+.toggle-pass {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 12px;
+  color: #0074D9;
+}
+
+/* REMEMBER ME */
+.remember {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: #555;
+  margin-bottom: 18px;
+}
+
+.remember input {
+  margin-right: 8px;
 }
 
 /* BUTTON */
@@ -101,7 +122,23 @@ body {
 
 .login-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(138,43,226,0.35);
+  box-shadow: 0 8px 18px rgba(138,43,226,0.35);
+}
+
+/* LOADING */
+.spinner {
+  display: none;
+  margin: 15px auto 0;
+  width: 24px;
+  height: 24px;
+  border: 3px solid #ddd;
+  border-top: 3px solid #8A2BE2;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* LINKS */
@@ -123,7 +160,7 @@ body {
 
 /* MESSAGE */
 #msg {
-  margin-top: 15px;
+  margin-top: 12px;
   text-align: center;
   font-size: 13px;
   color: #8A2BE2;
@@ -135,25 +172,28 @@ body {
 
 <div class="login-box">
 
-  <!-- LOGO (replace src with your logo) -->
-  <div class="logo">
-    <img src="logo.png" alt="Food Business Academy Logo">
-  </div>
-
   <div class="academy-title">Food Business Academy</div>
 
   <h2>Student Login</h2>
-  <p>Access your learning dashboard</p>
+  <p>Sign in to access your dashboard</p>
 
   <div class="input-field">
-    <input type="email" id="email" placeholder="Email address">
+    <input type="email" id="email" placeholder="Email">
   </div>
 
   <div class="input-field">
     <input type="password" id="password" placeholder="Password">
+    <span class="toggle-pass" onclick="togglePassword()">Show</span>
   </div>
 
-  <button class="login-btn" onclick="login()">Sign In</button>
+  <div class="remember">
+    <input type="checkbox" id="rememberMe">
+    <label for="rememberMe">Remember me</label>
+  </div>
+
+  <button class="login-btn" onclick="login()">Login</button>
+
+  <div class="spinner" id="spinner"></div>
 
   <div class="links">
     <a href="#" onclick="resetPassword()">Forgot password?</a>
@@ -162,10 +202,9 @@ body {
   <p id="msg"></p>
 </div>
 
-<!-- Firebase -->
+<!-- Firebase (ORIGINAL WORKING SETUP) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
 const firebaseConfig = {
@@ -175,47 +214,57 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-
 const auth = firebase.auth();
-const db = firebase.firestore();
 
+/* LOAD REMEMBERED EMAIL */
+window.onload = () => {
+  const savedEmail = localStorage.getItem("rememberEmail");
+  if (savedEmail) {
+    document.getElementById("email").value = savedEmail;
+    document.getElementById("rememberMe").checked = true;
+  }
+};
+
+function togglePassword() {
+  const pass = document.getElementById("password");
+  pass.type = pass.type === "password" ? "text" : "password";
+}
+
+/* ORIGINAL LOGIN LOGIC */
 function login() {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
+  const remember = document.getElementById("rememberMe").checked;
 
-  document.getElementById("msg").innerText = "Signing in...";
+  document.getElementById("msg").innerText = "";
+  document.getElementById("spinner").style.display = "block";
+
+  if (remember) {
+    localStorage.setItem("rememberEmail", email);
+  } else {
+    localStorage.removeItem("rememberEmail");
+  }
 
   auth.signInWithEmailAndPassword(email, password)
-    .then((cred) => {
-      const uid = cred.user.uid;
-
-      // Get user role + username
-      db.collection("users").doc(uid).get().then(doc => {
-        if (doc.exists) {
-          const role = doc.data().role;
-          const username = doc.data().username;
-
-          localStorage.setItem("username", username);
-
-          if (role === "admin") {
-            window.location.href = "admin.html";
-          } else {
-            window.location.href = "student.html";
-          }
-        } else {
-          window.location.href = "student.html";
-        }
-      });
+    .then(() => {
+      document.getElementById("msg").innerText = "Login successful ✔";
+      setTimeout(() => {
+        window.location.href = "student.html";
+      }, 900);
     })
     .catch(err => {
       document.getElementById("msg").innerText = err.message;
+    })
+    .finally(() => {
+      document.getElementById("spinner").style.display = "none";
     });
 }
 
+/* PASSWORD RESET */
 function resetPassword() {
   const email = document.getElementById("email").value;
   if (!email) {
-    document.getElementById("msg").innerText = "Enter your email to reset password.";
+    document.getElementById("msg").innerText = "Enter your email first.";
     return;
   }
 
