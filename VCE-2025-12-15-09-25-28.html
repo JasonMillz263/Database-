@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Food Business Academy | Student Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+<!-- Charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<!-- Slick slider for hero -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css" />
+
+<style>
+:root{
+  --purple:#6d28d9;
+  --blue:#2563eb;
+  --bg:linear-gradient(180deg,#eef2ff,#f9fbff);
+  --text:#1f2937;
+  --soft:rgba(255,255,255,.85);
+}
+
+/* Base */
+*{box-sizing:border-box;font-family:'Poppins',sans-serif}
+body{margin:0;background:var(--bg);color:var(--text)}
+
+/* Layout */
+.layout{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+
+/* Sidebar */
+.sidebar{
+background:linear-gradient(180deg,var(--blue),var(--purple));
+color:#fff;padding:25px;position:sticky;top:0;height:100vh;overflow:auto
+}
+.sidebar h2{margin:0 0 20px;font-weight:700;letter-spacing:.3px}
+.sidebar .brand{
+display:flex;align-items:center;gap:12px;margin-bottom:25px
+}
+.sidebar .brand .logo{
+width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.25);
+display:flex;align-items:center;justify-content:center
+}
+.sidebar a{
+display:flex;gap:12px;align-items:center;
+color:#e5e7eb;text-decoration:none;
+padding:12px 14px;border-radius:12px;margin-bottom:8px;
+transition:transform .15s ease, background .15s ease
+}
+.sidebar a:hover{background:rgba(255,255,255,.18);transform:translateX(2px)}
+.sidebar .logout{background:#ef4444;color:#fff;margin-top:12px}
+.sidebar .logout:hover{background:#dc2626}
+
+/* Main */
+.main{padding:28px}
+
+/* Top Header */
+.top-header{
+display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;
+background:linear-gradient(135deg,var(--blue),var(--purple));
+color:#fff;padding:18px 22px;border-radius:18px;margin-bottom:25px;
+box-shadow:0 18px 32px rgba(109,40,217,.25);position:relative
+}
+.top-header h1{margin:0;font-size:22px;font-weight:700}
+.badge{background:rgba(255,255,255,.22);padding:6px 14px;border-radius:999px}
+.header-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.header-actions button{
+padding:10px 14px;border:none;border-radius:999px;background:rgba(255,255,255,.22);color:#fff;font-weight:600;cursor:pointer
+}
+.header-actions button:hover{background:rgba(255,255,255,.35)}
+
+/* Cards */
+.card{
+background:var(--soft);
+border-radius:22px;padding:22px;
+box-shadow:0 20px 40px rgba(0,0,0,.08);
+margin-bottom:22px;position:relative;overflow:hidden
+}
+.card .title{font-weight:700;margin-bottom:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+
+/* Progress Bar */
+.progress{height:12px;background:#e5e7eb;border-radius:20px;overflow:hidden}
+.progress span{display:block;height:100%;background:linear-gradient(135deg,var(--blue),var(--purple));transition:width .25s ease}
+
+/* Module item */
+.module{padding:10px;border-radius:12px;border:1px solid #e5e7eb;margin-bottom:8px;background:#fff;display:flex;align-items:center;justify-content:space-between}
+.module.completed{background:#e0f2fe;border-color:var(--blue)}
+.module .tick{color:#10b981}
+
+/* Buttons */
+button{
+padding:12px 18px;border:none;border-radius:14px;
+background:linear-gradient(135deg,var(--blue),var(--purple));
+color:#fff;font-weight:600;cursor:pointer;transition:box-shadow .2s ease, transform .1s ease
+}
+button:hover{box-shadow:0 15px 35px rgba(109,40,217,.35)}
+button:active{transform:scale(.98)}
+
+/* Inputs */
+.input{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.input input, .input select, .input textarea{
+padding:10px 12px;border:1px solid #e5e7eb;border-radius:12px;background:#fff
+}
+
+/* Hero slider */
+.hero-slider{margin-bottom:25px}
+.hero-slider .slide{
+padding:60px 30px;border-radius:20px;color:#fff;text-align:center;
+background:linear-gradient(135deg,var(--blue),var(--purple));
+font-size:22px;font-weight:600
+}
+
+/* Animations */
+.fade-in{animation:fadeIn .35s ease both}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.float{animation:float 6s ease-in-out infinite}
+@keyframes float{0%{transform:translateY(0)}50%{transform:translateY(-6px)}100%{transform:translateY(0)}}
+
+/* Hidden */
+.hidden{display:none}
+
+/* Responsive */
+@media(max-width:1000px){.layout{grid-template-columns:1fr}.sidebar{position:static;height:auto}}
+@media(max-width:680px){.header-actions{width:100%}}
+</style>
+</head>
+
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo float"><i class="fa-solid fa-chef-hat"></i></div>
+      <div>
+        <h2>FBA Portal</h2>
+        <div class="badge">Premium Learning</div>
+      </div>
+    </div>
+    <a href="#" onclick="show('dashboard')"><i class="fa-solid fa-house"></i> Dashboard</a>
+    <a href="#" onclick="show('progress')"><i class="fa-solid fa-chart-line"></i> Progress tracking</a>
+    <a href="#" onclick="show('catalog')"><i class="fa-solid fa-book-open"></i> Courses offered</a>
+    <a href="#" onclick="show('certs')"><i class="fa-solid fa-certificate"></i> Certificates</a>
+    <a href="#" onclick="show('tickets')"><i class="fa-solid fa-ticket"></i> Tickets support</a>
+    <a href="#" onclick="show('profile')"><i class="fa-solid fa-user"></i> Student profile</a>
+    <a href="#" onclick="logout()" class="logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- TOP HEADER -->
+    <div class="top-header">
+      <div>
+        <h1>Welcome, <span id="studentName">Student</span> 👋</h1>
+        <div class="badge">Student ID: <span id="studentId"></span></div>
+      </div>
+      <div class="header-actions">
+        <button onclick="show('dashboard')"><i class="fa-solid fa-house"></i> Home</button>
+        <button onclick="show('progress')"><i class="fa-solid fa-chart-line"></i> Progress</button>
+        <button onclick="show('catalog')"><i class="fa-solid fa-book-open"></i> Courses</button>
+        <button onclick="show('certs')"><i class="fa-solid fa-certificate"></i> Certificates</button>
+        <button onclick="show('tickets')"><i class="fa-solid fa-ticket"></i> Tickets</button>
+        <button onclick="show('profile')"><i class="fa-solid fa-user"></i> Profile</button>
+        <button onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <section id="dashboard" class="fade-in">
+      <!-- Hero Slider -->
+      <div class="hero-slider">
+        <div class="slide">🚀 Launch Your Food Business Career Today!</div>
+        <div class="slide">🍎 Learn from Industry Experts and Mentors</div>
+        <div class="slide">🎓 Earn Certificates Automatically as You Progress</div>
+      </div>
+
+      <div class="card">
+        <h3 class="title">🚀 Build your food business career</h3>
+        <p>Professional courses, real-world skills, and recognised certificates—tailored for ambitious entrepreneurs. Learn at your pace, track your progress, and graduate with confidence.</p>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <h3 class="title">📊 My courses overview</h3>
+          <div id="myCourses"></div>
+        </div>
+        <div class="card">
+          <h3 class="title">📈 Progress charts</h3>
+          <canvas id="progressChart" height="160"></canvas>
+        </div>
+        <div class="card">
+          <h3 class="title">✨ Why join FBA?</h3>
+          <ul>
+            <li class="module"><span><strong>Industry mentors:</strong> Learn from practitioners.</span></li>
+            <li class="module"><span><strong>Practical modules:</strong> Hands-on lessons with real workflows.</span></li>
+            <li class="module"><span><strong>Certificates:</strong> Earn recognised achievements automatically.</span></li>
+          </ul>
+          <button onclick="show('catalog')">Browse courses</button>
+        </div>
+      </div>
+    </section>
+
+<!-- PROGRESS TRACKING -->
+    <section id="progress" class="hidden fade-in">
+      <div class="card">
+        <h3 class="title">🧠 Last memory & continue learning</h3>
+        <p>Pick up exactly where you left off. Your module completions, quiz results, and certificates are saved. Continue your pending course below.</p>
+        <div id="lastMemory"></div>
+      </div>
+
+      <div class="card">
+        <h3 class="title">📍 Current & pending course results</h3>
+        <div id="pendingCourses"></div>
+      </div>
+    </section>
+
+    <!-- CATALOG -->
+    <section id="catalog" class="hidden fade-in">
+      <div class="card">
+        <h3 class="title">🧩 Courses offered</h3>
+        <div class="grid" id="courseGrid"></div>
+      </div>
+    </section>
+
+    <!-- COURSE PAGE -->
+    <section id="coursePage" class="hidden fade-in"></section>
+
+    <!-- CERTIFICATES -->
+    <section id="certs" class="hidden fade-in">
+      <div class="card">
+        <h3 class="title">🏆 Certificates achievements</h3>
+        <p>Certificates are auto-generated after passing the quiz. Download and showcase your success.</p>
+        <ul id="certList"></ul>
+      </div>
+    </section>
+
+    <!-- TICKETS -->
+    <section id="tickets" class="hidden fade-in">
+      <div class="card">
+        <h3 class="title">🎟️ Support tickets</h3>
+        <p>Submit payment or learning queries. You can also attach images for better clarity.</p>
+        <div class="grid">
+          <div>
+            <div class="input">
+              <label><strong>Subject:</strong></label>
+              <input id="ticketSubject" placeholder="e.g., Payment confirmation for Food Business Basics" />
+            </div>
+            <div class="input">
+              <label><strong>Category:</strong></label>
+              <select id="ticketCategory">
+                <option value="payment">Payment</option>
+                <option value="course">Course</option>
+                <option value="technical">Technical</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="input">
+              <label><strong>Message:</strong></label>
+              <textarea id="ticketMessage" rows="4" placeholder="Describe your issue or request"></textarea>
+            </div>
+            <div class="input">
+              <label><strong>Attach Image (optional):</strong></label>
+              <input type="file" id="ticketImage" accept="image/*" />
+            </div>
+            <button onclick="createTicket()">Submit ticket</button>
+          </div>
+          <div>
+            <h4 class="title">My tickets</h4>
+            <ul id="ticketList"></ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="title">💬 Live WhatsApp support</h3>
+        <p>Click the button to open WhatsApp chat directly with our support team.</p>
+        <button onclick="openWhatsApp()"><i class="fa-brands fa-whatsapp"></i> Chat on WhatsApp</button>
+      </div>
+    </section>
+
+    <!-- PROFILE -->
+    <section id="profile" class="hidden fade-in">
+      <div class="card">
+        <h3 class="title">👤 Student profile</h3>
+        <div class="grid">
+          <div>
+            <div class="input"><label><strong>Name:</strong></label><input id="profileName" /></div>
+            <div class="input"><label><strong>Age:</strong></label><input id="profileAge" type="number" min="10" max="100" /></div>
+            <div class="input"><label><strong>Location (City, Country):</strong></label><input id="profileLocation" placeholder="City, Country" /></div>
+            <div class="input"><label><strong>Phone:</strong></label><input id="profilePhone" /></div>
+            <div class="input"><label><strong>Bio:</strong></label><textarea id="profileBio" rows="3" placeholder="Tell us about your goals"></textarea></div>
+            <button onclick="saveProfile()">Save profile</button>
+          </div>
+          <div>
+            <h4 class="title">Preview</h4>
+            <div id="profilePreview"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Firebase & jsPDF -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js"></script>
+
+<script>
+/* Firebase init */
+firebase.initializeApp({
+  apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+  authDomain:"students-login-29409.firebaseapp.com",
+  projectId:"students-login-29409"
+});
+const auth=firebase.auth();
+const db=firebase.firestore();
+const storage=firebase.storage();
+
+/* WhatsApp Live Chat */
+function openWhatsApp(){
+  const number="+263786008070";
+  const url=`https://wa.me/${number.replace(/\D/g,'')}`;
+  window.open(url,"_blank");
+}
+
+/* Ticket with photo upload */
+async function createTicket(){
+  const subject = ticketSubject.value.trim();
+  const category = ticketCategory.value;
+  const message = ticketMessage.value.trim();
+  const file = ticketImage.files[0];
+  if(!subject || !message){ alert('Please fill subject and message.'); return }
+
+  let imageUrl = '';
+  if(file){
+    const storageRef = storage.ref(`tickets/${U()}/${Date.now()}_${file.name}`);
+    const snap = await storageRef.put(file);
+    imageUrl = await snap.ref.getDownloadURL();
+  }
+
+  await db.collection('students').doc(U()).collection('tickets').add({
+    subject, category, message, status:'open', image:imageUrl || '', created: Date.now()
+  });
+
+  ticketSubject.value=''; ticketMessage.value=''; ticketImage.value='';
+  loadTickets();
+}
+
+async function loadTickets(){
+  const q = await db.collection('students').doc(U()).collection('tickets').orderBy('created','desc').get();
+  ticketList.innerHTML = q.empty ? "<li>No tickets yet.</li>" :
+    q.docs.map(doc=>{
+      const t = doc.data();
+      return `<li class='module'>
+        <span><strong>${t.subject}</strong> — ${t.category} | <em>${t.status}</em></span>
+        ${t.image ? `<div><img src="${t.image}" style="max-width:100px;margin-top:5px;border-radius:8px"></div>` : ''}
+        <span>${new Date(t.created).toLocaleString()}</span>
+      </li>`;
+    }).join('');
+}
+function initTickets(){ loadTickets(); }
+
+/* Hero slider init */
+$(document).ready(function(){
+  $('.hero-slider').slick({
+    autoplay:true,
+    autoplaySpeed:4000,
+    dots:true,
+    arrows:false,
+    fade:true,
+    cssEase:'linear'
+  });
+});
+</script>
+
+<script>
+/* Helper: Current user UID */
+const U = () => auth.currentUser?.uid;
+
+/* View toggler */
+function show(id){
+  ['dashboard','progress','catalog','coursePage','certs','tickets','profile'].forEach(s=>document.getElementById(s).classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+/* Logout */
+function logout(){ auth.signOut().then(()=>location.href='index.html'); }
+
+/* Courses data */
+const courses = [
+  {
+    name:"Food Business Basics",
+    price:"$49",
+    modules:["Introduction","Planning","Food Safety","Operations"],
+    quiz:[
+      {q:"Why is food safety important?",options:["Protects consumers","Optional"],correct:0},
+      {q:"Which is essential in operations?",options:["Random workflows","Process standardization"],correct:1}
+    ]
+  },
+  {
+    name:"Dried Fruits Processing & Export",
+    price:"$69",
+    modules:["Drying Methods","Packaging","Export Compliance"],
+    quiz:[
+      {q:"Main reason for drying fruits?",options:["Preservation","Decoration"],correct:0},
+      {q:"Export requires:",options:["No paperwork","Compliance docs"],correct:1}
+    ]
+  }
+];
+
+/* State */
+let currentCourse=null, completedModules=[];
+
+/* Auth + initial load */
+auth.onAuthStateChanged(async user=>{
+  if(!user){ location.href='index.html'; return; }
+
+  studentId.innerText = user.uid.slice(0,8);
+
+  const ref = db.collection('students').doc(user.uid);
+  let snap = await ref.get();
+  if(!snap.exists){
+    await ref.set({
+      username: user.email.split('@')[0],
+      profile:{name:'',age:null,location:'',phone:'',bio:''},
+      enrolledCourses:{},
+      certificates:[],
+      lastMemory:{course:null,progress:0,updated:Date.now()}
+    });
+    snap = await ref.get();
+  }
+
+  const data = snap.data();
+  studentName.innerText = data.profile?.name || data.username;
+
+  renderMyCourses(data.enrolledCourses);
+  renderCatalog();
+  renderCerts(data.certificates);
+  renderProgress(data);
+  renderProfile(data.profile);
+  initTickets();
+  drawProgressChart(data.enrolledCourses);
+});
+
+/* Render My Courses */
+function renderMyCourses(enrolled){
+  myCourses.innerHTML='';
+  const keys = Object.keys(enrolled||{});
+  if(keys.length===0){
+    myCourses.innerHTML = "<p>No courses yet. Explore our catalog to begin.</p>";
+    return;
+  }
+  keys.forEach(c=>{
+    const info = enrolled[c];
+    const pct = info.progress||0;
+    const paid = info.paid ? "Paid ✅" : "Unpaid ❌";
+    myCourses.innerHTML += `
+      <div class='card'>
+        <h4>${c} — <small>${paid}</small></h4>
+        <div class='progress'><span style='width:${pct}%'></span></div>
+        <p>Completed modules: ${info.completedModules?.length||0}/${(courses.find(x=>x.name===c)||{modules:[]}).modules.length}</p>
+        <button onclick="openCourse('${c}')">Open</button>
+      </div>`;
+  });
+}
+
+/* Render Catalog */
+function renderCatalog(){
+  courseGrid.innerHTML='';
+  courses.forEach(c=>{
+    const mods = c.modules.map(m=>`<div class='module'><span>${m}</span></div>`).join('');
+    courseGrid.innerHTML += `
+      <div class='card'>
+        <h3>${c.name}</h3>
+        ${mods}
+        <strong style="display:block;margin:8px 0">${c.price}</strong>
+        <button onclick="pay('${c.name}')">Pay & Start</button>
+      </div>`;
+  });
+}
+
+/* Payment simulation */
+async function pay(name){
+  const uid = U();
+  await db.collection('students').doc(uid).set({
+    [`enrolledCourses.${name}`]: {paid:true,progress:0,completedModules:[],quizPassed:false},
+    lastMemory:{course:name,progress:0,updated:Date.now()}
+  }, {merge:true});
+  openCourse(name);
+}
+
+/* Open course */
+async function openCourse(name){
+  show('coursePage');
+  const uid = U();
+  const snap = await db.collection('students').doc(uid).get();
+  const data = snap.data().enrolledCourses[name] || {};
+  currentCourse = courses.find(c=>c.name===name);
+  completedModules = data.completedModules || [];
+  const pct = data.progress||0;
+  const canShowQuiz = data.paid && pct===100 && !data.quizPassed;
+
+  const modList = currentCourse.modules.map(m=>{
+    const isDone = completedModules.includes(m);
+    return `<div class='module ${isDone?'completed':''}' onclick="completeModule('${m}')">
+      <span>${m}</span>
+      ${isDone?'<i class="fa-solid fa-check tick"></i>':''}
+    </div>`;
+  }).join('');
+
+  coursePage.innerHTML = `
+    <div class='card'>
+      <h2>${name}</h2>
+      ${modList}
+      <div class='progress' style="margin:10px 0"><span style='width:${pct}%'></span></div>
+      <p><strong>Status:</strong> ${data.paid?'Paid ✅':'Unpaid ❌'} ${data.quizPassed?'| Quiz Passed ✅':''}</p>
+      ${canShowQuiz?renderQuiz():''}
+      ${!data.paid?`<button onclick="pay('${name}')">Pay & Start</button>`:''}
+      <button onclick="show('dashboard')">Back</button>
+    </div>`;
+
+  await db.collection('students').doc(uid).set({
+    lastMemory:{course:name,progress:pct,updated:Date.now()}
+  },{merge:true});
+}
+
+/* Complete module */
+async function completeModule(m){
+  if(completedModules.includes(m)) return;
+  completedModules.push(m);
+  const total = currentCourse.modules.length;
+  const progress = Math.round((completedModules.length/total)*100);
+  const uid = U();
+  await db.collection('students').doc(uid).set({
+    [`enrolledCourses.${currentCourse.name}.completedModules`]: completedModules,
+    [`enrolledCourses.${currentCourse.name}.progress`]: progress
+  },{merge:true});
+  openCourse(currentCourse.name);
+}
+
+/* Render Quiz */
+function renderQuiz(){
+  return `<h3>Quiz</h3>
+    ${currentCourse.quiz.map((q,i)=>
+      `<p><strong>Q${i+1}:</strong> ${q.q}</p>
+      ${q.options.map((o,j)=>`<label style="display:block;margin-bottom:6px">
+        <input type='radio' name='q${i}' value='${j}'> ${o}
+      </label>`).join('')}
+    `).join('')}
+    <button onclick='submitQuiz()'>Submit Quiz</button>`;
+}
+
+/* Submit quiz */
+async function submitQuiz(){
+  let pass=true;
+  currentCourse.quiz.forEach((q,i)=>{
+    const a=document.querySelector(`input[name=q${i}]:checked`);
+    if(!a || +a.value!==q.correct) pass=false;
+  });
+  if(!pass){ alert('Quiz failed. Review modules and try again.'); return; }
+  const uid = U();
+  await db.collection('students').doc(uid).set({
+    [`enrolledCourses.${currentCourse.name}.quizPassed`]: true,
+    certificates: firebase.firestore.FieldValue.arrayUnion(currentCourse.name)
+  },{merge:true});
+  generateCertificate();
+  renderCerts((await db.collection('students').doc(uid).get()).data().certificates);
+  openCourse(currentCourse.name);
+}
+
+/* Generate Certificate */
+function generateCertificate(){
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF({orientation:'landscape'});
+  const student = document.getElementById('studentName').innerText;
+  const date = new Date().toLocaleDateString();
+
+  doc.setFontSize(28);
+  doc.text('Food Business Academy', 150, 40, null, null, 'center');
+  doc.setFontSize(22);
+  doc.text('Certificate of Completion', 150, 60, null, null, 'center');
+  doc.setFontSize(16);
+  doc.text(`Awarded to ${student}`, 150, 85, null, null, 'center');
+  doc.text(`${currentCourse.name}`, 150, 105, null, null, 'center');
+  doc.text(`Date: ${date}`, 150, 125, null, null, 'center');
+
+  doc.setDrawColor(109,40,217); doc.setLineWidth(1.5);
+  doc.line(40, 30, 260, 30);
+  doc.line(40, 140, 260, 140);
+
+  doc.save(`${currentCourse.name}-certificate.pdf`);
+}
+
+/* Render certificates */
+function renderCerts(list){
+  certList.innerHTML = (list||[]).map(c=>`<li>${c}</li>`).join('') || "<li>No certificates yet.</li>";
+}
+
+/* Progress page */
+function renderProgress(data){
+  const mem = data.lastMemory || {course:null,progress:0};
+  lastMemory.innerHTML = mem.course
+    ? `<div class='module'><span><strong>Last course:</strong> ${mem.course}</span><span>${mem.progress}%</span></div>
+       <button onclick="openCourse('${mem.course}')">Continue</button>`
+    : "<p>No recent activity yet.</p>";
+
+  const enrolled = data.enrolledCourses || {};
+  const pending = Object.keys(enrolled).filter(c=>!enrolled[c].quizPassed);
+  pendingCourses.innerHTML = pending.length
+    ? pending.map(c=>{
+        const info = enrolled[c];
+        return `<div class='module'><span>${c}</span><span>${info.progress||0}%</span></div>`;
+      }).join('')
+    : "<p>No pending courses. Great job!</p>";
+}
+
+/* Profile */
+function renderProfile(profile){
+  profileName.value = profile?.name || '';
+  profileAge.value = profile?.age || '';
+  profileLocation.value = profile?.location || '';
+  profilePhone.value = profile?.phone || '';
+  profileBio.value = profile?.bio || '';
+  updateProfilePreview();
+}
+function updateProfilePreview(){
+  profilePreview.innerHTML = `
+    <div class='card'>
+      <p><strong>Name:</strong> ${profileName.value||'-'}</p>
+      <p><strong>Age:</strong> ${profileAge.value||'-'}</p>
+      <p><strong>Location:</strong> ${profileLocation.value||'-'}</p>
+      <p><strong>Phone:</strong> ${profilePhone.value||'-'}</p>
+      <p><strong>Bio:</strong> ${profileBio.value||'-'}</p>
+    </div>`;
+}
+['profileName','profileAge','profileLocation','profilePhone','profileBio'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',updateProfilePreview);
+});
+async function saveProfile(){
+  const uid = U();
+  const profile = {
+    name: profileName.value.trim(),
+    age: profileAge.value ? Number(profileAge.value) : null,
+    location: profileLocation.value.trim(),
+    phone: profilePhone.value.trim(),
+    bio: profileBio.value.trim()
+  };
+  await db.collection('students').doc(uid).set({profile},{merge:true});
+  studentName.innerText = profile.name || studentName.innerText;
+  alert('Profile saved.');
+}
+
+/* Charts */
+function drawProgressChart(enrolled){
+  const labels=[], values=[];
+  Object.keys(enrolled||{}).forEach(k=>{
+    labels.push(k); values.push(enrolled[k].progress||0);
+  });
+  const ctx = document.getElementById('progressChart');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Progress (%)',
+        data: values,
+        backgroundColor: ['#2563eb','#6d28d9','#60a5fa','#a78bfa','#93c5fd']
+      }]
+    },
+    options: {
+      responsive:true,
+      plugins:{legend:{display:false}},
+      scales:{y:{beginAtZero:true,max:100}}
+    }
+  });
+}
+</script>
+</body>
+</html>
