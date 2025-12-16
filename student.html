@@ -263,10 +263,10 @@ auth.onAuthStateChanged(async user=>{
   const ref = db.collection('students').doc(user.uid);
   const snap = await ref.get();
 
-  if(!if(!snap.exists){
-    await ref.set({ username:user.email.split('@')[0] });
+  if(!snap.exists){
+    await ref.set({ username: user.email.split('@')[0] });
     studentName.textContent = user.email.split('@')[0];
-  }else{
+  } else {
     const data = snap.data();
     studentName.textContent = data.profile?.name || data.username;
 
@@ -315,4 +315,4 @@ document.querySelectorAll('.nav-link').forEach(link => {
 </script>
 
 </body>
-                                                                                 </html>
+  </html>
