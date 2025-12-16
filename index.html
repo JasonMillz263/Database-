@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Food Business Academy | Student Login</title>
+<title>Food Business Academy | Login</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
@@ -23,7 +22,6 @@ body {
   justify-content: center;
 }
 
-/* CARD */
 .login-box {
   background: #ffffff;
   width: 100%;
@@ -39,7 +37,6 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* HEADINGS */
 .academy-title {
   text-align: center;
   font-size: 20px;
@@ -61,7 +58,6 @@ body {
   margin-bottom: 25px;
 }
 
-/* INPUTS */
 .input-field {
   margin-bottom: 18px;
   position: relative;
@@ -73,16 +69,8 @@ body {
   border-radius: 12px;
   border: 1px solid #dcdcdc;
   font-size: 14px;
-  transition: 0.3s;
 }
 
-.input-field input:focus {
-  border-color: #0074D9;
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(0,116,217,0.15);
-}
-
-/* SHOW PASSWORD */
 .toggle-pass {
   position: absolute;
   right: 15px;
@@ -93,20 +81,13 @@ body {
   color: #0074D9;
 }
 
-/* REMEMBER ME */
 .remember {
   display: flex;
   align-items: center;
   font-size: 13px;
-  color: #555;
   margin-bottom: 18px;
 }
 
-.remember input {
-  margin-right: 8px;
-}
-
-/* BUTTON */
 .login-btn {
   width: 100%;
   padding: 15px;
@@ -117,15 +98,8 @@ body {
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: 0.3s;
 }
 
-.login-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 18px rgba(138,43,226,0.35);
-}
-
-/* LOADING */
 .spinner {
   display: none;
   margin: 15px auto 0;
@@ -141,24 +115,12 @@ body {
   to { transform: rotate(360deg); }
 }
 
-/* LINKS */
 .links {
   margin-top: 18px;
   text-align: center;
   font-size: 13px;
 }
 
-.links a {
-  color: #0074D9;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.links a:hover {
-  text-decoration: underline;
-}
-
-/* MESSAGE */
 #msg {
   margin-top: 12px;
   text-align: center;
@@ -171,10 +133,8 @@ body {
 <body>
 
 <div class="login-box">
-
   <div class="academy-title">Food Business Academy</div>
-
-  <h2>Student Login</h2>
+  <h2>Login</h2>
   <p>Sign in to access your dashboard</p>
 
   <div class="input-field">
@@ -202,7 +162,7 @@ body {
   <p id="msg"></p>
 </div>
 
-<!-- Firebase (ORIGINAL WORKING SETUP) -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
@@ -216,67 +176,67 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 
-/* LOAD REMEMBERED EMAIL */
+/* Remember email */
 window.onload = () => {
   const savedEmail = localStorage.getItem("rememberEmail");
   if (savedEmail) {
-    document.getElementById("email").value = savedEmail;
-    document.getElementById("rememberMe").checked = true;
+    email.value = savedEmail;
+    rememberMe.checked = true;
   }
 };
 
 function togglePassword() {
-  const pass = document.getElementById("password");
-  pass.type = pass.type === "password" ? "text" : "password";
+  password.type = password.type === "password" ? "text" : "password";
 }
 
-/* ORIGINAL LOGIN LOGIC */
-function login() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  const remember = document.getElementById("rememberMe").checked;
+/* 🔐 LOGIN + ADMIN CHECK */
+async function login() {
+  const emailVal = email.value;
+  const passVal = password.value;
+  const remember = rememberMe.checked;
 
-  document.getElementById("msg").innerText = "";
-  document.getElementById("spinner").style.display = "block";
+  msg.innerText = "";
+  spinner.style.display = "block";
 
-  if (remember) {
-    localStorage.setItem("rememberEmail", email);
-  } else {
-    localStorage.removeItem("rememberEmail");
+  if (remember) localStorage.setItem("rememberEmail", emailVal);
+  else localStorage.removeItem("rememberEmail");
+
+  try {
+    const cred = await auth.signInWithEmailAndPassword(emailVal, passVal);
+    const user = cred.user;
+
+    // IMPORTANT: force refresh token
+    await user.getIdToken(true);
+
+    const tokenResult = await user.getIdTokenResult();
+
+    console.log("CLAIMS:", tokenResult.claims); // 🔍 DEBUG
+
+    if (tokenResult.claims.admin === true) {
+      window.location.href = "admin_dashboard.html";
+    } else {
+      window.location.href = "student.html";
+    }
+
+  } catch (err) {
+    msg.innerText = err.message;
+  } finally {
+    spinner.style.display = "none";
   }
-
-  auth.signInWithEmailAndPassword(email, password)
-    .then(() => {
-      document.getElementById("msg").innerText = "Login successful ✔";
-      setTimeout(() => {
-        window.location.href = "student.html";
-      }, 900);
-    })
-    .catch(err => {
-      document.getElementById("msg").innerText = err.message;
-    })
-    .finally(() => {
-      document.getElementById("spinner").style.display = "none";
-    });
 }
 
 /* PASSWORD RESET */
 function resetPassword() {
-  const email = document.getElementById("email").value;
-  if (!email) {
-    document.getElementById("msg").innerText = "Enter your email first.";
+  if (!email.value) {
+    msg.innerText = "Enter your email first.";
     return;
   }
 
-  auth.sendPasswordResetEmail(email)
-    .then(() => {
-      document.getElementById("msg").innerText = "Password reset email sent.";
-    })
-    .catch(err => {
-      document.getElementById("msg").innerText = err.message;
-    });
+  auth.sendPasswordResetEmail(email.value)
+    .then(() => msg.innerText = "Password reset email sent.")
+    .catch(err => msg.innerText = err.message);
 }
 </script>
 
 </body>
-  </html>
+</html>
