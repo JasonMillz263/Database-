@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>My Certificates | Food Business Academy</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Poppins',sans-serif}
+
+body{
+  background:#f5f7fb;
+  color:#1f2937;
+}
+
+.wrapper{
+  max-width:1200px;
+  margin:auto;
+  padding:30px 20px;
+}
+
+.header{
+  background:linear-gradient(135deg,#2563eb,#6d28d9);
+  color:#fff;
+  padding:25px;
+  border-radius:18px;
+  margin-bottom:30px;
+}
+
+.header h1{
+  font-size:26px;
+  font-weight:700;
+}
+
+.header p{
+  opacity:.9;
+  margin-top:6px;
+}
+
+/* Grid */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:20px;
+}
+
+/* Card */
+.card{
+  background:#fff;
+  border-radius:18px;
+  padding:22px;
+  box-shadow:0 20px 35px rgba(0,0,0,.08);
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
+
+.course-title{
+  font-size:18px;
+  font-weight:700;
+  margin-bottom:6px;
+}
+
+.meta{
+  font-size:14px;
+  color:#6b7280;
+  margin-bottom:14px;
+}
+
+.badge{
+  display:inline-block;
+  background:#22c55e;
+  color:#fff;
+  padding:5px 12px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:600;
+  margin-bottom:10px;
+}
+
+.actions{
+  display:flex;
+  gap:10px;
+  margin-top:15px;
+}
+
+.actions a{
+  flex:1;
+  text-align:center;
+  text-decoration:none;
+  padding:10px;
+  border-radius:12px;
+  font-weight:600;
+  font-size:14px;
+}
+
+.download{
+  background:linear-gradient(135deg,#2563eb,#6d28d9);
+  color:#fff;
+}
+
+.verify{
+  background:#e5e7eb;
+  color:#111827;
+}
+
+/* Empty state */
+.empty{
+  background:#fff;
+  border-radius:20px;
+  padding:50px 20px;
+  text-align:center;
+  box-shadow:0 20px 35px rgba(0,0,0,.08);
+}
+
+.empty i{
+  font-size:60px;
+  color:#9ca3af;
+  margin-bottom:20px;
+}
+
+.empty h2{
+  font-size:22px;
+  margin-bottom:10px;
+}
+
+.empty p{
+  color:#6b7280;
+  font-size:15px;
+}
+
+/* Responsive fix */
+@media(max-width:500px){
+  .header h1{font-size:22px}
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrapper">
+
+  <!-- HEADER -->
+  <div class="header">
+    <h1>🏆 My Certificates</h1>
+    <p>Certificates you’ve earned after completing courses</p>
+  </div>
+
+  <!-- CERTIFICATES GRID -->
+  <div id="certificatesGrid" class="grid"></div>
+
+  <!-- EMPTY STATE -->
+  <div id="emptyState" class="empty" style="display:none">
+    <i class="fa-solid fa-award"></i>
+    <h2>No Certificates Earned Yet</h2>
+    <p>
+      You have not completed any course that awards a certificate.<br>
+      Complete a course to unlock your certificates here.
+    </p>
+  </div>
+
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+/* Firebase config */
+firebase.initializeApp({
+  apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+  authDomain: "students-login-29409.firebaseapp.com",
+  projectId: "students-login-29409"
+});
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+/* Load certificates */
+auth.onAuthStateChanged(async user=>{
+  if(!user) return;
+
+  const grid = document.getElementById("certificatesGrid");
+  const empty = document.getElementById("emptyState");
+
+  const snap = await db
+    .collection("students")
+    .doc(user.uid)
+    .collection("certificates")
+    .orderBy("issuedAt","desc")
+    .get();
+
+  // CASE: NO CERTIFICATES
+  if(snap.empty){
+    grid.style.display="none";
+    empty.style.display="block";
+    return;
+  }
+
+  // CASE: CERTIFICATES EXIST
+  empty.style.display="none";
+
+  snap.forEach(doc=>{
+    const c = doc.data();
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+      <div>
+        <span class="badge">Completed</span>
+        <div class="course-title">${c.courseName}</div>
+        <div class="meta">
+          Issued on: ${new Date(c.issuedAt).toLocaleDateString()}
+        </div>
+      </div>
+      <div class="actions">
+        <a href="${c.certificateURL || '#'}" class="download">
+          <i class="fa-solid fa-download"></i> Download
+        </a>
+        <a href="#" class="verify">
+          <i class="fa-solid fa-check"></i> Verify
+        </a>
+      </div>
+    `;
+
+    grid.appendChild(card);
+  });
+});
+</script>
+
+</body>
+</html>
