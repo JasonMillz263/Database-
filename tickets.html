@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Support Tickets | Food Business Academy</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+body{
+  margin:0;
+  font-family:'Poppins',sans-serif;
+  background:#f4f6fb;
+  color:#1f2937;
+}
+
+.container{
+  max-width:1200px;
+  margin:auto;
+  padding:40px 20px;
+}
+
+h1{margin-bottom:6px}
+.subtitle{color:#6b7280;margin-bottom:30px}
+
+.grid{
+  display:grid;
+  grid-template-columns:420px 1fr;
+  gap:25px;
+}
+
+.card{
+  background:#fff;
+  border-radius:18px;
+  padding:22px;
+  box-shadow:0 20px 40px rgba(0,0,0,.08);
+}
+
+.input{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin-bottom:14px;
+}
+
+input, select, textarea{
+  padding:10px 12px;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  font-family:inherit;
+}
+
+textarea{resize:vertical}
+
+button{
+  padding:12px 18px;
+  border:none;
+  border-radius:14px;
+  background:linear-gradient(135deg,#2563eb,#6d28d9);
+  color:#fff;
+  font-weight:600;
+  cursor:pointer;
+}
+
+button:hover{opacity:.9}
+
+.ticket{
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  padding:14px;
+  margin-bottom:12px;
+}
+
+.ticket-header{
+  display:flex;
+  justify-content:space-between;
+  font-weight:600;
+}
+
+.status{
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:12px;
+  color:#fff;
+}
+
+.open{background:#f59e0b}
+.review{background:#3b82f6}
+.replied{background:#10b981}
+.closed{background:#ef4444}
+
+.ticket small{color:#6b7280}
+
+.empty{
+  text-align:center;
+  padding:40px;
+  color:#6b7280;
+}
+
+.support-box{
+  margin-top:25px;
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.support-box a{
+  text-decoration:none;
+  padding:12px 16px;
+  border-radius:14px;
+  font-weight:600;
+  display:inline-block;
+}
+
+.whatsapp{
+  background:#25D366;
+  color:#fff;
+}
+
+.email{
+  background:#e5e7eb;
+  color:#111827;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>🎟️ Support Tickets</h1>
+  <p class="subtitle">Need help? Submit a ticket and our team will assist you.</p>
+
+  <div class="grid">
+
+    <!-- CREATE TICKET -->
+    <div class="card">
+      <h3>Create a Ticket</h3>
+
+      <div class="input">
+        <label>Subject</label>
+        <input id="subject" placeholder="e.g. Payment confirmation issue">
+      </div>
+
+      <div class="input">
+        <label>Category</label>
+        <select id="category">
+          <option value="Payment">Payment</option>
+          <option value="Course">Course / Learning</option>
+          <option value="Technical">Technical</option>
+          <option value="Certificate">Certificate</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="input">
+        <label>Message</label>
+        <textarea id="message" rows="4" placeholder="Describe your issue in detail"></textarea>
+      </div>
+
+      <div class="input">
+        <label>Attachment (optional)</label>
+        <input type="file" id="attachment" accept="image/*,.pdf">
+      </div>
+
+      <button onclick="createTicket()">Submit Ticket</button>
+
+      <div class="support-box">
+        <a href="https://wa.me/263786008070" target="_blank" class="whatsapp">
+          WhatsApp Support
+        </a>
+        <a href="#" class="email">Email Support</a>
+      </div>
+    </div>
+
+    <!-- TICKET LIST -->
+    <div class="card">
+      <h3>My Tickets</h3>
+      <div id="ticketList"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+  authDomain:"students-login-29409.firebaseapp.com",
+  projectId:"students-login-29409"
+});
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+const storage = firebase.storage();
+
+auth.onAuthStateChanged(user=>{
+  if(!user){
+    document.getElementById("ticketList").innerHTML =
+      "<div class='empty'>Please log in to view tickets.</div>";
+    return;
+  }
+  loadTickets(user.uid);
+});
+
+async function createTicket(){
+  const user = auth.currentUser;
+  if(!user) return alert("Login required");
+
+  const s = subject.value.trim();
+  const m = message.value.trim();
+  if(!s || !m) return alert("Subject and message required");
+
+  let fileUrl = "";
+  if(attachment.files[0]){
+    const ref = storage.ref(`tickets/${user.uid}/${Date.now()}_${attachment.files[0].name}`);
+    const snap = await ref.put(attachment.files[0]);
+    fileUrl = await snap.ref.getDownloadURL();
+  }
+
+  await db.collection("students").doc(user.uid)
+    .collection("tickets").add({
+      subject:s,
+      category:category.value,
+      message:m,
+      attachment:fileUrl,
+      status:"Open",
+      created:Date.now()
+    });
+
+  subject.value="";
+  message.value="";
+  attachment.value="";
+  loadTickets(user.uid);
+}
+
+async function loadTickets(uid){
+  const list = document.getElementById("ticketList");
+  const snap = await db.collection("students").doc(uid)
+    .collection("tickets").orderBy("created","desc").get();
+
+  if(snap.empty){
+    list.innerHTML = "<div class='empty'>You have no support tickets yet.</div>";
+    return;
+  }
+
+  list.innerHTML = snap.docs.map(d=>{
+    const t = d.data();
+    const cls =
+      t.status === "Open" ? "open" :
+      t.status === "In Review" ? "review" :
+      t.status === "Replied" ? "replied" : "closed";
+
+    return `
+      <div class="ticket">
+        <div class="ticket-header">
+          <span>${t.subject}</span>
+          <span class="status ${cls}">${t.status}</span>
+        </div>
+        <small>${t.category} • ${new Date(t.created).toLocaleString()}</small>
+        <p>${t.message}</p>
+        ${t.attachment ? `<a href="${t.attachment}" target="_blank">View Attachment</a>` : ""}
+      </div>
+    `;
+  }).join("");
+}
+</script>
+
+</body>
+</html>
