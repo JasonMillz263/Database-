@@ -1,81 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Courses Offered | Food Business Academy</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <title>Courses Offered | Food Business Academy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    :root{
+      --blue:#2563eb;
+      --purple:#6d28d9;
+      --bg:#f5f7ff;
+      --card:#ffffff;
+      --text:#1f2937;
+    }
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    *{box-sizing:border-box;font-family:'Poppins',sans-serif}
+    body{margin:0;background:var(--bg);color:var(--text)}
 
-<style>
-:root{
-  --blue:#2563eb;
-  --purple:#6d28d9;
-  --bg:#f5f7ff;
-  --card:#ffffff;
-  --text:#1f2937;
-}
+    .main{padding:30px;max-width:1200px;margin:auto}
 
-*{box-sizing:border-box;font-family:'Poppins',sans-serif}
-body{margin:0;background:var(--bg);color:var(--text)}
+    h1{margin-bottom:25px}
 
-.main{padding:30px;max-width:1200px;margin:auto}
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+      gap:20px;
+    }
 
-h1{margin-bottom:25px}
+    .card{
+      background:var(--card);
+      border-radius:20px;
+      padding:22px;
+      box-shadow:0 15px 35px rgba(0,0,0,.08);
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+    }
 
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-  gap:20px;
-}
+    .card h3{margin-top:0}
 
-.card{
-  background:var(--card);
-  border-radius:20px;
-  padding:22px;
-  box-shadow:0 15px 35px rgba(0,0,0,.08);
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
-}
+    .modules{
+      margin:15px 0;
+    }
+    .modules li{
+      margin-bottom:6px;
+      list-style:none;
+      padding-left:20px;
+      position:relative;
+    }
+    .modules li::before{
+      content:"✔";
+      position:absolute;
+      left:0;
+      color:var(--blue);
+      font-size:14px;
+    }
 
-.card h3{margin-top:0}
+    .price{
+      font-size:18px;
+      font-weight:700;
+      margin:10px 0;
+    }
 
-.modules{
-  margin:15px 0;
-}
-.modules li{
-  margin-bottom:6px;
-  list-style:none;
-  padding-left:20px;
-  position:relative;
-}
-.modules li::before{
-  content:"✔";
-  position:absolute;
-  left:0;
-  color:var(--blue);
-  font-size:14px;
-}
-
-.price{
-  font-size:18px;
-  font-weight:700;
-  margin:10px 0;
-}
-
-button{
-  padding:12px;
-  border:none;
-  border-radius:14px;
-  background:linear-gradient(135deg,var(--blue),var(--purple));
-  color:#fff;
-  font-weight:600;
-  cursor:pointer;
-}
-button:hover{opacity:.9}
-</style>
+    button{
+      padding:12px;
+      border:none;
+      border-radius:14px;
+      background:linear-gradient(135deg,var(--blue),var(--purple));
+      color:#fff;
+      font-weight:600;
+      cursor:pointer;
+    }
+    button:hover{opacity:.9}
+  </style>
 </head>
 
 <body>
@@ -97,7 +95,7 @@ button:hover{opacity:.9}
         </ul>
         <div class="price">$49</div>
       </div>
-      <button>Pay to Start</button>
+      <button onclick="goToPaymentPage('Food Business Management Course', 49)">Pay to Start</button>
     </div>
 
     <!-- Course 2 -->
@@ -112,7 +110,7 @@ button:hover{opacity:.9}
         </ul>
         <div class="price">$59</div>
       </div>
-      <button>Pay to Start</button>
+      <button onclick="goToPaymentPage('Financial Management for Food Processors', 59)">Pay to Start</button>
     </div>
 
     <!-- Course 3 -->
@@ -127,7 +125,7 @@ button:hover{opacity:.9}
         </ul>
         <div class="price">$45</div>
       </div>
-      <button>Pay to Start</button>
+      <button onclick="goToPaymentPage('Food Value Addition Course for Farmers', 45)">Pay to Start</button>
     </div>
 
     <!-- Course 4 -->
@@ -142,7 +140,7 @@ button:hover{opacity:.9}
         </ul>
         <div class="price">$69</div>
       </div>
-      <button>Pay to Start</button>
+      <button onclick="goToPaymentPage('New Product Development and Management', 69)">Pay to Start</button>
     </div>
 
     <!-- Course 5 -->
@@ -157,11 +155,22 @@ button:hover{opacity:.9}
         </ul>
         <div class="price">$39</div>
       </div>
-      <button>Pay to Start</button>
+      <button onclick="goToPaymentPage('Management', 39)">Pay to Start</button>
     </div>
 
   </div>
 </main>
+
+<script>
+  function goToPaymentPage(courseName, coursePrice) {
+    // Store course details in localStorage for use on next page
+    localStorage.setItem('courseName', courseName);
+    localStorage.setItem('coursePrice', coursePrice);
+
+    // Redirect to the student details page
+    window.location.href = 'student-details.html';
+  }
+</script>
 
 </body>
 </html>
