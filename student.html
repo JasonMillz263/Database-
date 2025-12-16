@@ -99,13 +99,50 @@ body{margin:0;background:var(--bg);color:var(--text);overflow-x:hidden}
 .hero h2{font-size:32px;margin:0}
 .hero p{max-width:480px;margin-top:10px}
 
-/* Cards */
-.card{
-  background:var(--soft);
-  border-radius:24px;
-  padding:25px;
-  box-shadow:0 20px 40px rgba(0,0,0,.08);
-  margin-bottom:22px;
+/* Stats */
+.glass{
+  background:rgba(255,255,255,.7);
+  backdrop-filter:blur(14px);
+  border-radius:22px;
+  box-shadow:0 25px 45px rgba(0,0,0,.12);
+}
+
+/* Stats */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:18px;
+  margin-bottom:26px;
+}
+.stat-card{
+  padding:22px;
+  color:#111;
+  position:relative;
+}
+.stat-card i{
+  font-size:28px;
+  color:var(--purple);
+}
+.stat-value{
+  font-size:32px;
+  font-weight:700;
+}
+.stat-title{opacity:.7}
+
+/* Progress */
+.progress-box{margin-top:12px}
+.progress-track{
+  height:12px;
+  background:#e5e7eb;
+  border-radius:999px;
+  overflow:hidden;
+}
+.progress-fill{
+  height:100%;
+  width:0;
+  background:linear-gradient(90deg,var(--blue),var(--purple));
+  border-radius:999px;
+  transition:width 1.4s ease;
 }
 
 /* Buttons */
@@ -189,8 +226,59 @@ body{margin:0;background:var(--bg);color:var(--text);overflow-x:hidden}
   </div>
 </div>
 
+<!-- STATS -->
+<section class="stats">
+  <div class="stat-card glass">
+    <i class="fa fa-book"></i>
+    <div class="stat-value">3</div>
+    <div class="stat-title">Courses Enrolled</div>
+  </div>
+
+  <div class="stat-card glass">
+    <i class="fa fa-chart-line"></i>
+    <div class="stat-value">68%</div>
+    <div class="stat-title">Completion Rate</div>
+  </div>
+
+  <div class="stat-card glass">
+    <i class="fa fa-certificate"></i>
+    <div class="stat-value">1</div>
+    <div class="stat-title">Certificates</div>
+  </div>
+</section>
+
+<!-- DASHBOARD -->
+<section class="card glass">
+  <h3>Your Course Progress</h3>
+
+  <div class="progress-box">
+    <p>Food Business Startup</p>
+    <div class="progress-track">
+      <div class="progress-fill" data-progress="80"></div>
+    </div>
+  </div>
+
+  <div class="progress-box">
+    <p>Food Costing & Pricing</p>
+    <div class="progress-track">
+      <div class="progress-fill" data-progress="65"></div>
+    </div>
+  </div>
+
+  <div class="progress-box">
+    <p>Food Branding & Marketing</p>
+    <div class="progress-track">
+      <div class="progress-fill" data-progress="40"></div>
+    </div>
+  </div>
+</section>
+
+</main>
+</div>
 
 <!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -210,34 +298,47 @@ function logout(){
   auth.signOut().then(()=>location.href='index.html');
 }
 
-/* Auth */
+/* Auth + student data */
 auth.onAuthStateChanged(async user=>{
-  if(!user){location.href='index.html';return;}
+  if(!user){ location.href='index.html'; return; }
+
   studentId.textContent = user.uid.slice(0,8);
 
   const ref = db.collection('students').doc(user.uid);
   const snap = await ref.get();
-  studentName.textContent = snap.exists ? (snap.data().profile?.name || snap.data().username) : user.email.split('@')[0];
+
+  if(!snap.exists){
+    await ref.set({ username:user.email.split('@')[0] });
+    studentName.textContent = user.email.split('@')[0];
+  }else{
+    const data = snap.data();
+    studentName.textContent = data.profile?.name || data.username;
+  }
 });
 
 /* HERO SLIDER LOGIC */
-let slides=document.querySelectorAll('.slide');
-let i=0;
-setInterval(()=>{
+let slides = document.querySelectorAll('.slide');
+let i = 0;
+setInterval(() => {
   slides[i].classList.remove('active');
-  i=(i+1)%slides.length;
+  i = (i + 1) % slides.length;
   slides[i].classList.add('active');
-},4500);
+}, 4500);
 
-/* SPEED-DOWN PAGE TRANSITION */
-document.querySelectorAll('.nav-link').forEach(link=>{
-  link.addEventListener('click',e=>{
+/* Animate Progress Bars */
+document.querySelectorAll('.progress-fill').forEach(bar => {
+  setTimeout(() => bar.style.width = bar.dataset.progress + '%', 500);
+});
+
+/* Speed-down Page Transition */
+document.querySelectorAll('.nav-link').forEach(link => {
+  link.addEventListener('click', e => {
     e.preventDefault();
     pageTransition.classList.add('active');
-    setTimeout(()=>window.location=link.href,420);
+    setTimeout(() => window.location = link.href, 420);
   });
 });
 </script>
 
 </body>
-  </html>
+</html>
