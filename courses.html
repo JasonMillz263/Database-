@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Courses Offered | Food Business Academy</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+:root{
+  --blue:#2563eb;
+  --purple:#6d28d9;
+  --bg:#f5f7ff;
+  --card:#ffffff;
+  --text:#1f2937;
+}
+
+*{box-sizing:border-box;font-family:'Poppins',sans-serif}
+body{margin:0;background:var(--bg);color:var(--text)}
+
+.main{padding:30px;max-width:1200px;margin:auto}
+
+h1{margin-bottom:25px}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:20px;
+}
+
+.card{
+  background:var(--card);
+  border-radius:20px;
+  padding:22px;
+  box-shadow:0 15px 35px rgba(0,0,0,.08);
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
+
+.card h3{margin-top:0}
+
+.modules{
+  margin:15px 0;
+}
+.modules li{
+  margin-bottom:6px;
+  list-style:none;
+  padding-left:20px;
+  position:relative;
+}
+.modules li::before{
+  content:"✔";
+  position:absolute;
+  left:0;
+  color:var(--blue);
+  font-size:14px;
+}
+
+.price{
+  font-size:18px;
+  font-weight:700;
+  margin:10px 0;
+}
+
+button{
+  padding:12px;
+  border:none;
+  border-radius:14px;
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  color:#fff;
+  font-weight:600;
+  cursor:pointer;
+}
+button:hover{opacity:.9}
+</style>
+</head>
+
+<body>
+
+<main class="main">
+  <h1>📘 Courses Offered</h1>
+
+  <div class="grid">
+
+    <!-- Course 1 -->
+    <div class="card">
+      <div>
+        <h3>Food Business Management Course</h3>
+        <ul class="modules">
+          <li>Introduction to Food Business</li>
+          <li>Operations & Compliance</li>
+          <li>Food Safety Management</li>
+          <li>Marketing & Distribution</li>
+        </ul>
+        <div class="price">$49</div>
+      </div>
+      <button>Pay to Start</button>
+    </div>
+
+    <!-- Course 2 -->
+    <div class="card">
+      <div>
+        <h3>Financial Management for Food Processors</h3>
+        <ul class="modules">
+          <li>Costing & Pricing</li>
+          <li>Cash Flow Management</li>
+          <li>Budgeting & Forecasting</li>
+          <li>Profitability Analysis</li>
+        </ul>
+        <div class="price">$59</div>
+      </div>
+      <button>Pay to Start</button>
+    </div>
+
+    <!-- Course 3 -->
+    <div class="card">
+      <div>
+        <h3>Food Value Addition Course for Farmers</h3>
+        <ul class="modules">
+          <li>Post-Harvest Handling</li>
+          <li>Processing Techniques</li>
+          <li>Packaging & Storage</li>
+          <li>Market Readiness</li>
+        </ul>
+        <div class="price">$45</div>
+      </div>
+      <button>Pay to Start</button>
+    </div>
+
+    <!-- Course 4 -->
+    <div class="card">
+      <div>
+        <h3>New Product Development and Management</h3>
+        <ul class="modules">
+          <li>Idea Generation</li>
+          <li>Product Testing</li>
+          <li>Regulatory Approval</li>
+          <li>Product Launch Strategy</li>
+        </ul>
+        <div class="price">$69</div>
+      </div>
+      <button>Pay to Start</button>
+    </div>
+
+    <!-- Course 5 -->
+    <div class="card">
+      <div>
+        <h3>Management</h3>
+        <ul class="modules">
+          <li>Leadership Skills</li>
+          <li>Team Management</li>
+          <li>Decision Making</li>
+          <li>Business Ethics</li>
+        </ul>
+        <div class="price">$39</div>
+      </div>
+      <button>Pay to Start</button>
+    </div>
+
+  </div>
+</main>
+
+</body>
+</html>
