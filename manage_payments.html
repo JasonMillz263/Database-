@@ -1,0 +1,147 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Manage Payments | Admin Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    /* Add your custom styles here */
+    body { font-family: 'Poppins', sans-serif; background-color: #f9fbff; }
+    .container { max-width: 1200px; margin: auto; padding: 20px; }
+    h2 { margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; }
+    table th, table td { padding: 12px; text-align: center; border: 1px solid #ddd; }
+    .btn { padding: 12px 18px; background: linear-gradient(135deg, #2563eb, #6d28d9); color: white; border: none; border-radius: 8px; cursor: pointer; }
+    .btn:hover { opacity: 0.9; }
+    .status { font-weight: bold; color: green; }
+    .locked { color: red; }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+  <h2>Manage Payments</h2>
+
+  <!-- Table to Display Payment Records -->
+  <table>
+    <thead>
+      <tr>
+        <th>Student Name</th>
+        <th>Course Name</th>
+        <th>Amount Paid</th>
+        <th>Payment Status</th>
+        <th>Payment Date</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="paymentsTable">
+      <!-- Payment records will be populated here -->
+    </tbody>
+  </table>
+
+  <!-- Course Unlock Section (Visible when payment is completed) -->
+  <div id="unlockCourseSection" style="display: none;">
+    <h3>Unlock Course for Student</h3>
+    <label for="courseSelect">Select Course to Unlock:</label>
+    <select id="courseSelect">
+      <!-- Available courses will be listed here -->
+    </select>
+    <button class="btn" id="unlockCourseBtn">Unlock Course</button>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+// Firebase Initialization
+const firebaseConfig = {
+  apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+  authDomain: "students-login-29409.firebaseapp.com",
+  projectId: "students-login-29409"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+// Function to load payment records
+async function loadPayments() {
+  const paymentsRef = db.collection('payments');
+  const snapshot = await paymentsRef.get();
+
+  const paymentsTable = document.getElementById('paymentsTable');
+  paymentsTable.innerHTML = '';  // Clear previous records
+
+  snapshot.forEach(doc => {
+    const payment = doc.data();
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${payment.student_name}</td>
+      <td>${payment.course_name}</td>
+      <td>$${payment.amount}</td>
+      <td class="${payment.payment_status === 'completed' ? 'status' : 'locked'}">${payment.payment_status}</td>
+      <td>${new Date(payment.payment_date.seconds * 1000).toLocaleDateString()}</td>
+      <td>
+        <button class="btn" onclick="verifyPayment('${doc.id}', '${payment.student_id}', '${payment.course_name}')">Verify Payment</button>
+      </td>
+    `;
+    paymentsTable.appendChild(row);
+  });
+}
+
+// Function to verify payment and unlock course
+async function verifyPayment(paymentId, studentId, courseName) {
+  // Set course unlock section visible
+  document.getElementById('unlockCourseSection').style.display = 'block';
+  
+  // Get available courses (for this example, we hard-code them)
+  const courses = ['Food Business Management', 'Financial Management for Food Processors', 'Product Development'];
+  const courseSelect = document.getElementById('courseSelect');
+  courses.forEach(course => {
+    const option = document.createElement('option');
+    option.value = course;
+    option.textContent = course;
+    courseSelect.appendChild(option);
+  });
+
+  // Handle the unlock course action
+  document.getElementById('unlockCourseBtn').addEventListener('click', async () => {
+    const selectedCourse = courseSelect.value;
+
+    if (selectedCourse !== courseName) {
+      alert('Course does not match the payment course.');
+      return;
+    }
+
+    // Update the student’s course in Firestore to mark it as unlocked
+    try {
+      const studentRef = db.collection('students').doc(studentId).collection('courses').doc(selectedCourse);
+      await studentRef.update({ is_enrolled: true, enrollment_date: firebase.firestore.FieldValue.serverTimestamp() });
+
+      // Update payment status to 'completed'
+      await db.collection('payments').doc(paymentId).update({ payment_status: 'completed' });
+
+      alert('Payment verified and course unlocked!');
+      loadPayments();  // Reload payments table to reflect changes
+    } catch (error) {
+      console.error('Error unlocking course: ', error);
+      alert('Error unlocking the course. Please try again.');
+    }
+  });
+}
+
+// Load payments when page is loaded
+loadPayments();
+
+</script>
+
+</body>
+</html>
