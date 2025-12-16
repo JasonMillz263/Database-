@@ -129,22 +129,6 @@ body{margin:0;background:var(--bg);color:var(--text);overflow-x:hidden}
 }
 .stat-title{opacity:.7}
 
-/* Progress */
-.progress-box{margin-top:12px}
-.progress-track{
-  height:12px;
-  background:#e5e7eb;
-  border-radius:999px;
-  overflow:hidden;
-}
-.progress-fill{
-  height:100%;
-  width:0;
-  background:linear-gradient(90deg,var(--blue),var(--purple));
-  border-radius:999px;
-  transition:width 1.4s ease;
-}
-
 /* Buttons */
 .link-btn{
   padding:14px 20px;
@@ -230,46 +214,20 @@ body{margin:0;background:var(--bg);color:var(--text);overflow-x:hidden}
 <section class="stats">
   <div class="stat-card glass">
     <i class="fa fa-book"></i>
-    <div class="stat-value">3</div>
+    <div class="stat-value" id="coursesEnrolled">0</div>
     <div class="stat-title">Courses Enrolled</div>
   </div>
 
   <div class="stat-card glass">
     <i class="fa fa-chart-line"></i>
-    <div class="stat-value">68%</div>
+    <div class="stat-value" id="completionRate">0%</div>
     <div class="stat-title">Completion Rate</div>
   </div>
 
   <div class="stat-card glass">
     <i class="fa fa-certificate"></i>
-    <div class="stat-value">1</div>
+    <div class="stat-value" id="certificatesCount">0</div>
     <div class="stat-title">Certificates</div>
-  </div>
-</section>
-
-<!-- DASHBOARD -->
-<section class="card glass">
-  <h3>Your Course Progress</h3>
-
-  <div class="progress-box">
-    <p>Food Business Startup</p>
-    <div class="progress-track">
-      <div class="progress-fill" data-progress="80"></div>
-    </div>
-  </div>
-
-  <div class="progress-box">
-    <p>Food Costing & Pricing</p>
-    <div class="progress-track">
-      <div class="progress-fill" data-progress="65"></div>
-    </div>
-  </div>
-
-  <div class="progress-box">
-    <p>Food Branding & Marketing</p>
-    <div class="progress-track">
-      <div class="progress-fill" data-progress="40"></div>
-    </div>
   </div>
 </section>
 
@@ -277,8 +235,6 @@ body{margin:0;background:var(--bg);color:var(--text);overflow-x:hidden}
 </div>
 
 <!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0
-
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -307,12 +263,35 @@ auth.onAuthStateChanged(async user=>{
   const ref = db.collection('students').doc(user.uid);
   const snap = await ref.get();
 
-  if(!snap.exists){
+  if(!if(!snap.exists){
     await ref.set({ username:user.email.split('@')[0] });
     studentName.textContent = user.email.split('@')[0];
   }else{
     const data = snap.data();
     studentName.textContent = data.profile?.name || data.username;
+
+    // Fetch course enrollment and completion details
+    const coursesRef = db.collection('students').doc(user.uid).collection('courses');
+    const coursesSnap = await coursesRef.get();
+    const enrolledCourses = coursesSnap.size;
+
+    // Update Courses Enrolled
+    document.getElementById('coursesEnrolled').textContent = enrolledCourses;
+
+    // Calculate Completion Rate based on enrolled courses
+    let completedCourses = 0;
+    coursesSnap.forEach(doc => {
+      if (doc.data().completed) {
+        completedCourses++;
+      }
+    });
+    const completionRate = (completedCourses / enrolledCourses) * 100;
+    document.getElementById('completionRate').textContent = `${completionRate.toFixed(2)}%`;
+
+    // Fetch certificates
+    const certificatesRef = db.collection('students').doc(user.uid).collection('certificates');
+    const certificatesSnap = await certificatesRef.get();
+    document.getElementById('certificatesCount').textContent = certificatesSnap.size;
   }
 });
 
@@ -325,11 +304,6 @@ setInterval(() => {
   slides[i].classList.add('active');
 }, 4500);
 
-/* Animate Progress Bars */
-document.querySelectorAll('.progress-fill').forEach(bar => {
-  setTimeout(() => bar.style.width = bar.dataset.progress + '%', 500);
-});
-
 /* Speed-down Page Transition */
 document.querySelectorAll('.nav-link').forEach(link => {
   link.addEventListener('click', e => {
@@ -341,4 +315,4 @@ document.querySelectorAll('.nav-link').forEach(link => {
 </script>
 
 </body>
-</html>
+                                                                                 </html>
