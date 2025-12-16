@@ -23,9 +23,54 @@
       border-radius: 8px;
       border: 1px solid #ddd;
     }
-    button { background-color: #2563eb; color: white; border: none; cursor: pointer; }
+    button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
     button:hover { background-color: #6d28d9; }
     #studentDetails { margin-bottom: 20px; }
+
+    /* Invoice Popup Styles */
+    .invoice-popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80%;
+      max-width: 600px;
+      padding: 20px;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      z-index: 9999;
+      overflow-y: auto;
+    }
+    .invoice-popup .invoice-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .invoice-popup .invoice-body {
+      margin-bottom: 20px;
+    }
+    .invoice-popup .invoice-footer {
+      text-align: center;
+      font-size: 14px;
+    }
+    .invoice-popup button {
+      background-color: #ef4444;
+      margin-top: 10px;
+      padding: 10px 20px;
+      border-radius: 8px;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .invoice-popup button:hover {
+      background-color: #dc2626;
+    }
   </style>
 </head>
 <body>
@@ -64,6 +109,36 @@
     </form>
   </div>
 
+  <!-- Invoice Popup -->
+  <div id="invoicePopup" class="invoice-popup">
+    <div class="invoice-header">
+      <img src="school-logo.png" alt="School Logo" width="100">
+      <h3>Invoice for Course Payment</h3>
+    </div>
+    <div class="invoice-body">
+      <p><strong>Course Name:</strong> <span id="popupCourseName"></span></p>
+      <p><strong>Amount:</strong> $<span id="popupAmount"></span></p>
+      <p><strong>Payment Method:</strong> <span id="popupPaymentMethod"></span></p>
+
+      <h4>Banking Details:</h4>
+      <p><strong>Account Name:</strong> Food Business Academy</p>
+      <p><strong>Account Number:</strong> 1234567890</p>
+      <p><strong>Bank:</strong> ABC Bank</p>
+
+      <h4>Ecocash Number:</h4>
+      <p><strong>Ecocash:</strong> 0771234567</p>
+
+      <p><strong>Instructions:</strong></p>
+      <ul>
+        <li>Send proof of payment to <strong>WhatsApp: 0771234567</strong></li>
+        <li>Or email proof to: <strong>support@foodbusinessacademy.com</strong></li>
+      </ul>
+    </div>
+    <div class="invoice-footer">
+      <button onclick="closeInvoicePopup()">Close</button>
+    </div>
+  </div>
+
   <script>
     // Retrieve student and course data from localStorage
     const studentName = localStorage.getItem('studentName');
@@ -84,18 +159,30 @@
     document.getElementById('amount').value = coursePrice;
 
     // Handle form submission
-    document.getElementById('paymentForm').addEventListener('submit', function(event){
+    document.getElementById('paymentForm').addEventListener('submit', function(event) {
       event.preventDefault();
 
       const paymentMethod = document.getElementById('paymentMethod').value;
 
-      // Generate invoice (simulated here with alert)
-      alert(`Invoice generated for ${courseName} with amount $${coursePrice} via ${paymentMethod}.`);
-      
-      // After payment simulation, you can redirect or show confirmation.
-      // For example, after an actual payment gateway integration, redirect to a confirmation page:
-      // window.location.href = "payment-confirmation.html";
+      // Open invoice popup
+      openInvoicePopup(courseName, coursePrice, paymentMethod);
     });
+
+    // Function to open the invoice popup
+    function openInvoicePopup(courseName, coursePrice, paymentMethod) {
+      document.getElementById('popupCourseName').textContent = courseName;
+      document.getElementById('popupAmount').textContent = coursePrice;
+      document.getElementById('popupPaymentMethod').textContent = paymentMethod;
+
+      // Show the popup
+      document.getElementById('invoicePopup').style.display = 'block';
+    }
+
+    // Function to close the invoice popup
+    function closeInvoicePopup() {
+      document.getElementById('invoicePopup').style.display = 'none';
+    }
   </script>
+
 </body>
 </html>
