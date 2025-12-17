@@ -97,54 +97,75 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* 🔐 ADMIN-ONLY GUARD USING ROLE */
+/* 🔐 ADMIN AUTH GUARD */
 auth.onAuthStateChanged(async (user) => {
   if (!user) {
-    window.location.replace("../index.html"); // Student login page
+    window.location.replace("../index.html");
     return;
   }
 
   try {
-    // Check if user exists in admins collection
-    const adminDoc = await db.collection("admins").doc(user.uid).get();
+    const adminRef = db.collection("admins").doc(user.uid);
+    const adminSnap = await adminRef.get();
 
-    if (!adminDoc.exists || adminDoc.data().role !== "admin") {
-      alert("Access denied: Admins only");
-      await auth.signOut();
-      window.location.replace("../index.html");
-      return;
+    if (!adminSnap.exists) {
+      throw new Error("Admin record not found");
     }
 
-    // Admin confirmed
     document.getElementById("adminId").textContent = user.uid.slice(0, 8);
 
-    // Load stats
-    const studentsSnap = await db.collection("students").get();
-    document.getElementById("totalStudents").textContent = studentsSnap.size;
+    loadStats();
 
-    const coursesSnap = await db.collection("courses").get();
-    document.getElementById("totalCourses").textContent = coursesSnap.size;
-
-    const certSnap = await db.collection("certificates").get();
-    document.getElementById("totalCertificates").textContent = certSnap.size;
-
-  } catch (err) {
-    console.error(err);
-    alert("Error fetching admin data.");
+  } catch (error) {
+    console.error("Admin access error:", error);
+    alert("Access denied. Admins only.");
+    await auth.signOut();
     window.location.replace("../index.html");
   }
 });
 
-/* LOGOUT */
+/* 📊 REAL-TIME STATS */
+function loadStats() {
+
+  // STUDENTS
+  db.collection("students").onSnapshot(
+    (snapshot) => {
+      document.getElementById("totalStudents").textContent = snapshot.size;
+    },
+    (error) => {
+      console.error("Students read error:", error);
+    }
+  );
+
+  // COURSES
+  db.collection("courses").onSnapshot(
+    (snapshot) => {
+      document.getElementById("totalCourses").textContent = snapshot.size;
+    },
+    (error) => {
+      console.error("Courses read error:", error);
+    }
+  );
+
+  // CERTIFICATES
+  db.collection("certificates").onSnapshot(
+    (snapshot) => {
+      document.getElementById("totalCertificates").textContent = snapshot.size;
+    },
+    (error) => {
+      console.error("Certificates read error:", error);
+    }
+  );
+}
+
+/* 🚪 LOGOUT */
 function logout() {
   auth.signOut().then(() => {
     window.location.replace("../index.html");
   });
 }
 </script>
-
-</body>
-</html>
