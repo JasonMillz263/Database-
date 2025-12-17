@@ -7,7 +7,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 
 <style>
-/* ---- YOUR ORIGINAL STYLES (UNCHANGED) ---- */
 * { box-sizing: border-box; font-family: 'Poppins', sans-serif; }
 body {
   margin: 0;
@@ -97,6 +96,7 @@ body {
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
 const firebaseConfig = {
@@ -107,29 +107,26 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
+const db = firebase.firestore();
 
 function togglePassword() {
   password.type = password.type === "password" ? "text" : "password";
 }
 
-/* 🔐 LOGIN + ROLE REDIRECT */
+/* 🔐 LOGIN + FIRESTORE ROLE CHECK */
 async function login() {
   msg.innerText = "";
   spinner.style.display = "block";
 
   try {
-    const cred = await auth.signInWithEmailAndPassword(
-      email.value,
-      password.value
-    );
-
+    const cred = await auth.signInWithEmailAndPassword(email.value, password.value);
     const user = cred.user;
 
-    // Force refresh token
-    await user.getIdToken(true);
-    const token = await user.getIdTokenResult();
+    // Get the role from Firestore (use "students" collection)
+    const userDoc = await db.collection("students").doc(user.uid).get();
+    const role = userDoc.exists && userDoc.data().role ? userDoc.data().role : "user";
 
-    if (token.claims.admin === true) {
+    if (role === "admin") {
       window.location.href = "admin_dashboard.html";
     } else {
       window.location.href = "student.html";
