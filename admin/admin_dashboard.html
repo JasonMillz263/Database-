@@ -39,7 +39,6 @@
       min-height: 100vh;
     }
 
-    /* Sidebar */
     .sidebar {
       background: linear-gradient(180deg, var(--blue), var(--purple));
       color: #fff;
@@ -71,12 +70,10 @@
       color: #fff;
     }
 
-    /* Main */
     .main {
       padding: 28px;
     }
 
-    /* Header */
     .top-header {
       display: flex;
       justify-content: space-between;
@@ -94,7 +91,6 @@
       font-size: 14px;
     }
 
-    /* Stats */
     .stats {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -139,7 +135,7 @@
   <!-- SIDEBAR -->
   <aside class="sidebar">
     <h2>FBA Admin Portal</h2>
-    <a href="admin_dashboard.html"><i class="fa fa-home"></i> Dashboard</a>
+    <a href="index.html"><i class="fa fa-home"></i> Dashboard</a>
     <a href="manage_courses.html"><i class="fa fa-book"></i> Manage Courses</a>
     <a href="manage_users.html"><i class="fa fa-users"></i> Manage Users</a>
     <a href="manage_payments.html"><i class="fa fa-credit-card"></i> Manage Payments</a>
@@ -152,7 +148,6 @@
 
   <!-- MAIN -->
   <main class="main">
-
     <div class="top-header">
       <div>
         <h1>Welcome, Admin</h1>
@@ -195,20 +190,21 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* 🔐 ADMIN-ONLY GUARD USING FIRESTORE ROLE */
+/* 🔐 ADMIN-ONLY GUARD */
 auth.onAuthStateChanged(async (user) => {
   if (!user) {
-    window.location.replace("index.html");
+    window.location.replace("../index.html"); // student login page
     return;
   }
 
   try {
-    const doc = await db.collection("students").doc(user.uid).get();
-    const role = doc.exists && doc.data().role ? doc.data().role : "user";
+    // Check admin collection instead of students
+    const adminDoc = await db.collection("admins").doc(user.uid).get();
 
-    if (role !== "admin") {
-      alert("Access denied");
-      window.location.replace("student.html");
+    if (!adminDoc.exists) {
+      alert("Access denied: Admins only");
+      await auth.signOut();
+      window.location.replace("../index.html"); // student login
       return;
     }
 
@@ -228,17 +224,17 @@ auth.onAuthStateChanged(async (user) => {
   } catch (err) {
     console.error(err);
     alert("Error fetching admin data.");
-    window.location.replace("index.html");
+    window.location.replace("../index.html");
   }
 });
 
 /* LOGOUT */
 function logout() {
   auth.signOut().then(() => {
-    window.location.replace("index.html");
+    window.location.replace("../index.html");
   });
 }
 </script>
 
 </body>
-  </html>
+</html>
