@@ -1,219 +1,195 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
 <title>Manage Students | Food Business Academy</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
-:root{
-  --blue:#2563eb;
-  --purple:#6d28d9;
-  --danger:#ef4444;
-  --success:#22c55e;
-  --bg:#f5f7ff;
-  --card:#ffffffcc;
+body{
+  font-family:'Poppins',sans-serif;
+  margin:0;
+  background:#f5f7ff;
 }
-
-*{box-sizing:border-box;font-family:'Poppins',sans-serif}
-body{margin:0;background:linear-gradient(135deg,#eef2ff,#f5f7ff)}
-
-.container{max-width:1200px;margin:20px auto;padding:16px}
-.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
-  gap:18px;
-}
-
-.card{
-  background:var(--card);
-  backdrop-filter:blur(14px);
-  border-radius:22px;
-  padding:18px;
-  box-shadow:0 20px 40px rgba(0,0,0,.08);
-  transition:.3s;
-}
-.card:hover{transform:translateY(-6px)}
-
-.avatar{
-  width:54px;height:54px;border-radius:50%;
-  background:linear-gradient(135deg,var(--blue),var(--purple));
-  display:flex;align-items:center;justify-content:center;
-  color:#fff;font-size:20px;font-weight:700;
-}
-
-.name{font-size:18px;font-weight:600;margin-top:10px}
-.email{font-size:14px;opacity:.7;word-break:break-all}
-
-.badge{
-  display:inline-block;
-  padding:4px 12px;
-  border-radius:999px;
-  font-size:12px;
-  margin-top:6px;
-}
-.active{background:#dcfce7;color:#166534}
-.suspended{background:#fee2e2;color:#991b1b}
-
-.actions{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:10px;
-  margin-top:14px;
-}
-
-button{
-  border:none;
-  padding:10px;
-  border-radius:12px;
-  cursor:pointer;
-  font-weight:600;
-}
-
-.view{background:#e0e7ff}
-.reset{background:#ede9fe}
-.suspend{background:#fef3c7}
-.delete{background:var(--danger);color:#fff}
-
-/* MODAL */
-.modal{
-  position:fixed;inset:0;
-  background:rgba(0,0,0,.5);
-  display:none;align-items:center;justify-content:center;
-}
-.modal-content{
+.container{
+  max-width:1200px;
+  margin:30px auto;
   background:#fff;
   padding:20px;
-  border-radius:20px;
-  max-width:420px;
-  width:90%;
+  border-radius:14px;
+  box-shadow:0 20px 40px rgba(0,0,0,.08);
 }
-.modal h3{margin-top:0}
-.close{float:right;cursor:pointer;font-size:20px}
+h1{margin-top:0}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+th,td{
+  padding:12px;
+  border-bottom:1px solid #e5e7eb;
+  text-align:left;
+  font-size:14px;
+}
+th{
+  background:#eef2ff;
+  font-weight:600;
+}
+tr:hover{background:#f9fafb}
+
+button{
+  padding:6px 10px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:13px;
+}
+.reset{background:#e0e7ff}
+.delete{background:#ef4444;color:#fff}
 </style>
 </head>
 
 <body>
 
 <div class="container">
-  <div class="header">
-    <h1>Manage Students</h1>
-    <span class="badge active">Live Records</span>
-  </div>
+  <h1>Manage Students</h1>
 
-  <div id="studentsGrid" class="grid"></div>
-</div>
-
-<!-- MODAL -->
-<div id="modal" class="modal">
-  <div class="modal-content">
-    <span class="close" onclick="closeModal()">&times;</span>
-    <h3 id="modalName"></h3>
-    <p><b>Email:</b> <span id="modalEmail"></span></p>
-    <p><b>Status:</b> <span id="modalStatus"></span></p>
-    <p><b>Courses:</b> <span id="modalCourses"></span></p>
-  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Full Name</th>
+        <th>Email</th>
+        <th>Status</th>
+        <th>Courses</th>
+        <th>Progress</th>
+        <th>Certificates</th>
+        <th>Last Access</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="usersList">
+      <tr>
+        <td colspan="8">Loading students...</td>
+      </tr>
+    </tbody>
+  </table>
 </div>
 
 <script>
+/* 🔥 FIREBASE INIT */
 firebase.initializeApp({
   apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain: "students-login-29409.firebaseapp.com",
   projectId: "students-login-29409"
 });
 
-const auth=firebase.auth();
-const db=firebase.firestore();
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-/* ADMIN GUARD */
-auth.onAuthStateChanged(async user=>{
-  if(!user) return location.replace("../index.html");
-  const admin=await db.collection("admins").doc(user.uid).get();
-  if(!admin.exists){
+/* 🔐 ADMIN GUARD */
+auth.onAuthStateChanged(async user => {
+  if (!user) {
+    location.replace("../index.html");
+    return;
+  }
+
+  const adminSnap = await db.collection("admins").doc(user.uid).get();
+  if (!adminSnap.exists) {
     alert("Admins only");
     auth.signOut();
     location.replace("../index.html");
+    return;
   }
-  loadStudents();
+
+  fetchStudents();
 });
 
-/* LOAD STUDENTS */
-function loadStudents(){
-  db.collection("students").onSnapshot(snap=>{
-    const grid=document.getElementById("studentsGrid");
-    grid.innerHTML="";
-    snap.forEach(doc=>{
-      const s=doc.data();
+/* ✅ FETCH STUDENTS BY DOCUMENT IDS */
+async function fetchStudents() {
+  const usersList = document.getElementById("usersList");
+  usersList.innerHTML = `
+    <tr><td colspan="8">Loading students...</td></tr>
+  `;
 
-      const name =
-        s.fullName?.trim() ||
-        s.displayName?.trim() ||
-        s.email?.trim() ||
-        `Student (${doc.id.slice(0,6)})`;
+  try {
+    const snapshot = await db.collection("students").get();
 
-      const email=s.email||"—";
-      const status=s.suspended?"Suspended":"Active";
-      const badgeClass=s.suspended?"suspended":"active";
-      const initials=name.charAt(0).toUpperCase();
-
-      grid.innerHTML+=`
-        <div class="card">
-          <div class="avatar">${initials}</div>
-          <div class="name">${name}</div>
-          <div class="email">${email}</div>
-          <div class="badge ${badgeClass}">${status}</div>
-
-          <div class="actions">
-            <button class="view" onclick="viewStudent('${doc.id}')">View</button>
-            <button class="reset" onclick="resetPassword('${email}')">Reset</button>
-            <button class="suspend" onclick="toggleSuspend('${doc.id}',${!!s.suspended})">
-              ${s.suspended?"Activate":"Suspend"}
-            </button>
-            <button class="delete" onclick="deleteStudent('${doc.id}')">Delete</button>
-          </div>
-        </div>
+    if (snapshot.empty) {
+      usersList.innerHTML = `
+        <tr><td colspan="8">No students found</td></tr>
       `;
-    });
-  });
+      return;
+    }
+
+    usersList.innerHTML = "";
+
+    snapshot.docs
+      .sort((a, b) => {
+        const aTime = a.data().createdAt?.seconds || 0;
+        const bTime = b.data().createdAt?.seconds || 0;
+        return bTime - aTime;
+      })
+      .forEach(doc => {
+        const data = doc.data();
+
+        const fullName =
+          data.fullName ||
+          data.displayName ||
+          "Unnamed Student";
+
+        const email = data.email || "No email";
+        const status = data.suspended ? "Suspended" : "Active";
+        const courses = Array.isArray(data.coursesPaid)
+          ? data.coursesPaid.length
+          : 0;
+
+        const lastAccess =
+          data.lastAccessed?.toDate?.().toLocaleString() || "—";
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${fullName}</td>
+          <td>${email}</td>
+          <td>${status}</td>
+          <td>${courses}</td>
+          <td>${data.progress || "—"}</td>
+          <td>${data.certificates?.length || 0}</td>
+          <td>${lastAccess}</td>
+          <td>
+            <button class="reset" onclick="resetPassword('${email}')">Reset</button>
+            <button class="delete" onclick="deleteStudent('${doc.id}')">Delete</button>
+          </td>
+        `;
+
+        usersList.appendChild(tr);
+      });
+
+  } catch (err) {
+    console.error("Error fetching students:", err);
+    usersList.innerHTML = `
+      <tr><td colspan="8">Failed to load students</td></tr>
+    `;
+  }
 }
 
 /* ACTIONS */
-function viewStudent(uid){
-  db.collection("students").doc(uid).get().then(d=>{
-    const s=d.data();
-    modal.style.display="flex";
-    modalName.textContent=s.fullName||s.email;
-    modalEmail.textContent=s.email||"—";
-    modalStatus.textContent=s.suspended?"Suspended":"Active";
-    modalCourses.textContent=(s.coursesPaid||[]).length;
-  });
-}
-
-function closeModal(){modal.style.display="none"}
-
-function toggleSuspend(uid,state){
-  db.collection("students").doc(uid).update({suspended:!state});
+function resetPassword(email){
+  if(!email) return alert("No email found");
+  auth.sendPasswordResetEmail(email)
+    .then(()=>alert("Password reset email sent"))
+    .catch(err=>alert(err.message));
 }
 
 function deleteStudent(uid){
-  if(confirm("Soft delete student?")){
-    db.collection("students").doc(uid).update({deleted:true});
+  if(confirm("Soft delete this student?")){
+    db.collection("students").doc(uid).update({ deleted:true });
   }
-}
-
-function resetPassword(email){
-  auth.sendPasswordResetEmail(email)
-    .then(()=>alert("Reset email sent"))
-    .catch(e=>alert(e.message));
 }
 </script>
 
