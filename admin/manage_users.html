@@ -12,81 +12,21 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
-:root{
-  --blue:#2563eb;
-  --purple:#6d28d9;
-  --danger:#ef4444;
-  --card:#ffffffcc;
-}
-
-*{box-sizing:border-box;font-family:'Poppins',sans-serif}
-body{margin:0;background:linear-gradient(135deg,#eef2ff,#f5f7ff)}
-
+body{margin:0;background:linear-gradient(135deg,#eef2ff,#f5f7ff);font-family:Poppins}
 .container{max-width:1200px;margin:20px auto;padding:16px}
 .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
-
-.search{
-  padding:10px 14px;
-  border-radius:14px;
-  border:1px solid #e5e7eb;
-  min-width:260px;
-}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
-  gap:18px;
-}
-
-.card{
-  background:var(--card);
-  backdrop-filter:blur(14px);
-  border-radius:22px;
-  padding:18px;
-  box-shadow:0 20px 40px rgba(0,0,0,.08);
-}
-
-.avatar{
-  width:56px;height:56px;border-radius:50%;
-  background:linear-gradient(135deg,var(--blue),var(--purple));
-  display:flex;align-items:center;justify-content:center;
-  color:#fff;font-size:22px;font-weight:700;
-}
-
+.search{padding:10px 14px;border-radius:14px;border:1px solid #e5e7eb}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
+.card{background:#ffffffcc;border-radius:22px;padding:18px;box-shadow:0 20px 40px rgba(0,0,0,.08)}
+.avatar{width:56px;height:56px;border-radius:50%;background:#2563eb;color:#fff;
+display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px}
 .name{font-size:18px;font-weight:600;margin-top:12px}
 .email{font-size:14px;opacity:.7}
-
-.progress{
-  font-size:14px;
-  margin-top:8px;
-}
-
-.actions{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:10px;
-  margin-top:14px;
-}
-
-button{
-  border:none;
-  padding:10px;
-  border-radius:12px;
-  cursor:pointer;
-  font-weight:600;
-  font-size:13px;
-}
-
+.actions{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:16px}
+button{border:none;padding:10px;border-radius:12px;font-weight:600;cursor:pointer}
+.progress{background:#e0e7ff}
 .assign{background:#dbeafe}
-.track{background:#ede9fe}
-.delete{background:var(--danger);color:#fff}
-
-.empty{
-  grid-column:1/-1;
-  text-align:center;
-  padding:40px;
-  opacity:.6;
-}
+.delete{background:#ef4444;color:#fff}
 </style>
 </head>
 
@@ -95,12 +35,9 @@ button{
 <div class="container">
   <div class="header">
     <h1>Manage Students</h1>
-    <input id="searchInput" class="search" placeholder="Search students..." oninput="renderStudents()">
+    <input id="searchInput" class="search" placeholder="Search..." oninput="renderStudents()">
   </div>
-
-  <div id="studentsGrid" class="grid">
-    <div class="empty">Loading students…</div>
-  </div>
+  <div id="studentsGrid" class="grid"></div>
 </div>
 
 <script>
@@ -134,32 +71,19 @@ async function loadStudents(){
   renderStudents();
 }
 
-/* RENDER + SEARCH */
+/* RENDER */
 function renderStudents(){
   const grid=document.getElementById("studentsGrid");
   const q=document.getElementById("searchInput").value.toLowerCase();
-
-  const filtered=students.filter(s=>{
-    return (s.fullName||"").toLowerCase().includes(q) ||
-           (s.email||"").toLowerCase().includes(q);
-  });
-
-  if(!filtered.length){
-    grid.innerHTML='<div class="empty">No students found</div>';
-    return;
-  }
-
   grid.innerHTML="";
 
-  filtered.forEach(s=>{
+  students.filter(s=>{
+    return (s.fullName||"").toLowerCase().includes(q) ||
+           (s.email||"").toLowerCase().includes(q);
+  }).forEach(s=>{
     const name=s.fullName||"Unnamed Student";
     const email=s.email||"—";
-    const initials=name.charAt(0).toUpperCase();
-
-    const progressObj=s.progress||{};
-    const avgProgress=Object.values(progressObj).length
-      ? Math.round(Object.values(progressObj).reduce((a,b)=>a+b,0)/Object.values(progressObj).length)
-      : 0;
+    const initials=name[0].toUpperCase();
 
     grid.innerHTML+=`
       <div class="card">
@@ -167,16 +91,25 @@ function renderStudents(){
         <div class="name">${name}</div>
         <div class="email">${email}</div>
 
-        <div class="progress">📈 Overall Progress: <b>${avgProgress}%</b></div>
-
         <div class="actions">
-          <button class="assign" onclick="assignCourse('${s.id}')">Assign Course</button>
-          <button class="track" onclick="updateProgress('${s.id}')">Update Progress</button>
-          <button class="delete" onclick="deleteStudent('${s.id}')">Delete</button>
+          <button class="progress" onclick="openProgress('${s.id}')">
+            Track Progress
+          </button>
+          <button class="assign" onclick="assignCourse('${s.id}')">
+            Assign Course
+          </button>
+          <button class="delete" onclick="deleteStudent('${s.id}')">
+            Delete
+          </button>
         </div>
       </div>
     `;
   });
+}
+
+/* OPEN PROGRESS PAGE */
+function openProgress(uid){
+  location.href=`progress.html?uid=${uid}`;
 }
 
 /* ASSIGN COURSE */
@@ -186,9 +119,8 @@ async function assignCourse(uid){
 
   const ref=db.collection("students").doc(uid);
   const snap=await ref.get();
-  const data=snap.data();
+  const courses=snap.data().coursesPaid||[];
 
-  const courses=data.coursesPaid||[];
   if(courses.includes(course)) return alert("Already assigned");
 
   await ref.update({
@@ -200,36 +132,23 @@ async function assignCourse(uid){
   loadStudents();
 }
 
-/* UPDATE PROGRESS */
-async function updateProgress(uid){
-  const ref=db.collection("students").doc(uid);
-  const snap=await ref.get();
-  const {coursesPaid=[],progress={}}=snap.data();
+/* DELETE STUDENT (REAL DELETE) */
+async function deleteStudent(uid){
+  if(!confirm("⚠️ This will permanently delete the student. Continue?")) return;
 
-  if(!coursesPaid.length) return alert("No courses assigned");
+  try{
+    await db.collection("students").doc(uid).delete();
 
-  const course=prompt(`Which course?\n${coursesPaid.join(", ")}`);
-  if(!course || !coursesPaid.includes(course)) return alert("Invalid course");
+    await fetch("/deleteUser",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({uid})
+    });
 
-  const value=prompt("Progress percentage (0–100)");
-  const percent=parseInt(value);
-
-  if(isNaN(percent)||percent<0||percent>100){
-    return alert("Enter a valid percentage");
-  }
-
-  await ref.update({
-    [`progress.${course}`]:percent
-  });
-
-  alert("Progress updated");
-  loadStudents();
-}
-
-/* DELETE */
-function deleteStudent(uid){
-  if(confirm("Soft delete this student?")){
-    db.collection("students").doc(uid).update({deleted:true});
+    alert("Student deleted");
+    loadStudents();
+  }catch(e){
+    alert("Delete failed: "+e.message);
   }
 }
 </script>
