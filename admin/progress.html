@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Manage Students | Food Business Academy</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+body{
+  margin:0;
+  background:linear-gradient(135deg,#eef2ff,#f5f7ff);
+  font-family:'Poppins',sans-serif;
+}
+
+.container{
+  max-width:1200px;
+  margin:20px auto;
+  padding:16px;
+}
+
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:20px;
+}
+
+.search{
+  padding:10px 14px;
+  border-radius:14px;
+  border:1px solid #e5e7eb;
+  min-width:260px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:18px;
+}
+
+.card{
+  background:#ffffffcc;
+  backdrop-filter:blur(14px);
+  border-radius:22px;
+  padding:18px;
+  box-shadow:0 20px 40px rgba(0,0,0,.08);
+  transition:.3s;
+}
+.card:hover{transform:translateY(-6px)}
+
+.avatar{
+  width:56px;
+  height:56px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#2563eb,#6d28d9);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-size:22px;
+  font-weight:700;
+}
+
+.name{
+  font-size:18px;
+  font-weight:600;
+  margin-top:12px;
+}
+
+.email{
+  font-size:14px;
+  opacity:.7;
+  word-break:break-all;
+}
+
+.actions{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+  margin-top:16px;
+}
+
+button{
+  border:none;
+  padding:10px;
+  border-radius:12px;
+  cursor:pointer;
+  font-weight:600;
+  font-size:13px;
+}
+
+.progress{background:#e0e7ff}
+.assign{background:#dbeafe}
+
+.reset{
+  background:linear-gradient(135deg,#2563eb,#22c55e);
+  color:#fff;
+}
+
+.delete{
+  background:#ef4444;
+  color:#fff;
+}
+
+.empty{
+  grid-column:1/-1;
+  text-align:center;
+  padding:40px;
+  opacity:.6;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>Manage Students</h1>
+    <input
+      id="searchInput"
+      class="search"
+      placeholder="Search students..."
+      oninput="renderStudents()"
+    >
+  </div>
+
+  <div id="studentsGrid" class="grid">
+    <div class="empty">Loading students…</div>
+  </div>
+</div>
+
+<script>
+/* 🔥 FIREBASE INIT */
+firebase.initializeApp({
+  apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+  authDomain: "students-login-29409.firebaseapp.com",
+  projectId: "students-login-29409"
+});
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+let students = [];
+
+/* 🔐 ADMIN GUARD */
+auth.onAuthStateChanged(async user=>{
+  if(!user){
+    location.replace("../index.html");
+    return;
+  }
+
+  const adminSnap = await db.collection("admins").doc(user.uid).get();
+  if(!adminSnap.exists){
+    alert("Admins only");
+    auth.signOut();
+    location.replace("../index.html");
+    return;
+  }
+
+  loadStudents();
+});
+
+/* 📥 LOAD STUDENTS */
+async function loadStudents(){
+  const snap = await db.collection("students").get();
+  students = snap.docs.map(d=>({id:d.id, ...d.data()}));
+  renderStudents();
+}
+
+/* 🎨 RENDER + SEARCH */
+function renderStudents(){
+  const grid = document.getElementById("studentsGrid");
+  const q = document.getElementById("searchInput").value.toLowerCase();
+
+  const filtered = students.filter(s=>{
+    return (s.fullName||"").toLowerCase().includes(q) ||
+           (s.email||"").toLowerCase().includes(q);
+  });
+
+  if(!filtered.length){
+    grid.innerHTML = '<div class="empty">No students found</div>';
+    return;
+  }
+
+  grid.innerHTML = "";
+
+  filtered.forEach(s=>{
+    const name = s.fullName || s.displayName || "Unnamed Student";
+    const email = s.email || "—";
+    const initials = name.charAt(0).toUpperCase();
+
+    grid.innerHTML += `
+      <div class="card">
+        <div class="avatar">${initials}</div>
+        <div class="name">${name}</div>
+        <div class="email">${email}</div>
+
+        <div class="actions">
+          <button class="progress" onclick="openProgress('${s.id}')">
+            Track Progress
+          </button>
+
+          <button class="assign" onclick="assignCourse('${s.id}')">
+            Assign Course
+          </button>
+
+          <button class="reset" onclick="resetPassword('${email}')">
+            Reset Password
+          </button>
+
+          <button class="delete" onclick="deleteStudent('${s.id}')">
+            Delete
+          </button>
+        </div>
+      </div>
+    `;
+  });
+}
+
+/* 📈 OPEN PROGRESS PAGE */
+function openProgress(uid){
+  location.href = `progress.html?uid=${uid}`;
+}
+
+/* ➕ ASSIGN COURSE */
+async function assignCourse(uid){
+  const course = prompt("Enter course name");
+  if(!course) return;
+
+  const ref = db.collection("students").doc(uid);
+  const snap = await ref.get();
+  const courses = snap.data().coursesPaid || [];
+
+  if(courses.includes(course)){
+    alert("Course already assigned");
+    return;
+  }
+
+  await ref.update({
+    coursesPaid: [...courses, course],
+    [`progress.${course}`]: 0
+  });
+
+  alert("Course assigned");
+  loadStudents();
+}
+
+/* 🔐 RESET PASSWORD */
+function resetPassword(email){
+  if(!email) return alert("No email found");
+  auth.sendPasswordResetEmail(email)
+    .then(()=>alert("Password reset email sent"))
+    .catch(e=>alert(e.message));
+}
+
+/* ❌ DELETE STUDENT (PERMANENT) */
+async function deleteStudent(uid){
+  if(!confirm("⚠️ This will permanently delete the student. Are you sure?")) return;
+
+  try{
+    await db.collection("students").doc(uid).delete();
+
+    await fetch("/deleteUser",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ uid })
+    });
+
+    alert("Student deleted");
+    loadStudents();
+  }catch(e){
+    alert("Delete failed: " + e.message);
+  }
+}
+</script>
+
+</body>
+</html>
