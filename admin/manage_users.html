@@ -2,91 +2,152 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Manage Students | Admin Panel</title>
+<title>Manage Students | Food Business Academy</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- Fonts & Icons -->
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
+<!-- Firebase (Compat – GitHub Pages safe) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
-body {
-  margin: 0;
-  background: #f5f7ff;
-  font-family: 'Poppins', sans-serif;
+:root{
+  --blue:#2563eb;
+  --purple:#6d28d9;
+  --bg:#f5f7ff;
+  --card:#ffffffcc;
+  --danger:#ef4444;
+  --text:#1f2937;
 }
 
-.container {
-  max-width: 1100px;
-  margin: 20px auto;
-  background: #fff;
-  padding: 20px;
-  border-radius: 14px;
+*{box-sizing:border-box;font-family:'Poppins',sans-serif}
+body{margin:0;background:linear-gradient(135deg,#eef2ff,#f5f7ff);color:var(--text)}
+
+.container{
+  max-width:1200px;
+  margin:24px auto;
+  padding:16px;
 }
 
-h1 {
-  margin-bottom: 16px;
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:24px;
 }
 
-/* TABLE (DESKTOP) */
-table {
-  width: 100%;
-  border-collapse: collapse;
+.header h1{
+  font-size:26px;
 }
 
-th, td {
-  padding: 12px;
-  border-bottom: 1px solid #e5e7eb;
-  text-align: left;
+.badge{
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  color:#fff;
+  padding:8px 16px;
+  border-radius:999px;
+  font-size:14px;
 }
 
-th {
-  background: #2563eb;
-  color: #fff;
+/* GRID */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:18px;
 }
 
-/* ACTION BUTTONS */
-.actions button {
-  border: none;
-  padding: 6px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  margin-right: 6px;
+/* CARD */
+.card{
+  background:var(--card);
+  backdrop-filter:blur(14px);
+  border-radius:22px;
+  padding:18px;
+  box-shadow:0 20px 40px rgba(0,0,0,.08);
+  position:relative;
+  transition:.3s;
 }
 
-.delete { background: #ef4444; color: #fff; }
-.reset { background: #6366f1; color: #fff; }
+.card:hover{
+  transform:translateY(-6px);
+  box-shadow:0 30px 60px rgba(0,0,0,.12);
+}
 
-/* MOBILE CARDS */
-@media (max-width: 768px) {
-  table, thead { display: none; }
+.avatar{
+  width:56px;
+  height:56px;
+  border-radius:50%;
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:22px;
+  font-weight:700;
+}
 
-  .card {
-    background: #f9fafb;
-    border-radius: 12px;
-    padding: 14px;
-    margin-bottom: 14px;
-  }
+.name{
+  font-size:18px;
+  font-weight:600;
+  margin-top:12px;
+}
 
-  .card h3 {
-    margin: 0 0 6px;
-  }
+.email{
+  font-size:14px;
+  opacity:.7;
+  word-break:break-all;
+}
 
-  .meta {
-    font-size: 14px;
-    color: #555;
-  }
+.meta{
+  margin-top:10px;
+  font-size:14px;
+}
 
-  .card-actions {
-    margin-top: 10px;
-  }
+.meta span{
+  font-weight:600;
+}
 
-  .card-actions button {
-    width: 100%;
-    margin-bottom: 8px;
+/* ACTIONS */
+.actions{
+  margin-top:14px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+button{
+  border:none;
+  padding:10px;
+  border-radius:12px;
+  cursor:pointer;
+  font-weight:600;
+}
+
+.reset{
+  background:#e0e7ff;
+  color:#3730a3;
+}
+
+.delete{
+  background:var(--danger);
+  color:#fff;
+}
+
+/* EMPTY STATE */
+.empty{
+  text-align:center;
+  padding:60px 20px;
+  opacity:.6;
+}
+
+/* MOBILE */
+@media(max-width:600px){
+  .header{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:12px;
   }
 }
 </style>
@@ -95,29 +156,22 @@ th {
 <body>
 
 <div class="container">
-  <h1>Manage Students</h1>
 
-  <!-- DESKTOP TABLE -->
-  <table id="desktopTable">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Status</th>
-        <th>Courses</th>
-        <th>Progress</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody id="studentsTable"></tbody>
-  </table>
+  <div class="header">
+    <h1>Manage Students</h1>
+    <div class="badge"><i class="fa fa-users"></i> Live Records</div>
+  </div>
 
-  <!-- MOBILE CARDS -->
-  <div id="mobileCards"></div>
+  <div id="studentsGrid" class="grid"></div>
+  <div id="emptyState" class="empty" style="display:none">
+    <i class="fa fa-user-slash fa-3x"></i>
+    <p>No students found</p>
+  </div>
+
 </div>
 
 <script>
-/* FIREBASE */
+/* FIREBASE INIT */
 firebase.initializeApp({
   apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain: "students-login-29409.firebaseapp.com",
@@ -128,11 +182,11 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 /* ADMIN GUARD */
-auth.onAuthStateChanged(async user => {
-  if (!user) return location.replace("../index.html");
+auth.onAuthStateChanged(async user=>{
+  if(!user) return location.replace("../index.html");
 
-  const adminDoc = await db.collection("admins").doc(user.uid).get();
-  if (!adminDoc.exists) {
+  const admin = await db.collection("admins").doc(user.uid).get();
+  if(!admin.exists){
     alert("Admins only");
     auth.signOut();
     return location.replace("../index.html");
@@ -142,46 +196,40 @@ auth.onAuthStateChanged(async user => {
 });
 
 /* LOAD STUDENTS */
-function loadStudents() {
-  db.collection("students").onSnapshot(snapshot => {
-    const table = document.getElementById("studentsTable");
-    const cards = document.getElementById("mobileCards");
-    table.innerHTML = "";
-    cards.innerHTML = "";
+function loadStudents(){
+  db.collection("students").onSnapshot(snap=>{
+    const grid=document.getElementById("studentsGrid");
+    const empty=document.getElementById("emptyState");
+    grid.innerHTML="";
 
-    snapshot.forEach(doc => {
-      const s = doc.data();
-      const courses = (s.coursesPaid || []).join(", ");
-      const progress = s.progress
-        ? Object.values(s.progress).join("%, ") + "%"
-        : "—";
+    if(snap.empty){
+      empty.style.display="block";
+      return;
+    }
 
-      /* DESKTOP ROW */
-      table.innerHTML += `
-        <tr>
-          <td>${s.fullName || "—"}</td>
-          <td>${s.email}</td>
-          <td>${s.status || "active"}</td>
-          <td>${courses}</td>
-          <td>${progress}</td>
-          <td class="actions">
-            <button class="delete" onclick="deleteStudent('${doc.id}')">Delete</button>
-            <button class="reset" onclick="resetPassword('${s.email}')">Reset</button>
-          </td>
-        </tr>
-      `;
+    empty.style.display="none";
 
-      /* MOBILE CARD */
-      cards.innerHTML += `
+    snap.forEach(doc=>{
+      const s=doc.data();
+      const name=s.fullName || s.name || s.email;
+      const initials=name ? name[0].toUpperCase() : "?";
+
+      grid.innerHTML+=`
         <div class="card">
-          <h3>${s.fullName || "Student"}</h3>
-          <div class="meta">Email: ${s.email}</div>
-          <div class="meta">Status: ${s.status || "active"}</div>
-          <div class="meta">Courses: ${courses || "—"}</div>
-          <div class="meta">Progress: ${progress}</div>
-          <div class="card-actions">
-            <button class="delete" onclick="deleteStudent('${doc.id}')">Delete</button>
-            <button class="reset" onclick="resetPassword('${s.email}')">Reset Password</button>
+          <div class="avatar">${initials}</div>
+          <div class="name">${name}</div>
+          <div class="email">${s.email || "—"}</div>
+
+          <div class="meta"><span>Status:</span> ${s.status || "active"}</div>
+          <div class="meta"><span>Courses:</span> ${(s.coursesPaid||[]).length}</div>
+
+          <div class="actions">
+            <button class="reset" onclick="resetPassword('${s.email}')">
+              <i class="fa fa-key"></i> Reset
+            </button>
+            <button class="delete" onclick="deleteStudent('${doc.id}')">
+              <i class="fa fa-trash"></i> Delete
+            </button>
           </div>
         </div>
       `;
@@ -190,15 +238,15 @@ function loadStudents() {
 }
 
 /* ACTIONS */
-function deleteStudent(uid) {
-  if (!confirm("Delete this student?")) return;
+function deleteStudent(uid){
+  if(!confirm("Delete this student permanently?")) return;
   db.collection("students").doc(uid).delete();
 }
 
-function resetPassword(email) {
+function resetPassword(email){
   auth.sendPasswordResetEmail(email)
-    .then(() => alert("Reset email sent"))
-    .catch(err => alert(err.message));
+    .then(()=>alert("Password reset email sent"))
+    .catch(err=>alert(err.message));
 }
 </script>
 
