@@ -184,7 +184,7 @@
 </div>
 
 <script>
-/* 🔥 SAME FIREBASE CONFIG AS LOGIN PAGE */
+/* 🔥 FIREBASE CONFIG */
 const firebaseConfig = {
   apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain: "students-login-29409.firebaseapp.com",
@@ -195,33 +195,41 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* 🔐 ADMIN-ONLY GUARD */
+/* 🔐 ADMIN-ONLY GUARD USING FIRESTORE ROLE */
 auth.onAuthStateChanged(async (user) => {
   if (!user) {
     window.location.replace("index.html");
     return;
   }
 
-  const token = await user.getIdTokenResult(true);
+  try {
+    const doc = await db.collection("students").doc(user.uid).get();
+    const role = doc.exists && doc.data().role ? doc.data().role : "user";
 
-  if (token.claims.admin !== true) {
-    alert("Access denied");
-    window.location.replace("student.html");
-    return;
+    if (role !== "admin") {
+      alert("Access denied");
+      window.location.replace("student.html");
+      return;
+    }
+
+    // ✅ Admin confirmed
+    document.getElementById("adminId").textContent = user.uid.slice(0, 8);
+
+    // Load stats
+    const studentsSnap = await db.collection("students").get();
+    document.getElementById("totalStudents").textContent = studentsSnap.size;
+
+    const coursesSnap = await db.collection("courses").get();
+    document.getElementById("totalCourses").textContent = coursesSnap.size;
+
+    const certSnap = await db.collection("certificates").get();
+    document.getElementById("totalCertificates").textContent = certSnap.size;
+
+  } catch (err) {
+    console.error(err);
+    alert("Error fetching admin data.");
+    window.location.replace("index.html");
   }
-
-  // ✅ Admin confirmed
-  document.getElementById("adminId").textContent = user.uid.slice(0, 8);
-
-  // Load stats
-  const studentsSnap = await db.collection("students").get();
-  document.getElementById("totalStudents").textContent = studentsSnap.size;
-
-  const coursesSnap = await db.collection("courses").get();
-  document.getElementById("totalCourses").textContent = coursesSnap.size;
-
-  const certSnap = await db.collection("certificates").get();
-  document.getElementById("totalCertificates").textContent = certSnap.size;
 });
 
 /* LOGOUT */
