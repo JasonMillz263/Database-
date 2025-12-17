@@ -6,7 +6,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -17,8 +16,6 @@
   --blue:#2563eb;
   --purple:#6d28d9;
   --danger:#ef4444;
-  --success:#22c55e;
-  --bg:#f5f7ff;
   --card:#ffffffcc;
 }
 
@@ -26,14 +23,7 @@
 body{margin:0;background:linear-gradient(135deg,#eef2ff,#f5f7ff)}
 
 .container{max-width:1200px;margin:20px auto;padding:16px}
-.header{
-  display:flex;
-  flex-wrap:wrap;
-  gap:12px;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:20px
-}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
 
 .search{
   padding:10px 14px;
@@ -54,9 +44,7 @@ body{margin:0;background:linear-gradient(135deg,#eef2ff,#f5f7ff)}
   border-radius:22px;
   padding:18px;
   box-shadow:0 20px 40px rgba(0,0,0,.08);
-  transition:.3s;
 }
-.card:hover{transform:translateY(-6px)}
 
 .avatar{
   width:56px;height:56px;border-radius:50%;
@@ -66,25 +54,18 @@ body{margin:0;background:linear-gradient(135deg,#eef2ff,#f5f7ff)}
 }
 
 .name{font-size:18px;font-weight:600;margin-top:12px}
-.email{font-size:14px;opacity:.7;word-break:break-all}
+.email{font-size:14px;opacity:.7}
 
-.meta{font-size:13px;margin-top:6px;opacity:.8}
-
-.badge{
-  display:inline-block;
-  padding:4px 12px;
-  border-radius:999px;
-  font-size:12px;
+.progress{
+  font-size:14px;
   margin-top:8px;
 }
-.active{background:#dcfce7;color:#166534}
-.suspended{background:#fee2e2;color:#991b1b}
 
 .actions{
   display:grid;
   grid-template-columns:repeat(2,1fr);
   gap:10px;
-  margin-top:16px;
+  margin-top:14px;
 }
 
 button{
@@ -97,7 +78,7 @@ button{
 }
 
 .assign{background:#dbeafe}
-.reset{background:#ede9fe}
+.track{background:#ede9fe}
 .delete{background:var(--danger);color:#fff}
 
 .empty{
@@ -114,13 +95,7 @@ button{
 <div class="container">
   <div class="header">
     <h1>Manage Students</h1>
-    <input
-      type="text"
-      id="searchInput"
-      class="search"
-      placeholder="Search students..."
-      oninput="renderStudents()"
-    >
+    <input id="searchInput" class="search" placeholder="Search students..." oninput="renderStudents()">
   </div>
 
   <div id="studentsGrid" class="grid">
@@ -129,122 +104,129 @@ button{
 </div>
 
 <script>
-/* 🔥 FIREBASE INIT */
 firebase.initializeApp({
   apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain: "students-login-29409.firebaseapp.com",
   projectId: "students-login-29409"
 });
 
-const auth = firebase.auth();
-const db = firebase.firestore();
+const auth=firebase.auth();
+const db=firebase.firestore();
+let students=[];
 
-let studentsCache = [];
-
-/* 🔐 ADMIN GUARD */
+/* ADMIN GUARD */
 auth.onAuthStateChanged(async user=>{
   if(!user) return location.replace("../index.html");
 
-  const admin = await db.collection("admins").doc(user.uid).get();
+  const admin=await db.collection("admins").doc(user.uid).get();
   if(!admin.exists){
     alert("Admins only");
     auth.signOut();
     return location.replace("../index.html");
   }
-
   loadStudents();
 });
 
-/* 🔄 LOAD STUDENTS */
+/* LOAD STUDENTS */
 async function loadStudents(){
-  const snap = await db.collection("students").get();
-
-  studentsCache = snap.docs
-    .map(d=>({ id:d.id, ...d.data() }))
-    .sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
-
+  const snap=await db.collection("students").get();
+  students=snap.docs.map(d=>({id:d.id,...d.data()}));
   renderStudents();
 }
 
-/* 🎨 RENDER + SEARCH */
+/* RENDER + SEARCH */
 function renderStudents(){
   const grid=document.getElementById("studentsGrid");
   const q=document.getElementById("searchInput").value.toLowerCase();
 
-  const filtered = studentsCache.filter(s=>{
-    const name = (s.fullName||s.displayName||"").toLowerCase();
-    const email = (s.email||"").toLowerCase();
-    return name.includes(q) || email.includes(q);
+  const filtered=students.filter(s=>{
+    return (s.fullName||"").toLowerCase().includes(q) ||
+           (s.email||"").toLowerCase().includes(q);
   });
 
   if(!filtered.length){
-    grid.innerHTML='<div class="empty">No matching students</div>';
+    grid.innerHTML='<div class="empty">No students found</div>';
     return;
   }
 
   grid.innerHTML="";
 
   filtered.forEach(s=>{
-    const name=s.fullName||s.displayName||"Unnamed Student";
+    const name=s.fullName||"Unnamed Student";
     const email=s.email||"—";
     const initials=name.charAt(0).toUpperCase();
-    const status=s.suspended?"Suspended":"Active";
-    const badge=s.suspended?"suspended":"active";
+
+    const progressObj=s.progress||{};
+    const avgProgress=Object.values(progressObj).length
+      ? Math.round(Object.values(progressObj).reduce((a,b)=>a+b,0)/Object.values(progressObj).length)
+      : 0;
 
     grid.innerHTML+=`
       <div class="card">
         <div class="avatar">${initials}</div>
         <div class="name">${name}</div>
         <div class="email">${email}</div>
-        <div class="badge ${badge}">${status}</div>
 
-        <div class="meta">📚 Courses: ${(s.coursesPaid||[]).length}</div>
+        <div class="progress">📈 Overall Progress: <b>${avgProgress}%</b></div>
 
         <div class="actions">
-          <button class="assign" onclick="assignCourse('${s.id}')">
-            Assign Course
-          </button>
-          <button class="reset" onclick="resetPassword('${email}')">
-            Reset
-          </button>
-          <button class="delete" onclick="deleteStudent('${s.id}')">
-            Delete
-          </button>
+          <button class="assign" onclick="assignCourse('${s.id}')">Assign Course</button>
+          <button class="track" onclick="updateProgress('${s.id}')">Update Progress</button>
+          <button class="delete" onclick="deleteStudent('${s.id}')">Delete</button>
         </div>
       </div>
     `;
   });
 }
 
-/* ➕ ASSIGN COURSE */
+/* ASSIGN COURSE */
 async function assignCourse(uid){
-  const course = prompt("Enter course name");
+  const course=prompt("Course name");
   if(!course) return;
 
-  const ref = db.collection("students").doc(uid);
-  const snap = await ref.get();
-  const courses = snap.data().coursesPaid || [];
+  const ref=db.collection("students").doc(uid);
+  const snap=await ref.get();
+  const data=snap.data();
 
-  if(courses.includes(course)){
-    return alert("Course already assigned");
-  }
+  const courses=data.coursesPaid||[];
+  if(courses.includes(course)) return alert("Already assigned");
 
   await ref.update({
-    coursesPaid:[...courses, course]
+    coursesPaid:[...courses,course],
+    [`progress.${course}`]:0
   });
 
   alert("Course assigned");
   loadStudents();
 }
 
-/* 🔧 ACTIONS */
-function resetPassword(email){
-  if(!email) return alert("No email found");
-  auth.sendPasswordResetEmail(email)
-    .then(()=>alert("Password reset email sent"))
-    .catch(e=>alert(e.message));
+/* UPDATE PROGRESS */
+async function updateProgress(uid){
+  const ref=db.collection("students").doc(uid);
+  const snap=await ref.get();
+  const {coursesPaid=[],progress={}}=snap.data();
+
+  if(!coursesPaid.length) return alert("No courses assigned");
+
+  const course=prompt(`Which course?\n${coursesPaid.join(", ")}`);
+  if(!course || !coursesPaid.includes(course)) return alert("Invalid course");
+
+  const value=prompt("Progress percentage (0–100)");
+  const percent=parseInt(value);
+
+  if(isNaN(percent)||percent<0||percent>100){
+    return alert("Enter a valid percentage");
+  }
+
+  await ref.update({
+    [`progress.${course}`]:percent
+  });
+
+  alert("Progress updated");
+  loadStudents();
 }
 
+/* DELETE */
 function deleteStudent(uid){
   if(confirm("Soft delete this student?")){
     db.collection("students").doc(uid).update({deleted:true});
