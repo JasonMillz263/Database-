@@ -1,84 +1,131 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
 <title>Manage Students | Food Business Academy</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
-body{
-  font-family:'Poppins',sans-serif;
-  margin:0;
-  background:#f5f7ff;
+:root{
+  --blue:#2563eb;
+  --purple:#6d28d9;
+  --danger:#ef4444;
+  --success:#22c55e;
+  --bg:#f5f7ff;
+  --card:#ffffffcc;
 }
-.container{
-  max-width:1200px;
-  margin:30px auto;
-  background:#fff;
-  padding:20px;
-  border-radius:14px;
-  box-shadow:0 20px 40px rgba(0,0,0,.08);
-}
-h1{margin-top:0}
 
-table{
-  width:100%;
-  border-collapse:collapse;
+*{box-sizing:border-box;font-family:'Poppins',sans-serif}
+body{margin:0;background:linear-gradient(135deg,#eef2ff,#f5f7ff)}
+
+.container{max-width:1200px;margin:20px auto;padding:16px}
+.header{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:20px
 }
-th,td{
-  padding:12px;
-  border-bottom:1px solid #e5e7eb;
-  text-align:left;
-  font-size:14px;
+
+.search{
+  padding:10px 14px;
+  border-radius:14px;
+  border:1px solid #e5e7eb;
+  min-width:260px;
 }
-th{
-  background:#eef2ff;
-  font-weight:600;
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:18px;
 }
-tr:hover{background:#f9fafb}
+
+.card{
+  background:var(--card);
+  backdrop-filter:blur(14px);
+  border-radius:22px;
+  padding:18px;
+  box-shadow:0 20px 40px rgba(0,0,0,.08);
+  transition:.3s;
+}
+.card:hover{transform:translateY(-6px)}
+
+.avatar{
+  width:56px;height:56px;border-radius:50%;
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:22px;font-weight:700;
+}
+
+.name{font-size:18px;font-weight:600;margin-top:12px}
+.email{font-size:14px;opacity:.7;word-break:break-all}
+
+.meta{font-size:13px;margin-top:6px;opacity:.8}
+
+.badge{
+  display:inline-block;
+  padding:4px 12px;
+  border-radius:999px;
+  font-size:12px;
+  margin-top:8px;
+}
+.active{background:#dcfce7;color:#166534}
+.suspended{background:#fee2e2;color:#991b1b}
+
+.actions{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+  margin-top:16px;
+}
 
 button{
-  padding:6px 10px;
   border:none;
-  border-radius:6px;
+  padding:10px;
+  border-radius:12px;
   cursor:pointer;
+  font-weight:600;
   font-size:13px;
 }
-.reset{background:#e0e7ff}
-.delete{background:#ef4444;color:#fff}
+
+.assign{background:#dbeafe}
+.reset{background:#ede9fe}
+.delete{background:var(--danger);color:#fff}
+
+.empty{
+  grid-column:1/-1;
+  text-align:center;
+  padding:40px;
+  opacity:.6;
+}
 </style>
 </head>
 
 <body>
 
 <div class="container">
-  <h1>Manage Students</h1>
+  <div class="header">
+    <h1>Manage Students</h1>
+    <input
+      type="text"
+      id="searchInput"
+      class="search"
+      placeholder="Search students..."
+      oninput="renderStudents()"
+    >
+  </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Full Name</th>
-        <th>Email</th>
-        <th>Status</th>
-        <th>Courses</th>
-        <th>Progress</th>
-        <th>Certificates</th>
-        <th>Last Access</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody id="usersList">
-      <tr>
-        <td colspan="8">Loading students...</td>
-      </tr>
-    </tbody>
-  </table>
+  <div id="studentsGrid" class="grid">
+    <div class="empty">Loading students…</div>
+  </div>
 </div>
 
 <script>
@@ -92,103 +139,115 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* 🔐 ADMIN GUARD */
-auth.onAuthStateChanged(async user => {
-  if (!user) {
-    location.replace("../index.html");
-    return;
-  }
+let studentsCache = [];
 
-  const adminSnap = await db.collection("admins").doc(user.uid).get();
-  if (!adminSnap.exists) {
+/* 🔐 ADMIN GUARD */
+auth.onAuthStateChanged(async user=>{
+  if(!user) return location.replace("../index.html");
+
+  const admin = await db.collection("admins").doc(user.uid).get();
+  if(!admin.exists){
     alert("Admins only");
     auth.signOut();
-    location.replace("../index.html");
+    return location.replace("../index.html");
+  }
+
+  loadStudents();
+});
+
+/* 🔄 LOAD STUDENTS */
+async function loadStudents(){
+  const snap = await db.collection("students").get();
+
+  studentsCache = snap.docs
+    .map(d=>({ id:d.id, ...d.data() }))
+    .sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+
+  renderStudents();
+}
+
+/* 🎨 RENDER + SEARCH */
+function renderStudents(){
+  const grid=document.getElementById("studentsGrid");
+  const q=document.getElementById("searchInput").value.toLowerCase();
+
+  const filtered = studentsCache.filter(s=>{
+    const name = (s.fullName||s.displayName||"").toLowerCase();
+    const email = (s.email||"").toLowerCase();
+    return name.includes(q) || email.includes(q);
+  });
+
+  if(!filtered.length){
+    grid.innerHTML='<div class="empty">No matching students</div>';
     return;
   }
 
-  fetchStudents();
-});
+  grid.innerHTML="";
 
-/* ✅ FETCH STUDENTS BY DOCUMENT IDS */
-async function fetchStudents() {
-  const usersList = document.getElementById("usersList");
-  usersList.innerHTML = `
-    <tr><td colspan="8">Loading students...</td></tr>
-  `;
+  filtered.forEach(s=>{
+    const name=s.fullName||s.displayName||"Unnamed Student";
+    const email=s.email||"—";
+    const initials=name.charAt(0).toUpperCase();
+    const status=s.suspended?"Suspended":"Active";
+    const badge=s.suspended?"suspended":"active";
 
-  try {
-    const snapshot = await db.collection("students").get();
+    grid.innerHTML+=`
+      <div class="card">
+        <div class="avatar">${initials}</div>
+        <div class="name">${name}</div>
+        <div class="email">${email}</div>
+        <div class="badge ${badge}">${status}</div>
 
-    if (snapshot.empty) {
-      usersList.innerHTML = `
-        <tr><td colspan="8">No students found</td></tr>
-      `;
-      return;
-    }
+        <div class="meta">📚 Courses: ${(s.coursesPaid||[]).length}</div>
 
-    usersList.innerHTML = "";
-
-    snapshot.docs
-      .sort((a, b) => {
-        const aTime = a.data().createdAt?.seconds || 0;
-        const bTime = b.data().createdAt?.seconds || 0;
-        return bTime - aTime;
-      })
-      .forEach(doc => {
-        const data = doc.data();
-
-        const fullName =
-          data.fullName ||
-          data.displayName ||
-          "Unnamed Student";
-
-        const email = data.email || "No email";
-        const status = data.suspended ? "Suspended" : "Active";
-        const courses = Array.isArray(data.coursesPaid)
-          ? data.coursesPaid.length
-          : 0;
-
-        const lastAccess =
-          data.lastAccessed?.toDate?.().toLocaleString() || "—";
-
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${fullName}</td>
-          <td>${email}</td>
-          <td>${status}</td>
-          <td>${courses}</td>
-          <td>${data.progress || "—"}</td>
-          <td>${data.certificates?.length || 0}</td>
-          <td>${lastAccess}</td>
-          <td>
-            <button class="reset" onclick="resetPassword('${email}')">Reset</button>
-            <button class="delete" onclick="deleteStudent('${doc.id}')">Delete</button>
-          </td>
-        `;
-
-        usersList.appendChild(tr);
-      });
-
-  } catch (err) {
-    console.error("Error fetching students:", err);
-    usersList.innerHTML = `
-      <tr><td colspan="8">Failed to load students</td></tr>
+        <div class="actions">
+          <button class="assign" onclick="assignCourse('${s.id}')">
+            Assign Course
+          </button>
+          <button class="reset" onclick="resetPassword('${email}')">
+            Reset
+          </button>
+          <button class="delete" onclick="deleteStudent('${s.id}')">
+            Delete
+          </button>
+        </div>
+      </div>
     `;
-  }
+  });
 }
 
-/* ACTIONS */
+/* ➕ ASSIGN COURSE */
+async function assignCourse(uid){
+  const course = prompt("Enter course name");
+  if(!course) return;
+
+  const ref = db.collection("students").doc(uid);
+  const snap = await ref.get();
+  const courses = snap.data().coursesPaid || [];
+
+  if(courses.includes(course)){
+    return alert("Course already assigned");
+  }
+
+  await ref.update({
+    coursesPaid:[...courses, course]
+  });
+
+  alert("Course assigned");
+  loadStudents();
+}
+
+/* 🔧 ACTIONS */
 function resetPassword(email){
   if(!email) return alert("No email found");
   auth.sendPasswordResetEmail(email)
     .then(()=>alert("Password reset email sent"))
-    .catch(err=>alert(err.message));
+    .catch(e=>alert(e.message));
 }
 
 function deleteStudent(uid){
   if(confirm("Soft delete this student?")){
-    db.collection("students").doc(uid).update({ deleted:true });
+    db.collection("students").doc(uid).update({deleted:true});
   }
 }
 </script>
