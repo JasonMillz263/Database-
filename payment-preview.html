@@ -1,166 +1,253 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Payment Preview | Food Business Academy</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <title>Payment | Food Business Academy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-body {
-  font-family: 'Poppins', sans-serif;
-  background: #eef2ff;
-  margin: 0;
-  padding: 0;
-}
-.container {
-  max-width: 600px;
-  margin: 50px auto;
-  background: #fff;
-  padding: 30px;
-  border-radius: 24px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.1);
-}
-h2 { text-align:center; color: #2563eb; margin-bottom: 30px;}
-label { display:block; margin:10px 0 4px; font-weight:600; }
-input[type=text], input[type=email], input[type=tel] {
-  width:100%;
-  padding:12px;
-  border-radius:12px;
-  border:1px solid #d1d5db;
-  margin-bottom:10px;
-}
-.payment-methods {
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-  margin:10px 0 20px;
-}
-.payment-methods label {
-  display:flex;
-  align-items:center;
-  gap:10px;
-  background:#f3f4f6;
-  padding:10px 12px;
-  border-radius:12px;
-  cursor:pointer;
-}
-.payment-methods input { accent-color: #2563eb; }
-.terms { display:flex; align-items:center; gap:10px; margin-bottom:20px; }
-button {
-  width:100%;
-  padding:14px;
-  border:none;
-  border-radius:16px;
-  font-weight:600;
-  background:linear-gradient(135deg,#2563eb,#6d28d9);
-  color:#fff;
-  cursor:pointer;
-  transition:0.3s;
-  font-size:16px;
-}
-button:disabled { opacity:0.8; cursor:not-allowed; }
-.loading { margin-top:10px; display:none; text-align:center; color:#2563eb; font-weight:600;}
-</style>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --blue:#2563eb;
+      --purple:#6d28d9;
+      --bg:#eef2ff;
+      --card:#ffffff;
+      --text:#1f2937;
+      --accent:#f59e0b;
+      --soft:#f1f5f9;
+    }
+
+    *{box-sizing:border-box;font-family:'Poppins',sans-serif}
+
+    body{
+      margin:0;
+      min-height:100vh;
+      background:linear-gradient(135deg,#e0e7ff,#fdfcff);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    }
+
+    .card{
+      width:100%;
+      max-width:560px;
+      background:#fff;
+      border-radius:30px;
+      padding:34px;
+      box-shadow:0 30px 70px rgba(0,0,0,.18);
+      animation:slideUp .6s ease;
+    }
+
+    @keyframes slideUp{
+      from{opacity:0;transform:translateY(40px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+
+    .header{text-align:center;margin-bottom:26px}
+    .header p{color:#6b7280;font-size:14px}
+
+    .section{margin-bottom:26px}
+    .section h4{margin-bottom:10px}
+
+    .box{
+      background:linear-gradient(180deg,#f8fafc,#f1f5f9);
+      border-radius:18px;
+      padding:18px;
+    }
+
+    .row{
+      display:flex;
+      justify-content:space-between;
+      margin-bottom:10px;
+      font-size:14px;
+    }
+
+    .status{color:var(--accent);font-weight:600}
+
+    .methods label{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:14px 16px;
+      border-radius:16px;
+      background:var(--soft);
+      margin-bottom:12px;
+      cursor:pointer;
+      border:2px solid transparent;
+      transition:.2s;
+    }
+
+    .methods label:hover{border-color:var(--blue)}
+    .methods input{accent-color:var(--blue)}
+
+    .terms{
+      display:flex;
+      gap:10px;
+      font-size:13px;
+      margin-top:10px;
+    }
+
+    .btn{
+      width:100%;
+      padding:16px;
+      border:none;
+      border-radius:18px;
+      background:linear-gradient(135deg,var(--blue),var(--purple));
+      color:#fff;
+      font-size:16px;
+      font-weight:600;
+      cursor:pointer;
+      transition:.3s;
+    }
+
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+
+    .loader{
+      display:none;
+      margin-top:18px;
+      text-align:center;
+      font-size:14px;
+      color:#4b5563;
+    }
+
+    .spinner{
+      width:28px;
+      height:28px;
+      border:4px solid #e5e7eb;
+      border-top-color:var(--blue);
+      border-radius:50%;
+      margin:10px auto;
+      animation:spin 1s linear infinite;
+    }
+
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
 </head>
 
 <body>
 
-<div class="container">
-  <h2>Payment Preview</h2>
+<div class="card">
 
-  <label for="studentName">Full Name</label>
-  <input type="text" id="studentName" placeholder="Enter your full name">
+  <div class="header">
+    <h2>Payment Preview</h2>
+    <p>Food Business Academy</p>
+  </div>
 
-  <label for="studentEmail">Email</label>
-  <input type="email" id="studentEmail" placeholder="Enter your email">
+  <div class="section">
+    <h4>Student Details</h4>
+    <div class="box">
+      <div class="row"><span>Name</span><strong id="name"></strong></div>
+      <div class="row"><span>Email</span><strong id="email"></strong></div>
+      <div class="row"><span>Phone</span><strong id="phone"></strong></div>
+    </div>
+  </div>
 
-  <label for="studentPhone">Phone Number</label>
-  <input type="tel" id="studentPhone" placeholder="Enter your phone number">
+  <div class="section">
+    <h4>Course Summary</h4>
+    <div class="box">
+      <div class="row"><span>Course</span><strong id="course"></strong></div>
+      <div class="row"><span>Amount</span><strong>$<span id="price"></span></strong></div>
+      <div class="row"><span>Status</span><span class="status">Pending</span></div>
+    </div>
+  </div>
 
-  <label>Payment Method</label>
-  <div class="payment-methods">
-    <label><input type="radio" name="paymentMethod" value="Ecocash"> Ecocash</label>
-    <label><input type="radio" name="paymentMethod" value="One Money"> One Money</label>
-    <label><input type="radio" name="paymentMethod" value="Bank Transfer"> Bank Transfer</label>
+  <div class="section">
+    <h4>Select Payment Method</h4>
+    <div class="methods">
+      <label><input type="radio" name="method" value="Ecocash"> Ecocash</label>
+      <label><input type="radio" name="method" value="OneMoney"> One Money</label>
+      <label><input type="radio" name="method" value="Bank Transfer"> Bank Transfer</label>
+    </div>
   </div>
 
   <div class="terms">
-    <input type="checkbox" id="agreeTerms">
-    <label for="agreeTerms">I agree to the terms and conditions</label>
+    <input type="checkbox" id="terms">
+    <label for="terms">I agree to the Terms & Conditions</label>
   </div>
 
-  <button id="proceedBtn">Proceed with Payment</button>
-  <div class="loading" id="loadingText">Generating invoice, please wait...</div>
+  <button class="btn" id="btn" disabled onclick="createInvoice()">
+    Proceed with Payment
+  </button>
+
+  <div class="loader" id="loader">
+    <div class="spinner"></div>
+    Generating your invoice…
+  </div>
+
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// 🔴 Replace with your Firebase config
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-};
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID"
+  };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-// Pre-fill student details if available
-document.getElementById("studentName").value = localStorage.getItem("studentName") || "";
-document.getElementById("studentEmail").value = localStorage.getItem("studentEmail") || "";
-document.getElementById("studentPhone").value = localStorage.getItem("studentPhone") || "";
-
-document.getElementById("proceedBtn").addEventListener("click", async () => {
-  const name = document.getElementById("studentName").value.trim();
-  const email = document.getElementById("studentEmail").value.trim();
-  const phone = document.getElementById("studentPhone").value.trim();
+  const name = localStorage.getItem("studentName");
+  const email = localStorage.getItem("studentEmail");
+  const phone = localStorage.getItem("studentPhone");
   const course = localStorage.getItem("courseName");
-  const amount = localStorage.getItem("coursePrice");
-  const method = document.querySelector('input[name="paymentMethod"]:checked')?.value;
-  const termsChecked = document.getElementById("agreeTerms").checked;
+  const price = localStorage.getItem("coursePrice");
 
-  if (!name || !email || !phone || !method) {
-    alert("Please fill all fields and select a payment method.");
-    return;
+  document.getElementById("name").innerText = name || "-";
+  document.getElementById("email").innerText = email || "-";
+  document.getElementById("phone").innerText = phone || "-";
+  document.getElementById("course").innerText = course || "-";
+  document.getElementById("price").innerText = price || "0";
+
+  const btn = document.getElementById("btn");
+  const loader = document.getElementById("loader");
+  const terms = document.getElementById("terms");
+
+  document.querySelectorAll('input[name="method"]').forEach(r => r.onchange = checkReady);
+  terms.onchange = checkReady;
+
+  function checkReady(){
+    const method = document.querySelector('input[name="method"]:checked');
+    btn.disabled = !(method && terms.checked);
   }
 
-  if (!termsChecked) {
-    alert("You must agree to the terms and conditions.");
-    return;
-  }
+  window.createInvoice = async () => {
+    const method = document.querySelector('input[name="method"]:checked')?.value;
+    if (!method) return;
 
-  const btn = document.getElementById("proceedBtn");
-  const loading = document.getElementById("loadingText");
-  btn.disabled = true;
-  loading.style.display = "block";
+    btn.disabled = true;
+    loader.style.display = "block";
 
-  try {
-    await addDoc(collection(db, "invoices"), {
-      studentName: name,
-      email: email,
-      phone: phone,
-      course: course,
-      amount: parseFloat(amount),
-      paymentMethod: method,
-      status: "pending",
-      createdAt: serverTimestamp()
-    });
+    try {
+      const docRef = await addDoc(collection(db,"invoices"),{
+        studentName: name,
+        email,
+        phone,
+        course,
+        amount: Number(price),
+        paymentMethod: method,
+        status: "pending",
+        createdAt: serverTimestamp()
+      });
 
-    // Save email for invoice page
-    localStorage.setItem("studentEmail", email);
+      localStorage.setItem("invoiceId", docRef.id);
+      window.location.href = "invoice.html";
 
-    // Redirect to invoice
-    window.location.href = "invoice.html";
-  } catch (error) {
-    console.error(error);
-    alert("Failed to generate invoice. Try again.");
-    btn.disabled = false;
-    loading.style.display = "none";
-  }
-});
+    } catch (err) {
+      alert("Error generating invoice. Try again.");
+      console.error(err);
+      btn.disabled = false;
+      loader.style.display = "none";
+    }
+  };
 </script>
 
 </body>
