@@ -1,170 +1,79 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Payment Preview | Food Business Academy</title>
+<title>Payment Preview - Food Business Academy</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
 <style>
-:root{
-  --blue:#2563eb;
-  --purple:#6d28d9;
-  --green:#22c55e;
-  --bg:#f4f6fb;
-}
-
-*{box-sizing:border-box;font-family:'Poppins',sans-serif}
-
 body{
-  margin:0;
-  min-height:100vh;
-  background:linear-gradient(135deg,#e0e7ff,#ffffff);
-  display:flex;
-  justify-content:center;
-  align-items:center;
+  font-family:'Poppins',sans-serif;
+  background:#f4f6fb;
   padding:20px;
 }
-
-/* ===== CARD ===== */
-.card{
-  width:100%;
+.container{
   max-width:480px;
+  margin:auto;
   background:#fff;
-  padding:28px;
-  border-radius:22px;
-  box-shadow:0 25px 60px rgba(0,0,0,.12);
-  animation:slideUp .6s ease;
-}
-
-@keyframes slideUp{
-  from{opacity:0;transform:translateY(40px)}
-  to{opacity:1}
-}
-
-h2{text-align:center;margin-bottom:20px}
-
-.info{
-  background:#f8fafc;
-  padding:16px;
+  padding:20px;
   border-radius:16px;
-  margin-bottom:18px;
+  box-shadow:0 8px 25px rgba(0,0,0,0.08);
 }
-
-.info p{
-  margin:6px 0;
-  font-size:14px;
-  display:flex;
-  justify-content:space-between;
-}
+h2{text-align:center;margin-bottom:15px;}
+p{margin:6px 0;font-size:14px;}
 
 select,button{
   width:100%;
-  padding:14px;
-  border-radius:14px;
-  border:1px solid #e5e7eb;
-  font-size:15px;
+  padding:12px;
+  margin-top:12px;
+  border-radius:10px;
+  border:1px solid #ddd;
 }
-
-select{margin-bottom:16px}
-
 button{
-  background:linear-gradient(135deg,var(--blue),var(--purple));
+  background:#2563eb;
   color:#fff;
   font-weight:600;
   border:none;
   cursor:pointer;
-  transition:.3s;
 }
+button:hover{background:#6d28d9}
 
-button:hover{transform:translateY(-2px);box-shadow:0 10px 25px rgba(0,0,0,.2)}
-button:disabled{opacity:.6;cursor:not-allowed}
-
-.loader{
-  text-align:center;
-  margin-top:14px;
+/* Invoice Popup */
+#invoicePopup{
   display:none;
-  font-size:14px;
-}
-
-/* ===== MODAL ===== */
-.modal{
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,.6);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:999;
+  background:rgba(0,0,0,0.6);
+  z-index:9999;
 }
-
-.invoice{
+#invoiceBox{
   background:#fff;
-  width:100%;
   max-width:420px;
-  padding:26px;
-  border-radius:22px;
-  box-shadow:0 30px 70px rgba(0,0,0,.25);
-  animation:pop .4s ease;
+  margin:15% auto;
+  padding:20px;
+  border-radius:16px;
 }
-
-@keyframes pop{
-  from{opacity:0;transform:scale(.9)}
-  to{opacity:1}
-}
-
-.badge{
-  display:inline-block;
-  background:#fef3c7;
-  color:#92400e;
-  padding:6px 14px;
-  border-radius:999px;
-  font-size:13px;
-  font-weight:600;
-}
-
-.invoice p{
-  font-size:14px;
-  margin:6px 0;
-}
-
-.actions{
-  margin-top:18px;
-  display:flex;
-  gap:10px;
-}
-
-.actions button{
-  flex:1;
-  padding:12px;
-  border-radius:14px;
-  font-weight:600;
-}
-
-.close{
-  background:var(--green);
-}
-
-.print{
-  background:#e5e7eb;
+.closeBtn{
+  background:#22c55e;
+  margin-top:10px;
 }
 </style>
 </head>
 
 <body>
 
-<!-- PAYMENT CARD -->
-<div class="card">
+<div class="container">
   <h2>Payment Preview</h2>
 
-  <div class="info">
-    <p><span>Name</span><strong id="name"></strong></p>
-    <p><span>Email</span><strong id="email"></strong></p>
-    <p><span>Phone</span><strong id="phone"></strong></p>
-    <p><span>Course</span><strong id="course"></strong></p>
-    <p><span>Amount</span><strong>$<span id="price"></span></strong></p>
-  </div>
+  <p><strong>Name:</strong> <span id="name"></span></p>
+  <p><strong>Email:</strong> <span id="email"></span></p>
+  <p><strong>Phone:</strong> <span id="phone"></span></p>
+  <p><strong>Course:</strong> <span id="course"></span></p>
+  <p><strong>Amount:</strong> $<span id="price"></span></p>
 
   <select id="method">
     <option value="Ecocash">Ecocash</option>
@@ -172,55 +81,34 @@ button:disabled{opacity:.6;cursor:not-allowed}
     <option value="PayPal">PayPal</option>
   </select>
 
-  <button id="payBtn">Proceed to Payment</button>
-  <div class="loader" id="loader">Creating invoice…</div>
+  <!-- IMPORTANT -->
+  <button type="button" onclick="proceedPayment()">Proceed to Payment</button>
 </div>
 
-<!-- INVOICE MODAL -->
-<div class="modal" id="invoicePopup">
-  <div class="invoice">
+<!-- INVOICE POPUP -->
+<div id="invoicePopup">
+  <div id="invoiceBox">
     <h3>Payment Invoice</h3>
-    <span class="badge">Pending Payment</span>
 
-    <div id="invoiceDetails" style="margin-top:12px"></div>
+    <p id="invoiceDetails"></p>
 
-    <p style="margin-top:12px"><strong>Payment Instructions</strong></p>
+    <p><strong>Payment Instructions</strong></p>
     <p>
-      📱 Ecocash: 0771 100 000<br>
       🏦 Bank: CBZ / FBC<br>
+      💰 Ecocash: 077 XXX XXXX<br>
       💳 PayPal: payments@email.com<br>
       📌 Reference: Your Email
     </p>
 
-    <div class="actions">
-      <button class="print" onclick="window.print()">Print</button>
-      <button class="close" onclick="closeInvoice()">Close</button>
-    </div>
+    <button class="closeBtn" onclick="closeInvoice()">Close</button>
   </div>
 </div>
 
-<!-- FIREBASE + LOGIC -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-/* 🔥 YOUR REAL FIREBASE CONFIG */
-const firebaseConfig = {
-  apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
-  authDomain: "students-login-29409.firebaseapp.com",
-  projectId: "students-login-29409",
-  storageBucket: "students-login-29409.firebasestorage.app",
-  messagingSenderId: "634331456872",
-  appId: "1:634331456872:web:6dae360c5e28d8356562dd"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-/* LOAD DATA (same as your working code) */
-const name = localStorage.getItem("studentName") || "Student";
-const email = localStorage.getItem("studentEmail") || "";
-const phone = localStorage.getItem("studentPhone") || "";
+<script>
+/* Load student + course data */
+const name = localStorage.getItem("studentName");
+const email = localStorage.getItem("studentEmail");
+const phone = localStorage.getItem("studentPhone");
 
 const params = new URLSearchParams(window.location.search);
 const course = params.get("courseName") || "Selected Course";
@@ -232,32 +120,46 @@ document.getElementById("phone").textContent = phone;
 document.getElementById("course").textContent = course;
 document.getElementById("price").textContent = price;
 
-/* PROCEED PAYMENT (COPIED + IMPROVED) */
-document.getElementById("payBtn").onclick = async ()=>{
-  const method = document.getElementById("method").value;
-  document.getElementById("loader").style.display="block";
+async function proceedPayment(){
+  let ip = "Unknown";
+  try{
+    const res = await fetch("https://api.ipify.org?format=json");
+    const data = await res.json();
+    ip = data.ip;
+  }catch(e){}
 
-  const ref = await addDoc(collection(db,"invoices"),{
-    name,email,phone,course,price,method,
-    status:"pending",
-    createdAt:serverTimestamp()
+  const method = document.getElementById("method").value;
+
+  const payments = JSON.parse(localStorage.getItem("payments")) || [];
+
+  payments.push({
+    id: Date.now(),
+    name,
+    email,
+    phone,
+    course,
+    price,
+    method,
+    ip,
+    status: "pending",
+    date: new Date().toLocaleString()
   });
 
+  localStorage.setItem("payments", JSON.stringify(payments));
+
   document.getElementById("invoiceDetails").innerHTML = `
-    <p><strong>Name:</strong> ${name}</p>
-    <p><strong>Email:</strong> ${email}</p>
-    <p><strong>Course:</strong> ${course}</p>
-    <p><strong>Amount:</strong> $${price}</p>
-    <p><strong>Method:</strong> ${method}</p>
-    <p><strong>Invoice No:</strong> FBA-${ref.id.slice(0,8).toUpperCase()}</p>
+    <strong>Name:</strong> ${name}<br>
+    <strong>Email:</strong> ${email}<br>
+    <strong>Course:</strong> ${course}<br>
+    <strong>Amount:</strong> $${price}<br>
+    <strong>Method:</strong> ${method}
   `;
 
-  document.getElementById("invoicePopup").style.display="flex";
-  document.getElementById("loader").style.display="none";
-};
+  document.getElementById("invoicePopup").style.display = "block";
+}
 
 function closeInvoice(){
-  document.getElementById("invoicePopup").style.display="none";
+  document.getElementById("invoicePopup").style.display = "none";
 }
 </script>
 
