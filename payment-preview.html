@@ -5,118 +5,26 @@
 <title>Payment Preview - Food Business Academy</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
-
 <style>
-body {
-  font-family: 'Poppins', sans-serif;
-  margin:0;
-  padding:20px;
-  background:#f4f6fb;
-}
-
-/* Container */
-.container {
-  max-width: 700px;
-  margin:auto;
-  background:#fff;
-  border-radius:20px;
-  padding:30px;
-  box-shadow:0 10px 25px rgba(0,0,0,.08);
-}
-
-h2 { text-align:center; margin-bottom:20px; }
-
-.student-details p { margin:6px 0; }
-
-.course-summary {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin:15px 0;
-  padding:15px;
-  background:#f0f4ff;
-  border-radius:12px;
-}
-
-label { font-weight:600; display:block; margin:8px 0 4px; }
-select, input[type="checkbox"] { width:100%; padding:10px; border-radius:10px; border:1px solid #ddd; margin-top:4px; }
-
-button {
-  margin-top:20px;
-  width:100%;
-  padding:15px;
-  border:none;
-  border-radius:12px;
-  background:linear-gradient(135deg,#2563eb,#6d28d9);
-  color:#fff;
-  font-weight:600;
-  cursor:pointer;
-  font-size:16px;
-}
-button:hover { opacity:.9; }
-button[disabled] { cursor:not-allowed; opacity:.85; }
-
-/* Invoice Popup */
-.invoice-popup {
-  display:none;
-  position:fixed;
-  top:50%;
-  left:50%;
-  transform:translate(-50%,-50%);
-  width:95%;
-  max-width:650px;
-  background:#fff;
-  border-radius:20px;
-  padding:25px;
-  box-shadow:0 15px 40px rgba(0,0,0,.3);
-  z-index:999;
-  overflow:auto;
-}
-
-.invoice-header {
-  text-align:center;
-  border-bottom:2px solid #f0f0f0;
-  padding-bottom:10px;
-  margin-bottom:15px;
-}
-.invoice-header img { width:100px; margin-bottom:10px; }
-
-.invoice-title { font-size:22px; font-weight:700; color:#2563eb; }
-
-.invoice-body p { margin:6px 0; }
-.invoice-body .highlight { font-weight:600; color:#6d28d9; }
-
-.payment-instructions {
-  margin-top:15px;
-  padding:10px;
-  background:#f9f9f9;
-  border-radius:12px;
-  font-size:14px;
-}
-
-.invoice-footer {
-  display:flex;
-  justify-content:space-between;
-  margin-top:20px;
-}
-.invoice-footer button { width:48%; }
-
-/* QR Code style */
-.qr-code {
-  display:block;
-  margin:10px auto;
-  width:150px;
-  height:150px;
-  border:1px solid #ddd;
-  border-radius:12px;
-}
-
-/* Mobile */
-@media(max-width:600px){
-  .course-summary { flex-direction:column; align-items:flex-start; }
-  .invoice-footer { flex-direction:column; gap:10px; }
-  .invoice-footer button { width:100%; }
-}
+  body{font-family:'Poppins',sans-serif;margin:0;padding:20px;background:#f4f6fb;}
+  .container{max-width:700px;margin:auto;background:#fff;border-radius:20px;padding:30px;box-shadow:0 10px 25px rgba(0,0,0,.08);}
+  h2{text-align:center;margin-bottom:20px;}
+  .student-details p{margin:6px 0;}
+  .course-summary{display:flex;justify-content:space-between;align-items:center;margin:15px 0;padding:15px;background:#f0f4ff;border-radius:12px;}
+  label{font-weight:600;display:block;margin:8px 0 4px;}
+  select,input[type="checkbox"]{width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;margin-top:4px;}
+  button{margin-top:20px;width:100%;padding:15px;border:none;border-radius:12px;background:linear-gradient(135deg,#2563eb,#6d28d9);color:#fff;font-weight:600;cursor:pointer;font-size:16px;}
+  button:hover{opacity:.9;}
+  button[disabled]{cursor:not-allowed;opacity:.85;}
+  .invoice-popup{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:95%;max-width:650px;background:#fff;border-radius:20px;padding:25px;box-shadow:0 15px 40px rgba(0,0,0,.3);z-index:999;overflow:auto;}
+  .invoice-header{text-align:center;border-bottom:2px solid #f0f0f0;padding-bottom:10px;margin-bottom:15px;}
+  .invoice-header img{width:100px;margin-bottom:10px;}
+  .invoice-title{font-size:22px;font-weight:700;color:#2563eb;}
+  .invoice-body p{margin:6px 0;}
+  .payment-instructions{margin-top:15px;padding:10px;background:#f9f9f9;border-radius:12px;font-size:14px;}
+  .invoice-footer{display:flex;justify-content:space-between;margin-top:20px;}
+  .invoice-footer button{width:48%;}
+  @media(max-width:600px){.course-summary{flex-direction:column;align-items:flex-start;}.invoice-footer{flex-direction:column;gap:10px;}.invoice-footer button{width:100%;}}
 </style>
 </head>
 <body>
@@ -163,7 +71,6 @@ button[disabled] { cursor:not-allowed; opacity:.85; }
       <p><strong>Bank Details:</strong> Food Business Academy, ABC Bank, Acc#: 1234567890</p>
       <p><strong>Ecocash:</strong> 0771234567</p>
       <p>Send proof of payment to WhatsApp: <strong>0771234567</strong> or email: <strong>support@foodbusinessacademy.com</strong></p>
-      <img src="ecocash-qr.png" class="qr-code" alt="Scan QR for Ecocash">
     </div>
   </div>
   <div class="invoice-footer">
@@ -172,84 +79,84 @@ button[disabled] { cursor:not-allowed; opacity:.85; }
   </div>
 </div>
 
-<!-- Firebase + JsPDF -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import jsPDF from "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-// Firebase Config
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-};
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+<script>
+  // Initialize Firebase
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-// Student + Course info
-const studentName = localStorage.getItem('studentName');
-const studentEmail = localStorage.getItem('studentEmail');
-const studentPhone = localStorage.getItem('studentPhone');
-const courseName = localStorage.getItem('courseName');
-const coursePrice = localStorage.getItem('coursePrice');
+  // Load student & course info from localStorage
+  const studentName = localStorage.getItem('studentName') || "";
+  const studentEmail = localStorage.getItem('studentEmail') || "";
+  const studentPhone = localStorage.getItem('studentPhone') || "";
+  const courseName = localStorage.getItem('courseName') || "";
+  const coursePrice = localStorage.getItem('coursePrice') || "";
 
-document.getElementById('studentDetails').innerHTML = `
-  <p><strong>Name:</strong> ${studentName}</p>
-  <p><strong>Email:</strong> ${studentEmail}</p>
-  <p><strong>Phone:</strong> ${studentPhone}</p>
-`;
+  document.getElementById('studentDetails').innerHTML = `
+    <p><strong>Name:</strong> ${studentName}</p>
+    <p><strong>Email:</strong> ${studentEmail}</p>
+    <p><strong>Phone:</strong> ${studentPhone}</p>
+  `;
+  document.getElementById('courseName').textContent = courseName;
+  document.getElementById('amount').textContent = coursePrice;
 
-document.getElementById('courseName').textContent = courseName;
-document.getElementById('amount').textContent = coursePrice;
+  const btn = document.getElementById('proceedPayment');
+  btn.addEventListener('click', async ()=>{
+    const paymentMethod = document.getElementById('paymentMethod').value;
+    if(!document.getElementById('terms').checked){
+      alert("Please accept the terms and conditions");
+      return;
+    }
 
-// Handle Proceed Payment
-document.getElementById('proceedPayment').addEventListener('click', async()=>{
-  const paymentMethod = document.getElementById('paymentMethod').value;
-  if(!document.getElementById('terms').checked){
-    alert("Please accept the terms and conditions");
-    return;
-  }
+    // Save invoice to Firestore
+    try {
+      await db.collection("invoices").add({
+        name: studentName,
+        email: studentEmail,
+        phone: studentPhone,
+        course: courseName,
+        amount: coursePrice,
+        paymentMethod: paymentMethod,
+        status: "pending",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } catch(e){
+      console.error("Error saving invoice:", e);
+    }
 
-  // Save invoice in Firestore
-  await addDoc(collection(db,'invoices'),{
-    name: studentName,
-    email: studentEmail,
-    phone: studentPhone,
-    course: courseName,
-    amount: coursePrice,
-    paymentMethod: paymentMethod,
-    status: "pending",
-    createdAt: serverTimestamp()
+    // Show invoice popup
+    document.getElementById('invName').textContent = studentName;
+    document.getElementById('invEmail').textContent = studentEmail;
+    document.getElementById('invPhone').textContent = studentPhone;
+    document.getElementById('invCourse').textContent = courseName;
+    document.getElementById('invAmount').textContent = coursePrice;
+    document.getElementById('invMethod').textContent = paymentMethod;
+
+    document.getElementById('invoicePopup').style.display = 'block';
   });
 
-  // Show popup
-  document.getElementById('invName').textContent = studentName;
-  document.getElementById('invEmail').textContent = studentEmail;
-  document.getElementById('invPhone').textContent = studentPhone;
-  document.getElementById('invCourse').textContent = courseName;
-  document.getElementById('invAmount').textContent = coursePrice;
-  document.getElementById('invMethod').textContent = paymentMethod;
+  function closeInvoicePopup(){
+    document.getElementById('invoicePopup').style.display = 'none';
+    window.location.href = "courses.html";
+  }
 
-  document.getElementById('invoicePopup').style.display = 'block';
-});
-
-// Close popup
-function closeInvoicePopup(){
-  document.getElementById('invoicePopup').style.display = 'none';
-  window.location.href = "courses.html";
-}
-
-// Download PDF
-function downloadInvoice(){
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  const invoiceText = document.getElementById('invoiceContent').innerText;
-  doc.setFontSize(12);
-  doc.text(invoiceText,10,10);
-  doc.save(`${courseName}-invoice.pdf`);
-}
+  function downloadInvoice(){
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const text = document.getElementById('invoiceContent').innerText;
+    doc.setFontSize(12);
+    doc.text(text, 10, 10);
+    doc.save(`${courseName}-invoice.pdf`);
+  }
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 </body>
 </html>
