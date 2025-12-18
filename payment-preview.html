@@ -8,12 +8,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
 <style>
-/* ===== YOUR ORIGINAL DESIGN (UNCHANGED) ===== */
 :root{
   --blue:#2563eb;
   --purple:#6d28d9;
-  --card:#ffffff;
-  --text:#1f2937;
   --accent:#f59e0b;
 }
 
@@ -24,14 +21,15 @@ body{
   min-height:100vh;
   background:linear-gradient(135deg,#e0e7ff,#ffffff);
   display:flex;
-  align-items:center;
   justify-content:center;
+  align-items:center;
   padding:20px;
 }
 
+/* ===== PAYMENT CARD ===== */
 .card{
-  max-width:560px;
   width:100%;
+  max-width:560px;
   background:#fff;
   padding:34px;
   border-radius:30px;
@@ -39,12 +37,7 @@ body{
 }
 
 .section{margin-bottom:24px}
-
-.box{
-  background:#f8fafc;
-  padding:18px;
-  border-radius:18px;
-}
+.box{background:#f8fafc;padding:18px;border-radius:18px}
 
 .row{
   display:flex;
@@ -75,40 +68,108 @@ body{
   cursor:pointer;
 }
 
-.btn:disabled{
-  opacity:.6;
-  cursor:not-allowed;
+.btn:disabled{opacity:.6;cursor:not-allowed}
+
+.loader{text-align:center;margin-top:14px;font-size:14px;display:none}
+
+/* ===== INVOICE MODAL ===== */
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
 }
 
-.loader{
-  display:none;
-  text-align:center;
-  margin-top:16px;
-  font-size:14px;
+.invoice{
+  background:#fff;
+  max-width:760px;
+  width:100%;
+  padding:40px;
+  border-radius:26px;
+  box-shadow:0 30px 70px rgba(0,0,0,.25);
+  animation:fade .4s ease;
+}
+
+@keyframes fade{
+  from{opacity:0;transform:translateY(30px)}
+  to{opacity:1}
+}
+
+.badge{
+  padding:8px 16px;
+  border-radius:999px;
+  background:#fef3c7;
+  color:#92400e;
+  font-weight:600;
+  font-size:13px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+
+.total{
+  margin-top:20px;
+  display:flex;
+  justify-content:space-between;
+  font-size:18px;
+  font-weight:700;
+}
+
+.actions{
+  margin-top:30px;
+  display:flex;
+  gap:14px;
+}
+
+.actions button{
+  flex:1;
+  padding:14px;
+  border:none;
+  border-radius:16px;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.print{background:#e5e7eb}
+.dashboard{
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  color:#fff;
+}
+
+@media print{
+  body *{visibility:hidden}
+  .invoice, .invoice *{visibility:visible}
+  .invoice{position:absolute;left:0;top:0;width:100%}
 }
 </style>
 </head>
 
 <body>
 
+<!-- ===== PAYMENT ===== -->
 <div class="card">
-
   <h2 style="text-align:center">Payment Preview</h2>
 
   <div class="section">
     <h4>Student Details</h4>
     <div class="box">
-      <div class="row"><span>Name</span><strong id="name"></strong></div>
-      <div class="row"><span>Email</span><strong id="email"></strong></div>
-      <div class="row"><span>Phone</span><strong id="phone"></strong></div>
+      <div class="row"><span>Name</span><strong id="sName"></strong></div>
+      <div class="row"><span>Email</span><strong id="sEmail"></strong></div>
+      <div class="row"><span>Phone</span><strong id="sPhone"></strong></div>
     </div>
   </div>
 
   <div class="section">
     <h4>Course</h4>
     <div class="box">
-      <div class="row"><span>Course</span><strong id="course"></strong></div>
-      <div class="row"><span>Amount</span><strong>$<span id="price"></span></strong></div>
+      <div class="row"><span>Course</span><strong id="sCourse"></strong></div>
+      <div class="row"><span>Amount</span><strong>$<span id="sPrice"></span></strong></div>
     </div>
   </div>
 
@@ -122,55 +183,100 @@ body{
   </div>
 
   <button class="btn" id="payBtn" disabled>Proceed with Payment</button>
-
   <div class="loader" id="loader">Creating invoice…</div>
-
 </div>
 
-<!-- ================= FIXED SCRIPT ================= -->
+<!-- ===== INVOICE MODAL ===== -->
+<div class="modal" id="invoiceModal">
+  <div class="invoice">
+
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h2>Food Business Academy</h2>
+      <span class="badge">Pending Payment</span>
+    </div>
+
+    <div class="section">
+      <h4>Student Details</h4>
+      <div class="grid">
+        <div class="row"><span>Name</span><strong id="iName"></strong></div>
+        <div class="row"><span>Email</span><strong id="iEmail"></strong></div>
+        <div class="row"><span>Phone</span><strong id="iPhone"></strong></div>
+        <div class="row"><span>Invoice No</span><strong id="iInvoice"></strong></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h4>Course & Payment</h4>
+      <div class="grid">
+        <div class="row"><span>Course</span><strong id="iCourse"></strong></div>
+        <div class="row"><span>Payment Method</span><strong id="iMethod"></strong></div>
+        <div class="row"><span>Date</span><strong id="iDate"></strong></div>
+      </div>
+
+      <div class="total">
+        <span>Total</span>
+        <span>$<span id="iAmount"></span></span>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="print" onclick="window.print()">🖨 Print / Download</button>
+      <button class="dashboard" onclick="location.href='dashboard.html'">Dashboard</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== FIREBASE + LOGIC ===== -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
 
+/* 🔥 YOUR FIREBASE CONFIG */
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID"
+  apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+  authDomain: "students-login-29409.firebaseapp.com",
+  projectId: "students-login-29409",
+  storageBucket: "students-login-29409.firebasestorage.app",
+  messagingSenderId: "634331456872",
+  appId: "1:634331456872:web:6dae360c5e28d8356562dd",
+  measurementId: "G-96XXYG1VR2"
 };
 
 const app = initializeApp(firebaseConfig);
+getAnalytics(app);
 const db = getFirestore(app);
 
-/* LOAD DATA */
+/* LOAD STUDENT FROM LOCALSTORAGE */
 const student = {
   name: localStorage.getItem("studentName"),
   email: localStorage.getItem("studentEmail"),
   phone: localStorage.getItem("studentPhone"),
   course: localStorage.getItem("courseName"),
-  price: Number(localStorage.getItem("coursePrice"))
+  price: localStorage.getItem("coursePrice")
 };
 
-document.getElementById("name").textContent = student.name;
-document.getElementById("email").textContent = student.email;
-document.getElementById("phone").textContent = student.phone;
-document.getElementById("course").textContent = student.course;
-document.getElementById("price").textContent = student.price;
+sName.textContent = student.name;
+sEmail.textContent = student.email;
+sPhone.textContent = student.phone;
+sCourse.textContent = student.course;
+sPrice.textContent = student.price;
 
 /* ENABLE BUTTON */
-const payBtn = document.getElementById("payBtn");
 document.querySelectorAll('input[name="method"]').forEach(r=>{
-  r.addEventListener("change",()=> payBtn.disabled = false);
+  r.addEventListener("change",()=> payBtn.disabled=false);
 });
 
-/* ✅ WORKING BUTTON LOGIC */
-payBtn.addEventListener("click", async ()=>{
+/* CREATE INVOICE + POPUP */
+payBtn.onclick = async ()=>{
   const method = document.querySelector('input[name="method"]:checked')?.value;
   if(!method) return;
 
-  payBtn.disabled = true;
-  document.getElementById("loader").style.display = "block";
+  loader.style.display="block";
+  payBtn.disabled=true;
 
-  const docRef = await addDoc(collection(db,"invoices"),{
+  const ref = await addDoc(collection(db,"invoices"),{
     studentName: student.name,
     email: student.email,
     phone: student.phone,
@@ -181,11 +287,18 @@ payBtn.addEventListener("click", async ()=>{
     createdAt: serverTimestamp()
   });
 
-  localStorage.setItem("invoiceId", docRef.id);
+  iName.textContent = student.name;
+  iEmail.textContent = student.email;
+  iPhone.textContent = student.phone;
+  iCourse.textContent = student.course;
+  iMethod.textContent = method;
+  iAmount.textContent = student.price;
+  iInvoice.textContent = "FBA-" + ref.id.slice(0,8).toUpperCase();
+  iDate.textContent = new Date().toLocaleDateString();
 
-  window.location.href = "invoice.html?id=" + docRef.id;
-});
+  invoiceModal.style.display="flex";
+};
 </script>
 
 </body>
-</html>
+  </html>
