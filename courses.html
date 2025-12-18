@@ -1,138 +1,128 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Courses Offered | Food Business Academy</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">  <style>
-    :root{
-      --blue:#2563eb;
-      --purple:#6d28d9;
-      --bg:#f5f7ff;
-      --card:#ffffff;
-      --text:#1f2937;
-      --pending:#f59e0b;
-    }
+<meta charset="UTF-8">
+<title>Courses Offered | Food Business Academy</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    *{box-sizing:border-box;font-family:'Poppins',sans-serif}
-    body{margin:0;background:var(--bg);color:var(--text)}
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
-    .main{padding:30px;max-width:1200px;margin:auto}
-    h1{margin-bottom:25px}
+<style>
+:root{
+  --blue:#2563eb;
+  --purple:#6d28d9;
+  --bg:#f5f7ff;
+  --card:#ffffff;
+  --text:#1f2937;
+  --pending:#f59e0b;
+}
 
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-      gap:20px;
-    }
+*{box-sizing:border-box;font-family:'Poppins',sans-serif}
+body{margin:0;background:var(--bg);color:var(--text)}
 
-    .card{
-      background:var(--card);
-      border-radius:20px;
-      padding:22px;
-      box-shadow:0 15px 35px rgba(0,0,0,.08);
-      display:flex;
-      flex-direction:column;
-      justify-content:space-between;
-      position:relative;
-    }
+.main{padding:30px;max-width:1200px;margin:auto}
+h1{margin-bottom:25px}
 
-    .badge{
-      position:absolute;
-      top:16px;
-      right:16px;
-      background:var(--pending);
-      color:#fff;
-      padding:6px 12px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:600;
-    }
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:20px;
+}
 
-    .modules{margin:15px 0}
-    .modules li{
-      margin-bottom:6px;
-      list-style:none;
-      padding-left:20px;
-      position:relative;
-    }
-    .modules li::before{
-      content:"✔";
-      position:absolute;
-      left:0;
-      color:var(--blue);
-      font-size:14px;
-    }
+.card{
+  background:var(--card);
+  border-radius:20px;
+  padding:22px;
+  box-shadow:0 15px 35px rgba(0,0,0,.08);
+  position:relative;
+}
 
-    .price{font-size:18px;font-weight:700;margin:10px 0}
+.badge{
+  position:absolute;
+  top:16px;
+  right:16px;
+  background:var(--pending);
+  color:#fff;
+  padding:6px 12px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:600;
+}
 
-    button{
-      padding:12px;
-      border:none;
-      border-radius:14px;
-      background:linear-gradient(135deg,var(--blue),var(--purple));
-      color:#fff;
-      font-weight:600;
-      cursor:pointer;
-    }
-    button[disabled]{background:var(--pending);cursor:not-allowed}
-  </style></head><body>
+.modules{margin:15px 0}
+.modules li{
+  margin-bottom:6px;
+  list-style:none;
+  padding-left:20px;
+  position:relative;
+}
+.modules li::before{
+  content:"✔";
+  position:absolute;
+  left:0;
+  color:var(--blue);
+}
+
+.price{font-size:18px;font-weight:700;margin:10px 0}
+
+button{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:14px;
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  color:#fff;
+  font-weight:600;
+  cursor:pointer;
+}
+button[disabled]{
+  background:var(--pending);
+  cursor:not-allowed;
+}
+</style>
+</head>
+
+<body>
 <main class="main">
   <h1>📘 Courses Offered</h1>
   <div class="grid" id="coursesGrid"></div>
-</main><script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+</main>
 
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-  };
+<script>
+const courses = [
+  {name:"Food Business Management Course", price:49, modules:["Introduction to Food Business","Operations & Compliance","Food Safety Management","Marketing & Distribution"]},
+  {name:"Financial Management for Food Processors", price:59, modules:["Costing & Pricing","Cash Flow Management","Budgeting & Forecasting","Profitability Analysis"]},
+  {name:"Food Value Addition Course for Farmers", price:45, modules:["Post-Harvest Handling","Processing Techniques","Packaging & Storage","Market Readiness"]},
+  {name:"New Product Development and Management", price:69, modules:["Idea Generation","Product Testing","Regulatory Approval","Product Launch Strategy"]},
+  {name:"Management", price:39, modules:["Leadership Skills","Team Management","Decision Making","Business Ethics"]}
+];
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+const pendingCourses = JSON.parse(localStorage.getItem("pendingCourses")) || [];
 
-  const studentEmail = localStorage.getItem("studentEmail");
+const grid = document.getElementById("coursesGrid");
 
-  const courses = [
-    {name:"Food Business Management Course", price:49, modules:["Introduction to Food Business","Operations & Compliance","Food Safety Management","Marketing & Distribution"]},
-    {name:"Financial Management for Food Processors", price:59, modules:["Costing & Pricing","Cash Flow Management","Budgeting & Forecasting","Profitability Analysis"]},
-    {name:"Food Value Addition Course for Farmers", price:45, modules:["Post-Harvest Handling","Processing Techniques","Packaging & Storage","Market Readiness"]},
-    {name:"New Product Development and Management", price:69, modules:["Idea Generation","Product Testing","Regulatory Approval","Product Launch Strategy"]},
-    {name:"Management", price:39, modules:["Leadership Skills","Team Management","Decision Making","Business Ethics"]}
-  ];
+courses.forEach(c => {
+  const isPending = pendingCourses.includes(c.name);
 
-  async function loadCourses(){
-    let pending = [];
-    if(studentEmail){
-      const q = query(collection(db,"invoices"), where("email","==",studentEmail), where("status","==","pending"));
-      const snap = await getDocs(q);
-      snap.forEach(d => pending.push(d.data().course));
-    }
+  grid.innerHTML += `
+    <div class="card">
+      ${isPending ? '<div class="badge">Pending Payment</div>' : ''}
+      <h3>${c.name}</h3>
+      <ul class="modules">${c.modules.map(m=>`<li>${m}</li>`).join('')}</ul>
+      <div class="price">$${c.price}</div>
+      <button ${isPending?'disabled':''}
+        onclick="goToPayment('${c.name}',${c.price})">
+        ${isPending?'Pending Payment':'Pay to Start'}
+      </button>
+    </div>
+  `;
+});
 
-    const grid = document.getElementById("coursesGrid");
-    courses.forEach(c => {
-      const isPending = pending.includes(c.name);
-      grid.innerHTML += `
-        <div class="card">
-          ${isPending ? '<div class="badge">Pending Payment</div>' : ''}
-          <div>
-            <h3>${c.name}</h3>
-            <ul class="modules">${c.modules.map(m=>`<li>${m}</li>`).join('')}</ul>
-            <div class="price">$${c.price}</div>
-          </div>
-          <button ${isPending?'disabled':''} onclick="goToPaymentPage('${c.name}',${c.price})">${isPending?'Pending Payment':'Pay to Start'}</button>
-        </div>`;
-    });
-  }
-
-  loadCourses();
-
-  window.goToPaymentPage = (course, price) => {
-    localStorage.setItem("courseName", course);
-    localStorage.setItem("coursePrice", price);
-    window.location.href = "student-details.html";
-  };
-</script></body>
+function goToPayment(course, price){
+  localStorage.setItem("courseName", course);
+  localStorage.setItem("coursePrice", price);
+  window.location.href = "student-details.html";
+}
+</script>
+</body>
 </html>
