@@ -15,6 +15,12 @@ label{font-weight:600;display:block;margin:8px 0 4px;}
 select,input[type="checkbox"]{width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;margin-top:4px;}
 button{margin-top:20px;width:100%;padding:15px;border:none;border-radius:12px;background:linear-gradient(135deg,#2563eb,#6d28d9);color:#fff;font-weight:600;cursor:pointer;font-size:16px;}
 button:hover{opacity:.9;}
+
+/* Spinner */
+#loading{text-align:center;margin-top:15px;display:none;}
+.spinner{margin:0 auto;width:40px;height:40px;border:5px solid #ddd;border-top-color:#2563eb;border-radius:50%;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
 .invoice-popup{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:95%;max-width:650px;background:#fff;border-radius:20px;padding:25px;box-shadow:0 15px 40px rgba(0,0,0,.3);z-index:999;overflow:auto;}
 .invoice-header{text-align:center;border-bottom:2px solid #f0f0f0;padding-bottom:10px;margin-bottom:15px;}
 .invoice-header img{width:100px;margin-bottom:10px;}
@@ -50,6 +56,11 @@ button:hover{opacity:.9;}
   </label>
 
   <button id="proceedPayment">Proceed to Payment</button>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <p>Generating invoice...</p>
+  </div>
 </div>
 
 <!-- Invoice Popup -->
@@ -84,7 +95,7 @@ button:hover{opacity:.9;}
 <script>
 document.addEventListener("DOMContentLoaded", function(){
 
-  // 1️⃣ Load student & course info from localStorage
+  // Load student & course info from localStorage
   const studentName = localStorage.getItem('studentName') || "";
   const studentEmail = localStorage.getItem('studentEmail') || "";
   const studentPhone = localStorage.getItem('studentPhone') || "";
@@ -99,7 +110,7 @@ document.addEventListener("DOMContentLoaded", function(){
   document.getElementById('courseName').textContent = courseName;
   document.getElementById('amount').textContent = coursePrice;
 
-  // 2️⃣ Initialize Firebase
+  // Initialize Firebase
   const firebaseConfig = {
     apiKey: "YOUR_API_KEY",
     authDomain: "YOUR_PROJECT.firebaseapp.com",
@@ -108,7 +119,7 @@ document.addEventListener("DOMContentLoaded", function(){
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
-  // 3️⃣ Proceed to Payment Button
+  // Proceed to Payment Button
   document.getElementById('proceedPayment').addEventListener('click', async ()=>{
     const paymentMethod = document.getElementById('paymentMethod').value;
     if(!document.getElementById('terms').checked){
@@ -116,8 +127,12 @@ document.addEventListener("DOMContentLoaded", function(){
       return;
     }
 
-    // 4️⃣ Save invoice to Firestore
+    // Show loading spinner
+    const loadingDiv = document.getElementById('loading');
+    loadingDiv.style.display = 'block';
+
     try{
+      // Save invoice to Firestore
       await db.collection("invoices").add({
         name: studentName,
         email: studentEmail,
@@ -130,9 +145,15 @@ document.addEventListener("DOMContentLoaded", function(){
       });
     }catch(e){
       console.error("Error saving invoice:", e);
+      alert("Failed to generate invoice. Please try again.");
+      loadingDiv.style.display = 'none';
+      return;
     }
 
-    // 5️⃣ Show invoice popup
+    // Hide loading spinner
+    loadingDiv.style.display = 'none';
+
+    // Show invoice popup
     document.getElementById('invName').textContent = studentName;
     document.getElementById('invEmail').textContent = studentEmail;
     document.getElementById('invPhone').textContent = studentPhone;
