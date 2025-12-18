@@ -1,228 +1,200 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Manage Payments | Food Business Academy</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-<style>
-:root{
-  --bg:#f4f6fb;
-  --card:#ffffff;
-  --blue:#2563eb;
-  --green:#22c55e;
-  --red:#ef4444;
-  --pending:#f59e0b;
-  --text:#1f2937;
-  --muted:#6b7280;
-}
-
-*{box-sizing:border-box;font-family:'Poppins',sans-serif}
-
-body{margin:0;background:var(--bg)}
-
-header{
-  background:#fff;
-  padding:20px 30px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  box-shadow:0 6px 20px rgba(0,0,0,.06);
-}
-
-header h1{margin:0;font-size:22px}
-
-header button{
-  padding:10px 16px;
-  border:none;
-  border-radius:12px;
-  font-weight:600;
-  cursor:pointer;
-}
-
-.binBtn{background:#e5e7eb}
-.adminBtn{background:var(--blue);color:#fff}
-
-main{padding:30px;max-width:1200px;margin:auto}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(340px,1fr));
-  gap:24px;
-}
-
-.card{
-  background:var(--card);
-  border-radius:20px;
-  padding:22px;
-  box-shadow:0 12px 30px rgba(0,0,0,.08);
-  position:relative;
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
-}
-
-.status{
-  position:absolute;
-  top:18px;
-  right:18px;
-  padding:6px 12px;
-  border-radius:999px;
-  font-size:12px;
-  font-weight:600;
-  color:#fff;
-}
-
-.pending{background:var(--pending)}
-.paid{background:var(--green)}
-
-.info{font-size:14px;color:var(--muted);margin-bottom:6px}
-.course{margin:10px 0;font-weight:600}
-
-.actions button{
-  width:100%;
-  padding:10px;
-  border:none;
-  border-radius:12px;
-  font-weight:600;
-  margin-top:8px;
-  cursor:pointer;
-}
-
-.approve{background:var(--green);color:#fff}
-.cancel{background:#f97316;color:#fff}
-.delete{background:var(--red);color:#fff}
-.restore{background:var(--blue);color:#fff}
-.disabled{background:#e5e7eb;color:#9ca3af;cursor:not-allowed}
-.download{background:#0ea5e9;color:#fff}
-</style>
-</head>
-
-<body>
-
-<header>
-  <h1>💳 Manage Payments</h1>
-  <div>
-    <button class="binBtn" onclick="toggleBin()">🗑 Recycle Bin</button>
-    <button class="adminBtn" onclick="location.href='#'">Admin Dashboard</button>
-  </div>
-</header>
-
-<main>
-  <div class="grid" id="grid"></div>
-</main>
-
-<script>
-const grid = document.getElementById("grid");
-
-let showBin = false;
-
-function loadData() {
-  // Always load fresh data from localStorage
-  return {
-    payments: JSON.parse(localStorage.getItem("payments")) || [],
-    deleted: JSON.parse(localStorage.getItem("deletedPayments")) || [],
-    statusData: JSON.parse(localStorage.getItem("courseStatus")) || {}
-  };
-}
-
-function render() {
-  const { payments, deleted, statusData } = loadData();
-  const source = showBin ? deleted : payments;
-  grid.innerHTML = "";
-
-  if (source.length === 0) {
-    grid.innerHTML = "<p>No records found.</p>";
-    return;
-  }
-
-  source.forEach((p, i) => {
-    const status = statusData[p.email]?.[p.course] || "pending";
-
-    grid.innerHTML += `
-      <div class="card">
-        <div class="status ${status === 'paid' ? 'paid' : 'pending'}">
-          ${status === 'paid' ? 'Paid' : 'Pending'}
-        </div>
-
-        <div>
-          <h3>${p.name}</h3>
-          <div class="info">📧 ${p.email}</div>
-          <div class="info">📞 ${p.phone || 'N/A'}</div>
-          <div class="info">🧾 Invoice: ${p.invoiceNumber || ''}</div>
-          <div class="info">💳 Method: ${p.method || ''}</div>
-          <div class="course">📘 ${p.course}</div>
-        </div>
-
-        <div class="actions">
-          ${!showBin && status === "pending" ? `<button class="approve" onclick="approve('${p.email}','${p.course}')">Approve</button>` : ""}
-          ${!showBin && status === "paid" ? `<button class="cancel" onclick="cancel('${p.email}','${p.course}')">Cancel Approval</button>` : ""}
-          ${!showBin ? `<button class="download" onclick="downloadInvoice('${p.invoiceNumber}','${p.name}','${p.course}','${p.price}')">Download Invoice</button>` : ""}
-          ${!showBin ? `<button class="delete" onclick="remove(${i})">Delete</button>` : `<button class="restore" onclick="restore(${i})">Restore</button>`}
-        </div>
-      </div>
-    `;
-  });
-}
-
-/* ACTIONS */
-function approve(email, course){
-  const { statusData } = loadData();
-  if(!statusData[email]) statusData[email] = {};
-  statusData[email][course] = "paid";
-  localStorage.setItem("courseStatus", JSON.stringify(statusData));
-  render();
-}
-
-function cancel(email, course){
-  const { statusData } = loadData();
-  if(!statusData[email]) statusData[email] = {};
-  statusData[email][course] = "pending";
-  localStorage.setItem("courseStatus", JSON.stringify(statusData));
-  render();
-}
-
-function remove(index){
-  const { payments, deleted } = loadData();
-  deleted.push(payments[index]);
-  payments.splice(index,1);
-  localStorage.setItem("payments", JSON.stringify(payments));
-  localStorage.setItem("deletedPayments", JSON.stringify(deleted));
-  render();
-}
-
-function restore(index){
-  const { payments, deleted } = loadData();
-  payments.push(deleted[index]);
-  deleted.splice(index,1);
-  localStorage.setItem("payments", JSON.stringify(payments));
-  localStorage.setItem("deletedPayments", JSON.stringify(deleted));
-  render();
-}
-
-function toggleBin(){
-  showBin = !showBin;
-  render();
-}
-
-/* PDF */
-function downloadInvoice(inv, name, course, price){
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF();
-  pdf.text("Food Business Academy",20,20);
-  pdf.text(`Invoice: ${inv}`,20,35);
-  pdf.text(`Name: ${name}`,20,45);
-  pdf.text(`Course: ${course}`,20,55);
-  pdf.text(`Amount: $${price}`,20,65);
-  pdf.save(`${inv}.pdf`);
-}
-
-// Initial render
-render();
-</script>
-
-</body>
-</html>
+<!DOCTYPE html>  <html lang="en">  
+<head>  
+<meta charset="UTF-8">  
+<title>Manage Payments | Food Business Academy</title>  
+<meta name="viewport" content="width=device-width, initial-scale=1.0">  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>  <style>  
+:root{  
+  --bg:#f4f6fb;  
+  --card:#ffffff;  
+  --blue:#2563eb;  
+  --green:#22c55e;  
+  --red:#ef4444;  
+  --pending:#f59e0b;  
+  --text:#1f2937;  
+  --muted:#6b7280;  
+}  
+  
+*{box-sizing:border-box;font-family:'Poppins',sans-serif}  
+  
+body{margin:0;background:var(--bg)}  
+  
+header{  
+  background:#fff;  
+  padding:20px 30px;  
+  display:flex;  
+  justify-content:space-between;  
+  align-items:center;  
+  box-shadow:0 6px 20px rgba(0,0,0,.06);  
+}  
+  
+header h1{margin:0;font-size:22px}  
+  
+header button{  
+  padding:10px 16px;  
+  border:none;  
+  border-radius:12px;  
+  font-weight:600;  
+  cursor:pointer;  
+}  
+  
+.binBtn{background:#e5e7eb}  
+.adminBtn{background:var(--blue);color:#fff}  
+  
+main{padding:30px;max-width:1200px;margin:auto}  
+  
+.grid{  
+  display:grid;  
+  grid-template-columns:repeat(auto-fit,minmax(340px,1fr));  
+  gap:24px;  
+}  
+  
+.card{  
+  background:var(--card);  
+  border-radius:20px;  
+  padding:22px;  
+  box-shadow:0 12px 30px rgba(0,0,0,.08);  
+  position:relative;  
+  display:flex;  
+  flex-direction:column;  
+  justify-content:space-between;  
+}  
+  
+.status{  
+  position:absolute;  
+  top:18px;  
+  right:18px;  
+  padding:6px 12px;  
+  border-radius:999px;  
+  font-size:12px;  
+  font-weight:600;  
+  color:#fff;  
+}  
+  
+.pending{background:var(--pending)}  
+.paid{background:var(--green)}  
+  
+.info{font-size:14px;color:var(--muted);margin-bottom:6px}  
+.course{margin:10px 0;font-weight:600}  
+  
+.actions button{  
+  width:100%;  
+  padding:10px;  
+  border:none;  
+  border-radius:12px;  
+  font-weight:600;  
+  margin-top:8px;  
+  cursor:pointer;  
+}  
+  
+.approve{background:var(--green);color:#fff}  
+.cancel{background:#f97316;color:#fff}  
+.delete{background:var(--red);color:#fff}  
+.restore{background:var(--blue);color:#fff}  
+.disabled{background:#e5e7eb;color:#9ca3af;cursor:not-allowed}  
+.download{background:#0ea5e9;color:#fff}  
+</style>  </head>  <body>  <header>  
+  <h1>💳 Manage Payments</h1>  
+  <div>  
+    <button class="binBtn" onclick="toggleBin()">🗑 Recycle Bin</button>  
+    <button class="adminBtn" onclick="location.href='#'">Admin Dashboard</button>  
+  </div>  
+</header>  <main>  
+  <div class="grid" id="grid"></div>  
+</main>  <script>  
+const grid = document.getElementById("grid");  
+  
+let payments = JSON.parse(localStorage.getItem("payments")) || [];  
+let deleted = JSON.parse(localStorage.getItem("deletedPayments")) || [];  
+let statusData = JSON.parse(localStorage.getItem("courseStatus")) || {};  
+  
+let showBin = false;  
+  
+render();  
+  
+function render(){  
+  grid.innerHTML = "";  
+  const source = showBin ? deleted : payments;  
+  
+  if(source.length === 0){  
+    grid.innerHTML = "<p>No records found.</p>";  
+    return;  
+  }  
+  
+  source.forEach((p, i) => {  
+    const status = statusData[p.email]?.[p.course] || "pending";  
+  
+    grid.innerHTML += `  
+      <div class="card">  
+        <div class="status ${status === 'paid' ? 'paid' : 'pending'}">  
+          ${status === 'paid' ? 'Paid' : 'Pending'}  
+        </div>  
+  
+        <div>  
+          <h3>${p.name}</h3>  
+          <div class="info">📧 ${p.email}</div>  
+          <div class="info">📞 ${p.phone || 'N/A'}</div>  
+          <div class="info">🧾 Invoice: ${p.invoiceNumber}</div>  
+          <div class="info">💳 Method: ${p.method}</div>  
+          <div class="course">📘 ${p.course}</div>  
+        </div>  
+  
+        <div class="actions">  
+          ${!showBin && status === "pending" ? `<button class="approve" onclick="approve('${p.email}','${p.course}')">Approve</button>` : ""}  
+          ${!showBin && status === "paid" ? `<button class="cancel" onclick="cancel('${p.email}','${p.course}')">Cancel Approval</button>` : ""}  
+          ${!showBin ? `<button class="download" onclick="downloadInvoice('${p.invoiceNumber}','${p.name}','${p.course}','${p.price}')">Download Invoice</button>` : ""}  
+          ${!showBin ? `<button class="delete" onclick="remove(${i})">Delete</button>` : `<button class="restore" onclick="restore(${i})">Restore</button>`}  
+        </div>  
+      </div>  
+    `;  
+  });  
+}  
+  
+/* ACTIONS */  
+function approve(email, course){  
+  if(!statusData[email]) statusData[email] = {};  
+  statusData[email][course] = "paid";  
+  localStorage.setItem("courseStatus", JSON.stringify(statusData));  
+  render();  
+}  
+  
+function cancel(email, course){  
+  statusData[email][course] = "pending";  
+  localStorage.setItem("courseStatus", JSON.stringify(statusData));  
+  render();  
+}  
+  
+function remove(index){  
+  deleted.push(payments[index]);  
+  payments.splice(index,1);  
+  localStorage.setItem("payments", JSON.stringify(payments));  
+  localStorage.setItem("deletedPayments", JSON.stringify(deleted));  
+  render();  
+}  
+  
+function restore(index){  
+  payments.push(deleted[index]);  
+  deleted.splice(index,1);  
+  localStorage.setItem("payments", JSON.stringify(payments));  
+  localStorage.setItem("deletedPayments", JSON.stringify(deleted));  
+  render();  
+}  
+  
+function toggleBin(){  
+  showBin = !showBin;  
+  render();  
+}  
+  
+/* PDF */  
+function downloadInvoice(inv, name, course, price){  
+  const { jsPDF } = window.jspdf;  
+  const pdf = new jsPDF();  
+  pdf.text("Food Business Academy",20,20);  
+  pdf.text(`Invoice: ${inv}`,20,35);  
+  pdf.text(`Name: ${name}`,20,45);  
+  pdf.text(`Course: ${course}`,20,55);  
+  pdf.text(`Amount: $${price}`,20,65);  
+  pdf.save(`${inv}.pdf`);  
+}  
+</script>  </body>  
+</html>  Copy the logic here...
