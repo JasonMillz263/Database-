@@ -1,15 +1,9 @@
-
-
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>Payment Preview - Food Business Academy</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-
-<style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><style>
 body{
   font-family:'Poppins',sans-serif;
   background:#f4f6fb;
@@ -53,72 +47,57 @@ button:hover{background:#6d28d9}
 #invoiceBox{
   background:#fff;
   max-width:420px;
-  margin:15% auto;
+  margin:10% auto;
   padding:20px;
   border-radius:16px;
 }
-.closeBtn{
-  background:#22c55e;
-  margin-top:10px;
-}
-</style>
-</head>
-
-<body>
-
-<div class="container">
-  <h2>Payment Preview</h2>
-
-  <p><strong>Name:</strong> <span id="name"></span></p>
+.closeBtn{background:#22c55e;}
+.pdfBtn{background:#0ea5e9;}
+</style></head><body><div class="container">
+  <h2>Payment Preview</h2>  <p><strong>Name:</strong> <span id="name"></span></p>
   <p><strong>Email:</strong> <span id="email"></span></p>
   <p><strong>Phone:</strong> <span id="phone"></span></p>
   <p><strong>Course:</strong> <span id="course"></span></p>
-  <p><strong>Amount:</strong> $<span id="price"></span></p>
-
-  <select id="method">
+  <p><strong>Amount:</strong> $<span id="price"></span></p>  <select id="method">
     <option value="Ecocash">Ecocash</option>
     <option value="Bank Transfer">Bank Transfer</option>
-    <option value="PayPal">PayPal</option>
-  </select>
+    <option value="One Money">One Money</option>
+  </select><button type="button" onclick="proceedPayment()">Proceed to Payment</button>
 
-  <!-- IMPORTANT -->
-  <button type="button" onclick="proceedPayment()">Proceed to Payment</button>
-</div>
-
-<!-- INVOICE POPUP -->
-<div id="invoicePopup">
+</div><!-- INVOICE POPUP --><div id="invoicePopup">
   <div id="invoiceBox">
     <h3>Payment Invoice</h3>
+    <p><strong>Invoice No:</strong> <span id="invoiceNo"></span></p><p id="invoiceDetails"></p>
 
-    <p id="invoiceDetails"></p>
+<p><strong>Payment Instructions</strong></p>
+<p>
+  🏦 Bank: CBZ / FBC<br>
+  💰 Ecocash: 077 XXX XXXX<br>
+  📱 One Money: 071 XXX XXXX<br>
+  📌 Reference: Your Invoice Number
+</p>
 
-    <p><strong>Payment Instructions</strong></p>
-    <p>
-      🏦 Bank: CBZ / FBC<br>
-      💰 Ecocash: 077 XXX XXXX<br>
-      💳 PayPal: payments@email.com<br>
-      📌 Reference: Your Email
-    </p>
+<button class="pdfBtn" onclick="downloadPDF()">Download Invoice PDF</button>
+<button class="closeBtn" onclick="closeInvoice()">Close</button>
 
-    <button class="closeBtn" onclick="closeInvoice()">Close</button>
   </div>
-</div>
-
-<script>
-/* Load student + course data */
-const name = localStorage.getItem("studentName");
-const email = localStorage.getItem("studentEmail");
-const phone = localStorage.getItem("studentPhone");
+</div><script>
+const name = localStorage.getItem("studentName") || "";
+const email = localStorage.getItem("studentEmail") || "";
+const phone = localStorage.getItem("studentPhone") || "";
 
 const params = new URLSearchParams(window.location.search);
 const course = params.get("courseName") || "Selected Course";
 const price = params.get("coursePrice") || "0";
+
+const invoiceNumber = "FBA-" + Date.now();
 
 document.getElementById("name").textContent = name;
 document.getElementById("email").textContent = email;
 document.getElementById("phone").textContent = phone;
 document.getElementById("course").textContent = course;
 document.getElementById("price").textContent = price;
+document.getElementById("invoiceNo").textContent = invoiceNumber;
 
 async function proceedPayment(){
   let ip = "Unknown";
@@ -133,7 +112,7 @@ async function proceedPayment(){
   const payments = JSON.parse(localStorage.getItem("payments")) || [];
 
   payments.push({
-    id: Date.now(),
+    invoiceNumber,
     name,
     email,
     phone,
@@ -158,10 +137,26 @@ async function proceedPayment(){
   document.getElementById("invoicePopup").style.display = "block";
 }
 
+function downloadPDF(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  doc.setFontSize(16);
+  doc.text("Food Business Academy", 20, 20);
+  doc.setFontSize(12);
+  doc.text(`Invoice No: ${invoiceNumber}`, 20, 30);
+  doc.text(`Name: ${name}`, 20, 40);
+  doc.text(`Email: ${email}`, 20, 50);
+  doc.text(`Course: ${course}`, 20, 60);
+  doc.text(`Amount: $${price}`, 20, 70);
+  doc.text(`Payment Method: ${document.getElementById("method").value}`, 20, 80);
+  doc.text("Status: Pending Payment", 20, 95);
+
+  doc.save(`${invoiceNumber}.pdf`);
+}
+
 function closeInvoice(){
   document.getElementById("invoicePopup").style.display = "none";
 }
-</script>
-
-</body>
+</script></body>
 </html>
