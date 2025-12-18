@@ -118,27 +118,23 @@ main{padding:30px;max-width:1200px;margin:auto}
 <script>
 const grid = document.getElementById("grid");
 
-let payments = JSON.parse(localStorage.getItem("payments")) || [];
-let deleted = JSON.parse(localStorage.getItem("deletedPayments")) || [];
-let statusData = JSON.parse(localStorage.getItem("courseStatus")) || {};
-
 let showBin = false;
 
-render();
-
-// ALWAYS fetch latest payments from localStorage to catch new pending payments
-function loadPayments(){
-  payments = JSON.parse(localStorage.getItem("payments")) || [];
-  deleted = JSON.parse(localStorage.getItem("deletedPayments")) || [];
-  statusData = JSON.parse(localStorage.getItem("courseStatus")) || {};
+function loadData() {
+  // Always load fresh data from localStorage
+  return {
+    payments: JSON.parse(localStorage.getItem("payments")) || [],
+    deleted: JSON.parse(localStorage.getItem("deletedPayments")) || [],
+    statusData: JSON.parse(localStorage.getItem("courseStatus")) || {}
+  };
 }
 
-function render(){
-  loadPayments(); // refresh before rendering
-  grid.innerHTML = "";
+function render() {
+  const { payments, deleted, statusData } = loadData();
   const source = showBin ? deleted : payments;
+  grid.innerHTML = "";
 
-  if(source.length === 0){
+  if (source.length === 0) {
     grid.innerHTML = "<p>No records found.</p>";
     return;
   }
@@ -156,8 +152,8 @@ function render(){
           <h3>${p.name}</h3>
           <div class="info">📧 ${p.email}</div>
           <div class="info">📞 ${p.phone || 'N/A'}</div>
-          <div class="info">🧾 Invoice: ${p.invoiceNumber}</div>
-          <div class="info">💳 Method: ${p.method}</div>
+          <div class="info">🧾 Invoice: ${p.invoiceNumber || ''}</div>
+          <div class="info">💳 Method: ${p.method || ''}</div>
           <div class="course">📘 ${p.course}</div>
         </div>
 
@@ -174,6 +170,7 @@ function render(){
 
 /* ACTIONS */
 function approve(email, course){
+  const { statusData } = loadData();
   if(!statusData[email]) statusData[email] = {};
   statusData[email][course] = "paid";
   localStorage.setItem("courseStatus", JSON.stringify(statusData));
@@ -181,6 +178,7 @@ function approve(email, course){
 }
 
 function cancel(email, course){
+  const { statusData } = loadData();
   if(!statusData[email]) statusData[email] = {};
   statusData[email][course] = "pending";
   localStorage.setItem("courseStatus", JSON.stringify(statusData));
@@ -188,18 +186,8 @@ function cancel(email, course){
 }
 
 function remove(index){
-  const p = payments[index];
-
-  // Remove course status completely
-  if(statusData[p.email]){
-    delete statusData[p.email][p.course];
-    if(Object.keys(statusData[p.email]).length === 0){
-      delete statusData[p.email];
-    }
-    localStorage.setItem("courseStatus", JSON.stringify(statusData));
-  }
-
-  deleted.push(p);
+  const { payments, deleted } = loadData();
+  deleted.push(payments[index]);
   payments.splice(index,1);
   localStorage.setItem("payments", JSON.stringify(payments));
   localStorage.setItem("deletedPayments", JSON.stringify(deleted));
@@ -207,6 +195,7 @@ function remove(index){
 }
 
 function restore(index){
+  const { payments, deleted } = loadData();
   payments.push(deleted[index]);
   deleted.splice(index,1);
   localStorage.setItem("payments", JSON.stringify(payments));
@@ -230,6 +219,9 @@ function downloadInvoice(inv, name, course, price){
   pdf.text(`Amount: $${price}`,20,65);
   pdf.save(`${inv}.pdf`);
 }
+
+// Initial render
+render();
 </script>
 
 </body>
