@@ -1,112 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Invoice | Food Business Academy</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<title>Invoice | Food Business Academy</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
-  <style>
-    :root{
-      --blue:#2563eb;
-      --purple:#6d28d9;
-      --bg:#f4f6ff;
-      --card:#ffffff;
-      --text:#1f2937;
-      --accent:#f59e0b;
-      --success:#16a34a;
-    }
+<style>
+:root{
+  --blue:#2563eb;
+  --purple:#6d28d9;
+  --card:#ffffff;
+  --text:#1f2937;
+  --accent:#f59e0b;
+  --success:#16a34a;
+}
 
-    *{box-sizing:border-box;font-family:'Poppins',sans-serif}
-    body{
-      margin:0;
-      background:linear-gradient(135deg,#eef2ff,#ffffff);
-      padding:30px;
-      color:var(--text);
-    }
+*{box-sizing:border-box;font-family:'Poppins',sans-serif}
 
-    .invoice{
-      max-width:760px;
-      margin:auto;
-      background:var(--card);
-      border-radius:24px;
-      padding:40px;
-      box-shadow:0 30px 70px rgba(0,0,0,.15);
-      animation:fadeIn .6s ease;
-    }
+body{
+  margin:0;
+  background:linear-gradient(135deg,#eef2ff,#ffffff);
+  padding:30px;
+}
 
-    @keyframes fadeIn{from{opacity:0;transform:translateY(30px)}to{opacity:1}}
+.invoice{
+  max-width:760px;
+  margin:auto;
+  background:var(--card);
+  border-radius:24px;
+  padding:40px;
+  box-shadow:0 30px 70px rgba(0,0,0,.15);
+  animation:fadeIn .5s ease;
+}
 
-    .top{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      flex-wrap:wrap;
-      gap:20px;
-    }
+@keyframes fadeIn{
+  from{opacity:0;transform:translateY(30px)}
+  to{opacity:1}
+}
 
-    .logo h2{margin:0;color:var(--blue)}
-    .logo p{margin:4px 0 0;font-size:13px;color:#6b7280}
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:20px;
+  flex-wrap:wrap;
+}
 
-    .badge{
-      padding:8px 14px;
-      border-radius:999px;
-      background:#fef3c7;
-      color:#92400e;
-      font-weight:600;
-      font-size:13px;
-    }
+.logo h2{margin:0;color:var(--blue)}
+.logo p{margin:4px 0 0;font-size:13px;color:#6b7280}
 
-    .section{margin-top:30px}
-    .section h4{margin-bottom:12px}
+.badge{
+  padding:8px 16px;
+  border-radius:999px;
+  background:#fef3c7;
+  color:#92400e;
+  font-weight:600;
+  font-size:13px;
+}
 
-    .grid{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:14px;
-      font-size:14px;
-    }
+.section{margin-top:30px}
+.section h4{margin-bottom:12px}
 
-    .row{
-      display:flex;
-      justify-content:space-between;
-      padding:10px 14px;
-      background:#f8fafc;
-      border-radius:12px;
-    }
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
 
-    .total{
-      margin-top:20px;
-      display:flex;
-      justify-content:space-between;
-      font-size:18px;
-      font-weight:700;
-    }
+.row{
+  display:flex;
+  justify-content:space-between;
+  padding:10px 14px;
+  background:#f8fafc;
+  border-radius:12px;
+  font-size:14px;
+}
 
-    .actions{
-      margin-top:30px;
-      display:flex;
-      gap:14px;
-      flex-wrap:wrap;
-    }
+.total{
+  margin-top:20px;
+  display:flex;
+  justify-content:space-between;
+  font-size:18px;
+  font-weight:700;
+}
 
-    button{
-      flex:1;
-      padding:14px;
-      border:none;
-      border-radius:16px;
-      font-weight:600;
-      cursor:pointer;
-    }
+.actions{
+  margin-top:30px;
+  display:flex;
+  gap:14px;
+  flex-wrap:wrap;
+}
 
-    .print{background:#e5e7eb}
-    .dashboard{background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff}
+button{
+  flex:1;
+  padding:14px;
+  border:none;
+  border-radius:16px;
+  font-weight:600;
+  cursor:pointer;
+}
 
-    @media print{
-      body{background:#fff}
-      .actions{display:none}
-    }
-  </style>
+.print{background:#e5e7eb}
+.dashboard{background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff}
+
+@media print{
+  body{background:#fff}
+  .actions{display:none}
+}
+</style>
 </head>
 
 <body>
@@ -114,9 +116,6 @@
 <div class="invoice">
 
   <!-- HEADER -->
-
-  <!-- HEADER -->
-
   <div class="top">
     <div class="logo">
       <h2>Food Business Academy</h2>
@@ -125,6 +124,7 @@
     <span class="badge" id="status">Pending Payment</span>
   </div>
 
+  <!-- STUDENT -->
   <div class="section">
     <h4>Student Details</h4>
     <div class="grid">
@@ -135,6 +135,7 @@
     </div>
   </div>
 
+  <!-- COURSE -->
   <div class="section">
     <h4>Course & Payment</h4>
     <div class="grid">
@@ -142,91 +143,92 @@
       <div class="row"><span>Payment Method</span><strong id="method"></strong></div>
       <div class="row"><span>Date</span><strong id="date"></strong></div>
     </div>
+
     <div class="total">
       <span>Total</span>
       <span>$<span id="amount"></span></span>
     </div>
+  </div>
 
   <!-- PAYMENT INSTRUCTIONS -->
   <div class="section" style="background:#f9fafb;padding:20px;border-radius:16px">
     <h4>How to Make Payment</h4>
-    <div class="row"><span>📱 Ecocash</span><strong>0771100000</strong></div>
-    <div class="row"><span>📱 One Money</span><strong>071900000</strong></div>
-    <div class="row"><span>🏦 Bank Account</span><strong>XXXXXXXXX</strong></div>
+    <div class="row"><span>📱 Ecocash</span><strong>0771 100 000</strong></div>
+    <div class="row"><span>📱 One Money</span><strong>0719 000 000</strong></div>
+    <div class="row"><span>🏦 Bank</span><strong>XXXXXXXX</strong></div>
 
-    <p style="margin-top:14px;font-size:13px;color:#374151">
-      After making payment, please send your <strong>proof of payment</strong> via:
-      <br>📲 WhatsApp: <strong>0771100000</strong>
-      <br>📧 Email: <strong>foodprenueracademy@suppot.com</strong>
+    <p style="margin-top:14px;font-size:13px">
+      After payment, send your <strong>proof of payment</strong> via:<br>
+      📲 WhatsApp: <strong>0771 100 000</strong><br>
+      📧 Email: <strong>foodpreneuracademy@support.com</strong>
     </p>
   </div>
 
   <!-- ACTIONS -->
   <div class="actions">
-    <button class="print" onclick="window.print()">🖨 Print / Download Invoice</button>()">🖨 Print / Download Invoice</button>()">Print Invoice</button>
+    <button class="print" onclick="window.print()">🖨 Print / Download</button>
     <button class="dashboard" onclick="location.href='dashboard.html'">Go to Dashboard</button>
   </div>
 
 </div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getFirestore, collection, query, where, getDocs, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-  };
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-  const email = localStorage.getItem("studentEmail");
-  const course = localStorage.getItem("courseName");
+// ✅ LOAD BY INVOICE ID
+const invoiceId = localStorage.getItem("invoiceId");
 
-  async function loadInvoice(){
-    const q = query(
-      collection(db,"invoices"),
-      where("email","==",email),
-      where("course","==",course),
-      orderBy("createdAt","desc"),
-      limit(1)
-    );
+if(!invoiceId){
+  alert("Invoice not found");
+}
 
-    const snap = await getDocs(q);
-    if(snap.empty) return;
+async function loadInvoice(){
+  const ref = doc(db,"invoices",invoiceId);
+  const snap = await getDoc(ref);
 
-    const d = snap.docs[0].data();
+  if(!snap.exists()) return;
 
-    name.textContent = d.studentName;
-    emailEl.textContent = d.email;
-    phone.textContent = d.phone;
-    courseEl.textContent = d.course;
-    method.textContent = d.paymentMethod;
-    amount.textContent = d.amount;
-    invoice.textContent = snap.docs[0].id.slice(0,8).toUpperCase();
+  const d = snap.data();
 
-    date.textContent = new Date(d.createdAt?.seconds*1000).toLocaleDateString();
+  name.textContent = d.studentName;
+  email.textContent = d.email;
+  phone.textContent = d.phone;
+  course.textContent = d.course;
+  method.textContent = d.paymentMethod;
+  amount.textContent = d.amount;
 
-    if(d.status === "paid"){
-      status.textContent = "Paid";
-      status.style.background = "#dcfce7";
-      status.style.color = "#166534";
-    }
+  invoice.textContent = "FBA-" + invoiceId.slice(0,8).toUpperCase();
+  date.textContent = new Date(d.createdAt.seconds * 1000).toLocaleDateString();
+
+  if(d.status === "paid"){
+    status.textContent = "Paid";
+    status.style.background = "#dcfce7";
+    status.style.color = "#166534";
   }
+}
 
-  const name = document.getElementById("name");
-  const emailEl = document.getElementById("email");
-  const phone = document.getElementById("phone");
-  const courseEl = document.getElementById("course");
-  const method = document.getElementById("method");
-  const amount = document.getElementById("amount");
-  const invoice = document.getElementById("invoice");
-  const date = document.getElementById("date");
-  const status = document.getElementById("status");
+const name = document.getElementById("name");
+const email = document.getElementById("email");
+const phone = document.getElementById("phone");
+const course = document.getElementById("course");
+const method = document.getElementById("method");
+const amount = document.getElementById("amount");
+const invoice = document.getElementById("invoice");
+const date = document.getElementById("date");
+const status = document.getElementById("status");
 
-  loadInvoice();
+loadInvoice();
 </script>
+
 </body>
 </html>
