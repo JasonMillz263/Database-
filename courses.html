@@ -1,175 +1,153 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Courses Offered | Food Business Academy</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <style>
-    :root{
-      --blue:#2563eb;
-      --purple:#6d28d9;
-      --bg:#f5f7ff;
-      --card:#ffffff;
-      --text:#1f2937;
-    }
+<meta charset="UTF-8">
+<title>Courses | Food Business Academy</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    *{box-sizing:border-box;font-family:'Poppins',sans-serif}
-    body{margin:0;background:var(--bg);color:var(--text)}
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
-    .main{padding:30px;max-width:1200px;margin:auto}
+<style>
+body{
+  margin:0;
+  background:#f5f7ff;
+  font-family:'Poppins',sans-serif;
+  padding:20px;
+}
 
-    h1{margin-bottom:25px}
+h1{
+  text-align:center;
+  margin-bottom:30px;
+}
 
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-      gap:20px;
-    }
+.course-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:20px;
+  max-width:1000px;
+  margin:auto;
+}
 
-    .card{
-      background:var(--card);
-      border-radius:20px;
-      padding:22px;
-      box-shadow:0 15px 35px rgba(0,0,0,.08);
-      display:flex;
-      flex-direction:column;
-      justify-content:space-between;
-    }
+.course{
+  background:#fff;
+  padding:22px;
+  border-radius:20px;
+  box-shadow:0 15px 40px rgba(0,0,0,.12);
+}
 
-    .card h3{margin-top:0}
+.course h3{margin-top:0}
 
-    .modules{
-      margin:15px 0;
-    }
-    .modules li{
-      margin-bottom:6px;
-      list-style:none;
-      padding-left:20px;
-      position:relative;
-    }
-    .modules li::before{
-      content:"✔";
-      position:absolute;
-      left:0;
-      color:var(--blue);
-      font-size:14px;
-    }
+.course p{
+  font-size:14px;
+  margin:10px 0;
+}
 
-    .price{
-      font-size:18px;
-      font-weight:700;
-      margin:10px 0;
-    }
+button{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:16px;
+  font-weight:600;
+  cursor:pointer;
+}
 
-    button{
-      padding:12px;
-      border:none;
-      border-radius:14px;
-      background:linear-gradient(135deg,var(--blue),var(--purple));
-      color:#fff;
-      font-weight:600;
-      cursor:pointer;
-    }
-    button:hover{opacity:.9}
-  </style>
+.enroll{
+  background:#2563eb;
+  color:#fff;
+}
+
+.pending{
+  background:#f59e0b;
+  color:#fff;
+  cursor:default;
+}
+</style>
 </head>
 
 <body>
 
-<main class="main">
-  <h1>📘 Courses Offered</h1>
+<h1>Our Courses</h1>
 
-  <div class="grid">
+<div class="course-grid">
 
-    <!-- Course 1 -->
-    <div class="card">
-      <div>
-        <h3>Food Business Management Course</h3>
-        <ul class="modules">
-          <li>Introduction to Food Business</li>
-          <li>Operations & Compliance</li>
-          <li>Food Safety Management</li>
-          <li>Marketing & Distribution</li>
-        </ul>
-        <div class="price">$49</div>
-      </div>
-      <button onclick="goToPaymentPage('Food Business Management Course', 49)">Pay to Start</button>
-    </div>
-
-    <!-- Course 2 -->
-    <div class="card">
-      <div>
-        <h3>Financial Management for Food Processors</h3>
-        <ul class="modules">
-          <li>Costing & Pricing</li>
-          <li>Cash Flow Management</li>
-          <li>Budgeting & Forecasting</li>
-          <li>Profitability Analysis</li>
-        </ul>
-        <div class="price">$59</div>
-      </div>
-      <button onclick="goToPaymentPage('Financial Management for Food Processors', 59)">Pay to Start</button>
-    </div>
-
-    <!-- Course 3 -->
-    <div class="card">
-      <div>
-        <h3>Food Value Addition Course for Farmers</h3>
-        <ul class="modules">
-          <li>Post-Harvest Handling</li>
-          <li>Processing Techniques</li>
-          <li>Packaging & Storage</li>
-          <li>Market Readiness</li>
-        </ul>
-        <div class="price">$45</div>
-      </div>
-      <button onclick="goToPaymentPage('Food Value Addition Course for Farmers', 45)">Pay to Start</button>
-    </div>
-
-    <!-- Course 4 -->
-    <div class="card">
-      <div>
-        <h3>New Product Development and Management</h3>
-        <ul class="modules">
-          <li>Idea Generation</li>
-          <li>Product Testing</li>
-          <li>Regulatory Approval</li>
-          <li>Product Launch Strategy</li>
-        </ul>
-        <div class="price">$69</div>
-      </div>
-      <button onclick="goToPaymentPage('New Product Development and Management', 69)">Pay to Start</button>
-    </div>
-
-    <!-- Course 5 -->
-    <div class="card">
-      <div>
-        <h3>Management</h3>
-        <ul class="modules">
-          <li>Leadership Skills</li>
-          <li>Team Management</li>
-          <li>Decision Making</li>
-          <li>Business Ethics</li>
-        </ul>
-        <div class="price">$39</div>
-      </div>
-      <button onclick="goToPaymentPage('Management', 39)">Pay to Start</button>
-    </div>
-
+  <div class="course">
+    <h3>Food Business Startup</h3>
+    <p>Learn how to start and scale your food business.</p>
+    <p><strong>$120</strong></p>
+    <button id="btn-startup" class="enroll">Enroll Now</button>
   </div>
-</main>
 
-<script>
-  function goToPaymentPage(courseName, coursePrice) {
-    // Store course details in localStorage for use on next page
-    localStorage.setItem('courseName', courseName);
-    localStorage.setItem('coursePrice', coursePrice);
+  <div class="course">
+    <h3>Bakery Masterclass</h3>
+    <p>Professional baking skills from experts.</p>
+    <p><strong>$150</strong></p>
+    <button id="btn-bakery" class="enroll">Enroll Now</button>
+  </div>
 
-    // Redirect to the student details page
-    window.location.href = 'student-details.html';
-  }
+</div>
+
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+/* 🔴 EDIT ONLY THIS */
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+};
+/* 🔴 STOP */
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const email = localStorage.getItem("studentEmail");
+
+async function checkPendingPayments(){
+  if(!email) return;
+
+  const q = query(
+    collection(db,"payments"),
+    where("email","==",email),
+    where("status","==","pending")
+  );
+
+  const snapshot = await getDocs(q);
+
+  snapshot.forEach(doc=>{
+    const course = doc.data().course;
+
+    if(course === "Food Business Startup"){
+      markPending("btn-startup");
+    }
+    if(course === "Bakery Masterclass"){
+      markPending("btn-bakery");
+    }
+  });
+}
+
+function markPending(btnId){
+  const btn = document.getElementById(btnId);
+  btn.textContent = "Pending Payment";
+  btn.className = "pending";
+  btn.disabled = true;
+}
+
+/* ENROLL BUTTONS */
+document.getElementById("btn-startup").onclick = ()=>{
+  localStorage.setItem("courseName","Food Business Startup");
+  localStorage.setItem("coursePrice","120");
+  window.location.href="student-details.html";
+};
+
+document.getElementById("btn-bakery").onclick = ()=>{
+  localStorage.setItem("courseName","Bakery Masterclass");
+  localStorage.setItem("coursePrice","150");
+  window.location.href="student-details.html";
+};
+
+checkPendingPayments();
 </script>
 
 </body>
