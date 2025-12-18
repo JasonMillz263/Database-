@@ -15,12 +15,9 @@ label{font-weight:600;display:block;margin:8px 0 4px;}
 select,input[type="checkbox"]{width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;margin-top:4px;}
 button{margin-top:20px;width:100%;padding:15px;border:none;border-radius:12px;background:linear-gradient(135deg,#2563eb,#6d28d9);color:#fff;font-weight:600;cursor:pointer;font-size:16px;}
 button:hover{opacity:.9;}
-
-/* Spinner */
 #loading{text-align:center;margin-top:15px;display:none;}
 .spinner{margin:0 auto;width:40px;height:40px;border:5px solid #ddd;border-top-color:#2563eb;border-radius:50%;animation:spin 1s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
-
 .invoice-popup{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:95%;max-width:650px;background:#fff;border-radius:20px;padding:25px;box-shadow:0 15px 40px rgba(0,0,0,.3);z-index:999;overflow:auto;}
 .invoice-header{text-align:center;border-bottom:2px solid #f0f0f0;padding-bottom:10px;margin-bottom:15px;}
 .invoice-header img{width:100px;margin-bottom:10px;}
@@ -88,12 +85,10 @@ button:hover{opacity:.9;}
   </div>
 </div>
 
-<!-- Firebase v9+ Modular SDK -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain: "students-login-29409.firebaseapp.com",
@@ -104,16 +99,15 @@ const firebaseConfig = {
   measurementId: "G-96XXYG1VR2"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Load student & course info
-const studentName = localStorage.getItem('studentName') || "";
-const studentEmail = localStorage.getItem('studentEmail') || "";
-const studentPhone = localStorage.getItem('studentPhone') || "";
-const courseName = localStorage.getItem('courseName') || "";
-const coursePrice = localStorage.getItem('coursePrice') || "";
+// --- Load student/course info ---
+const studentName = localStorage.getItem('studentName');
+const studentEmail = localStorage.getItem('studentEmail');
+const studentPhone = localStorage.getItem('studentPhone');
+const courseName = localStorage.getItem('courseName');
+const coursePrice = localStorage.getItem('coursePrice');
 
 document.getElementById('studentDetails').innerHTML = `
   <p><strong>Name:</strong> ${studentName}</p>
@@ -123,11 +117,11 @@ document.getElementById('studentDetails').innerHTML = `
 document.getElementById('courseName').textContent = courseName;
 document.getElementById('amount').textContent = coursePrice;
 
-// Proceed to Payment
+// --- Original working popup logic ---
 document.getElementById('proceedPayment').addEventListener('click', async ()=>{
   const paymentMethod = document.getElementById('paymentMethod').value;
   if(!document.getElementById('terms').checked){
-    alert("Please accept the terms and conditions");
+    alert("Please accept terms and conditions");
     return;
   }
 
@@ -144,23 +138,23 @@ document.getElementById('proceedPayment').addEventListener('click', async ()=>{
       status: "pending",
       createdAt: serverTimestamp()
     });
-  } catch(e){
-    console.error("Error saving invoice:", e);
-    alert("Failed to generate invoice. Please try again.");
     document.getElementById('loading').style.display = 'none';
-    return;
+
+    // Show popup
+    document.getElementById('invName').textContent = studentName;
+    document.getElementById('invEmail').textContent = studentEmail;
+    document.getElementById('invPhone').textContent = studentPhone;
+    document.getElementById('invCourse').textContent = courseName;
+    document.getElementById('invAmount').textContent = coursePrice;
+    document.getElementById('invMethod').textContent = paymentMethod;
+
+    document.getElementById('invoicePopup').style.display = 'block';
+
+  } catch(e){
+    console.error("Error:", e);
+    alert("Failed to generate invoice.");
+    document.getElementById('loading').style.display = 'none';
   }
-
-  document.getElementById('loading').style.display = 'none';
-
-  // Show invoice popup
-  document.getElementById('invName').textContent = studentName;
-  document.getElementById('invEmail').textContent = studentEmail;
-  document.getElementById('invPhone').textContent = studentPhone;
-  document.getElementById('invCourse').textContent = courseName;
-  document.getElementById('invAmount').textContent = coursePrice;
-  document.getElementById('invMethod').textContent = paymentMethod;
-  document.getElementById('invoicePopup').style.display = 'block';
 });
 
 function closeInvoicePopup(){
