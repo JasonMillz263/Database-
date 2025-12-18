@@ -88,82 +88,79 @@ button:hover{opacity:.9;}
   </div>
 </div>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<!-- Firebase v9+ Modular SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-<script>
-document.addEventListener("DOMContentLoaded", function(){
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+  authDomain: "students-login-29409.firebaseapp.com",
+  projectId: "students-login-29409",
+  storageBucket: "students-login-29409.firebasestorage.app",
+  messagingSenderId: "634331456872",
+  appId: "1:634331456872:web:6dae360c5e28d8356562dd",
+  measurementId: "G-96XXYG1VR2"
+};
 
-  // Load student & course info from localStorage
-  const studentName = localStorage.getItem('studentName') || "";
-  const studentEmail = localStorage.getItem('studentEmail') || "";
-  const studentPhone = localStorage.getItem('studentPhone') || "";
-  const courseName = localStorage.getItem('courseName') || "";
-  const coursePrice = localStorage.getItem('coursePrice') || "";
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-  document.getElementById('studentDetails').innerHTML = `
-    <p><strong>Name:</strong> ${studentName}</p>
-    <p><strong>Email:</strong> ${studentEmail}</p>
-    <p><strong>Phone:</strong> ${studentPhone}</p>
-  `;
-  document.getElementById('courseName').textContent = courseName;
-  document.getElementById('amount').textContent = coursePrice;
+// Load student & course info
+const studentName = localStorage.getItem('studentName') || "";
+const studentEmail = localStorage.getItem('studentEmail') || "";
+const studentPhone = localStorage.getItem('studentPhone') || "";
+const courseName = localStorage.getItem('courseName') || "";
+const coursePrice = localStorage.getItem('coursePrice') || "";
 
-  // Initialize Firebase
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+document.getElementById('studentDetails').innerHTML = `
+  <p><strong>Name:</strong> ${studentName}</p>
+  <p><strong>Email:</strong> ${studentEmail}</p>
+  <p><strong>Phone:</strong> ${studentPhone}</p>
+`;
+document.getElementById('courseName').textContent = courseName;
+document.getElementById('amount').textContent = coursePrice;
 
-  // Proceed to Payment Button
-  document.getElementById('proceedPayment').addEventListener('click', async ()=>{
-    const paymentMethod = document.getElementById('paymentMethod').value;
-    if(!document.getElementById('terms').checked){
-      alert("Please accept the terms and conditions");
-      return;
-    }
+// Proceed to Payment
+document.getElementById('proceedPayment').addEventListener('click', async ()=>{
+  const paymentMethod = document.getElementById('paymentMethod').value;
+  if(!document.getElementById('terms').checked){
+    alert("Please accept the terms and conditions");
+    return;
+  }
 
-    // Show loading spinner
-    const loadingDiv = document.getElementById('loading');
-    loadingDiv.style.display = 'block';
+  document.getElementById('loading').style.display = 'block';
 
-    try{
-      // Save invoice to Firestore
-      await db.collection("invoices").add({
-        name: studentName,
-        email: studentEmail,
-        phone: studentPhone,
-        course: courseName,
-        amount: coursePrice,
-        paymentMethod: paymentMethod,
-        status: "pending",
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-    }catch(e){
-      console.error("Error saving invoice:", e);
-      alert("Failed to generate invoice. Please try again.");
-      loadingDiv.style.display = 'none';
-      return;
-    }
+  try {
+    await addDoc(collection(db,"invoices"),{
+      name: studentName,
+      email: studentEmail,
+      phone: studentPhone,
+      course: courseName,
+      amount: coursePrice,
+      paymentMethod: paymentMethod,
+      status: "pending",
+      createdAt: serverTimestamp()
+    });
+  } catch(e){
+    console.error("Error saving invoice:", e);
+    alert("Failed to generate invoice. Please try again.");
+    document.getElementById('loading').style.display = 'none';
+    return;
+  }
 
-    // Hide loading spinner
-    loadingDiv.style.display = 'none';
+  document.getElementById('loading').style.display = 'none';
 
-    // Show invoice popup
-    document.getElementById('invName').textContent = studentName;
-    document.getElementById('invEmail').textContent = studentEmail;
-    document.getElementById('invPhone').textContent = studentPhone;
-    document.getElementById('invCourse').textContent = courseName;
-    document.getElementById('invAmount').textContent = coursePrice;
-    document.getElementById('invMethod').textContent = paymentMethod;
-
-    document.getElementById('invoicePopup').style.display = 'block';
-  });
-
+  // Show invoice popup
+  document.getElementById('invName').textContent = studentName;
+  document.getElementById('invEmail').textContent = studentEmail;
+  document.getElementById('invPhone').textContent = studentPhone;
+  document.getElementById('invCourse').textContent = courseName;
+  document.getElementById('invAmount').textContent = coursePrice;
+  document.getElementById('invMethod').textContent = paymentMethod;
+  document.getElementById('invoicePopup').style.display = 'block';
 });
 
 function closeInvoicePopup(){
