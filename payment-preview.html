@@ -55,8 +55,8 @@ button:hover{background:#6d28d9}
   padding:20px;
   border-radius:16px;
 }
-.closeBtn{background:#22c55e;}
-.pdfBtn{background:#0ea5e9;}
+.greenBtn{background:#22c55e;}
+.blueBtn{background:#0ea5e9;}
 </style>
 </head>
 
@@ -67,7 +67,6 @@ button:hover{background:#6d28d9}
 
   <p><strong>Name:</strong> <span id="name"></span></p>
   <p><strong>Email:</strong> <span id="email"></span></p>
-  <p><strong>Phone:</strong> <span id="phone"></span></p>
   <p><strong>Course:</strong> <span id="course"></span></p>
   <p><strong>Amount:</strong> $<span id="price"></span></p>
 
@@ -96,59 +95,39 @@ button:hover{background:#6d28d9}
       📌 Reference: Invoice Number
     </p>
 
-    <button class="pdfBtn" onclick="downloadPDF()">Download Invoice PDF</button>
-    <button class="closeBtn" onclick="goBackToCourses()">Back to Courses</button>
+    <button class="blueBtn" onclick="downloadPDF()">Download Invoice PDF</button>
+    <button class="greenBtn" onclick="goBack()">Back to Courses</button>
   </div>
 </div>
 
 <script>
 const name  = localStorage.getItem("studentName") || "";
 const email = localStorage.getItem("studentEmail") || "";
-const phone = localStorage.getItem("studentPhone") || "";
 
-const course = localStorage.getItem("courseName") || "Selected Course";
-const price  = localStorage.getItem("coursePrice") || "0";
+const course = localStorage.getItem("courseName") || "";
+const price  = localStorage.getItem("coursePrice") || "";
 
 const invoiceNumber = "FBA-" + Date.now();
 
 document.getElementById("name").textContent = name;
 document.getElementById("email").textContent = email;
-document.getElementById("phone").textContent = phone;
 document.getElementById("course").textContent = course;
 document.getElementById("price").textContent = price;
 document.getElementById("invoiceNo").textContent = invoiceNumber;
 
-async function proceedPayment(){
-  const method = document.getElementById("method").value;
-
-  /* SAVE PENDING COURSE */
-  const pendingCourses = JSON.parse(localStorage.getItem("pendingCourses")) || [];
-  if(!pendingCourses.includes(course)){
-    pendingCourses.push(course);
-  }
-  localStorage.setItem("pendingCourses", JSON.stringify(pendingCourses));
-
-  /* SAVE PAYMENT RECORD */
-  const payments = JSON.parse(localStorage.getItem("payments")) || [];
-  payments.push({
-    invoiceNumber,
-    name,
-    email,
-    phone,
-    course,
-    price,
-    method,
-    status: "pending",
-    date: new Date().toLocaleString()
-  });
-  localStorage.setItem("payments", JSON.stringify(payments));
+function proceedPayment(){
+  /* STORE COURSE STATUS */
+  const statusData = JSON.parse(localStorage.getItem("courseStatus")) || {};
+  if(!statusData[email]) statusData[email] = {};
+  statusData[email][course] = "pending";
+  localStorage.setItem("courseStatus", JSON.stringify(statusData));
 
   document.getElementById("invoiceDetails").innerHTML = `
     <strong>Name:</strong> ${name}<br>
     <strong>Email:</strong> ${email}<br>
     <strong>Course:</strong> ${course}<br>
     <strong>Amount:</strong> $${price}<br>
-    <strong>Method:</strong> ${method}
+    <strong>Status:</strong> Pending Payment
   `;
 
   document.getElementById("invoicePopup").style.display = "block";
@@ -157,21 +136,18 @@ async function proceedPayment(){
 function downloadPDF(){
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
-
   doc.setFontSize(16);
-  doc.text("Food Business Academy", 20, 20);
+  doc.text("Food Business Academy",20,20);
   doc.setFontSize(12);
-  doc.text(`Invoice No: ${invoiceNumber}`, 20, 35);
-  doc.text(`Name: ${name}`, 20, 45);
-  doc.text(`Email: ${email}`, 20, 55);
-  doc.text(`Course: ${course}`, 20, 65);
-  doc.text(`Amount: $${price}`, 20, 75);
-  doc.text("Status: Pending Payment", 20, 90);
-
+  doc.text(`Invoice No: ${invoiceNumber}`,20,35);
+  doc.text(`Name: ${name}`,20,45);
+  doc.text(`Course: ${course}`,20,55);
+  doc.text(`Amount: $${price}`,20,65);
+  doc.text("Status: Pending Payment",20,80);
   doc.save(`${invoiceNumber}.pdf`);
 }
 
-function goBackToCourses(){
+function goBack(){
   window.location.href = "courses.html";
 }
 </script>
