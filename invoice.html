@@ -172,6 +172,7 @@ button{
 
 </div>
 
+<!-- ================== SCRIPT (FIXED, SAFE) ================== -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -185,47 +186,72 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ✅ LOAD BY INVOICE ID
-const invoiceId = localStorage.getItem("invoiceId");
+/* GET INVOICE ID SAFELY */
+const params = new URLSearchParams(window.location.search);
+const invoiceId =
+  params.get("id") ||
+  localStorage.getItem("invoiceId");
 
-if(!invoiceId){
-  alert("Invoice not found");
+if (!invoiceId) {
+  alert("Invoice not found.");
 }
 
+/* DOM ELEMENTS */
+const el = id => document.getElementById(id);
+
+const nameEl    = el("name");
+const emailEl   = el("email");
+const phoneEl   = el("phone");
+const courseEl  = el("course");
+const methodEl  = el("method");
+const amountEl  = el("amount");
+const invoiceEl = el("invoice");
+const dateEl    = el("date");
+const statusEl  = el("status");
+
+/* LOAD INVOICE */
 async function loadInvoice(){
-  const ref = doc(db,"invoices",invoiceId);
-  const snap = await getDoc(ref);
+  try{
+    if(!invoiceId) return;
 
-  if(!snap.exists()) return;
+    const ref = doc(db,"invoices",invoiceId);
+    const snap = await getDoc(ref);
 
-  const d = snap.data();
+    if(!snap.exists()){
+      alert("Invoice does not exist.");
+      return;
+    }
 
-  name.textContent = d.studentName;
-  email.textContent = d.email;
-  phone.textContent = d.phone;
-  course.textContent = d.course;
-  method.textContent = d.paymentMethod;
-  amount.textContent = d.amount;
+    const d = snap.data();
 
-  invoice.textContent = "FBA-" + invoiceId.slice(0,8).toUpperCase();
-  date.textContent = new Date(d.createdAt.seconds * 1000).toLocaleDateString();
+    nameEl.textContent    = d.studentName || "";
+    emailEl.textContent   = d.email || "";
+    phoneEl.textContent   = d.phone || "";
+    courseEl.textContent  = d.course || "";
+    methodEl.textContent  = d.paymentMethod || "";
+    amountEl.textContent  = d.amount || "0";
 
-  if(d.status === "paid"){
-    status.textContent = "Paid";
-    status.style.background = "#dcfce7";
-    status.style.color = "#166534";
+    invoiceEl.textContent =
+      d.invoiceNumber || ("FBA-" + invoiceId.slice(0,8).toUpperCase());
+
+    if(d.createdAt && d.createdAt.seconds){
+      dateEl.textContent =
+        new Date(d.createdAt.seconds * 1000).toLocaleDateString();
+    }else{
+      dateEl.textContent = "Processing...";
+    }
+
+    if(d.status === "paid"){
+      statusEl.textContent = "Paid";
+      statusEl.style.background = "#dcfce7";
+      statusEl.style.color = "#166534";
+    }
+
+  }catch(err){
+    console.error("Invoice error:", err);
+    alert("Failed to load invoice.");
   }
 }
-
-const name = document.getElementById("name");
-const email = document.getElementById("email");
-const phone = document.getElementById("phone");
-const course = document.getElementById("course");
-const method = document.getElementById("method");
-const amount = document.getElementById("amount");
-const invoice = document.getElementById("invoice");
-const date = document.getElementById("date");
-const status = document.getElementById("status");
 
 loadInvoice();
 </script>
