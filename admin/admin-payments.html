@@ -173,13 +173,27 @@ function approve(email, course){
 }
 
 function cancel(email, course){
+  if(!statusData[email]) statusData[email] = {};
   statusData[email][course] = "pending";
   localStorage.setItem("courseStatus", JSON.stringify(statusData));
   render();
 }
 
 function remove(index){
-  deleted.push(payments[index]);
+  // Get deleted payment
+  const p = payments[index];
+
+  // Remove course status completely
+  if(statusData[p.email]){
+    delete statusData[p.email][p.course];
+    // Remove empty email entry
+    if(Object.keys(statusData[p.email]).length === 0){
+      delete statusData[p.email];
+    }
+    localStorage.setItem("courseStatus", JSON.stringify(statusData));
+  }
+
+  deleted.push(p);
   payments.splice(index,1);
   localStorage.setItem("payments", JSON.stringify(payments));
   localStorage.setItem("deletedPayments", JSON.stringify(deleted));
