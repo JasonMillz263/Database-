@@ -5,7 +5,7 @@
 <title>Manage Payments | Food Business Academy</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
@@ -126,7 +126,15 @@ let showBin = false;
 
 render();
 
+// ALWAYS fetch latest payments from localStorage to catch new pending payments
+function loadPayments(){
+  payments = JSON.parse(localStorage.getItem("payments")) || [];
+  deleted = JSON.parse(localStorage.getItem("deletedPayments")) || [];
+  statusData = JSON.parse(localStorage.getItem("courseStatus")) || {};
+}
+
 function render(){
+  loadPayments(); // refresh before rendering
   grid.innerHTML = "";
   const source = showBin ? deleted : payments;
 
@@ -180,13 +188,11 @@ function cancel(email, course){
 }
 
 function remove(index){
-  // Get deleted payment
   const p = payments[index];
 
   // Remove course status completely
   if(statusData[p.email]){
     delete statusData[p.email][p.course];
-    // Remove empty email entry
     if(Object.keys(statusData[p.email]).length === 0){
       delete statusData[p.email];
     }
