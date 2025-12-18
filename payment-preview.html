@@ -90,7 +90,7 @@ button:disabled { opacity:0.8; cursor:not-allowed; }
     <label for="agreeTerms">I agree to the terms and conditions</label>
   </div>
 
-  <button id="proceedBtn" onclick="proceedPayment()">Proceed with Payment</button>
+  <button id="proceedBtn">Proceed with Payment</button>
   <div class="loading" id="loadingText">Generating invoice, please wait...</div>
 </div>
 
@@ -113,7 +113,7 @@ document.getElementById("studentName").value = localStorage.getItem("studentName
 document.getElementById("studentEmail").value = localStorage.getItem("studentEmail") || "";
 document.getElementById("studentPhone").value = localStorage.getItem("studentPhone") || "";
 
-async function proceedPayment() {
+document.getElementById("proceedBtn").addEventListener("click", async () => {
   const name = document.getElementById("studentName").value.trim();
   const email = document.getElementById("studentEmail").value.trim();
   const phone = document.getElementById("studentPhone").value.trim();
@@ -138,7 +138,7 @@ async function proceedPayment() {
   loading.style.display = "block";
 
   try {
-    const invoiceRef = await addDoc(collection(db, "invoices"), {
+    await addDoc(collection(db, "invoices"), {
       studentName: name,
       email: email,
       phone: phone,
@@ -160,7 +160,7 @@ async function proceedPayment() {
     btn.disabled = false;
     loading.style.display = "none";
   }
-}
+});
 </script>
 
 </body>
