@@ -43,7 +43,10 @@ header button{
   cursor:pointer;
 }
 
-.main{padding:30px;max-width:1300px;margin:auto}
+.binBtn{background:#e5e7eb}
+.adminBtn{background:var(--blue);color:#fff}
+
+main{padding:30px;max-width:1300px;margin:auto}
 
 .grid{
   display:grid;
@@ -91,6 +94,7 @@ header button{
 .approve{background:var(--green);color:#fff}
 .cancel{background:var(--orange);color:#fff}
 .delete{background:var(--red);color:#fff}
+.restore{background:#0ea5e9;color:#fff}
 .download{background:#0ea5e9;color:#fff}
 </style>
 </head>
@@ -99,6 +103,10 @@ header button{
 
 <header>
   <h1>💳 Manage Course Payments</h1>
+  <div>
+    <button class="binBtn" onclick="toggleBin()">🗑 Recycle Bin</button>
+    <button class="adminBtn">Admin Dashboard</button>
+  </div>
 </header>
 
 <main class="main">
@@ -117,72 +125,91 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
 const grid = document.getElementById("grid");
+let showBin = false;
+let deletedPayments = []; // fresh recycle bin
 
 /* Load all students and their courses */
 async function loadPayments(){
   grid.innerHTML = "";
   const snap = await getDocs(collection(db, "students"));
-  let anyRecord = false;
+  let records = [];
 
   snap.forEach(docSnap=>{
     const student = docSnap.data();
     if(!student.courses) return;
 
     Object.entries(student.courses).forEach(([courseName, info])=>{
-      if(!info || !info.status) return;
-      anyRecord = true;
-
-      const statusClass = info.status === "paid" ? "paid" : "pending";
-
-      grid.innerHTML += `
-        <div class="card">
-          <div class="status ${statusClass}">${info.status === "paid" ? "Paid" : "Pending"}</div>
-          <h3>${student.name}</h3>
-          <div class="info">📧 ${student.email}</div>
-          <div class="info">📞 ${student.phone || 'N/A'}</div>
-          <div class="info">🧾 Invoice: ${info.invoiceNumber || 'N/A'}</div>
-          <div class="info">💳 Method: ${info.method || 'N/A'}</div>
-          <div class="course">📘 ${courseName}</div>
-          <div class="actions">
-            ${info.status === "pending"
-              ? `<button class="approve" onclick="approve('${docSnap.id}','${courseName}')">Approve</button>`
-              : `<button class="cancel" onclick="cancel('${docSnap.id}','${courseName}')">Cancel</button>`}
-            <button class="download" onclick="downloadInvoice('${info.invoiceNumber}','${student.name}','${courseName}','${info.price || 0}')">Download Invoice</button>
-            <button class="delete" onclick="deleteCourse('${docSnap.id}','${courseName}')">Delete</button>
-          </div>
-        </div>
-      `;
+      if(!info.status) return; // skip courses with no status
+      records.push({
+        studentId: docSnap.id,
+        name: student.name,
+        email: student.email,
+        phone: student.phone || "N/A",
+        course: courseName,
+        ...info
+      });
     });
   });
 
-  if(!anyRecord){
+  if(records.length === 0){
     grid.innerHTML = "<p>No pending or paid courses found.</p>";
+    return;
   }
+
+  records.forEach((r, i)=>{
+    const statusClass = r.status === "paid" ? "paid" : "pending";
+
+    grid.innerHTML += `
+      <div class="card">
+        <div class="status ${statusClass}">${r.status === "paid" ? "Paid" : "Pending"}</div>
+        <h3>${r.name}</h3>
+        <div class="info">📧 ${r.email}</div>
+        <div class="info">📞 ${r.phone}</div>
+        <div class="info">🧾 Invoice: ${r.invoiceNumber || 'N/A'}</div>
+        <div class="info">💳 Method: ${r.method || 'N/A'}</div>
+        <div class="course">📘 ${r.course}</div>
+        <div class="actions">
+          ${r.status === "pending"
+            ? `<button class="approve" onclick="approve('${r.studentId}','${r.course}')">Approve Payment</button>`
+            : `<button class="cancel" onclick="cancel('${r.studentId}','${r.course}')">Cancel Payment</button>`}
+          <button class="download" onclick="downloadInvoice('${r.invoiceNumber}','${r.name}','${r.course}','${r.price || 0}')">Download Invoice</button>
+          <button class="delete" onclick="deletePayment('${r.studentId}','${r.course}')">Delete</button>
+        </div>
+      </div>
+    `;
+  });
 }
 
-/* Approve payment */
-window.approve = async (studentId, courseName)=>{
+/* Actions */
+window.approve = async (studentId, course)=>{
   const ref = doc(db,"students",studentId);
-  await updateDoc(ref,{[`courses.${courseName}.status`]:"paid"});
+  await updateDoc(ref, {[`courses.${course}.status`]:"paid"});
   loadPayments();
 };
 
-/* Cancel payment → remove course to revert student to Pay to Start */
-window.cancel = async (studentId, courseName)=>{
+window.cancel = async (studentId, course)=>{
   const ref = doc(db,"students",studentId);
-  await updateDoc(ref,{[`courses.${courseName}`]: deleteField()});
+  await updateDoc(ref, {[`courses.${course}`]: deleteField()}); // revert to Pay to Start
   loadPayments();
 };
 
-/* Delete course */
-window.deleteCourse = async (studentId, courseName)=>{
+window.deletePayment = async (studentId, course)=>{
+  deletedPayments.push({studentId, course});
   const ref = doc(db,"students",studentId);
-  await updateDoc(ref,{[`courses.${courseName}`]: deleteField()});
+  await updateDoc(ref, {[`courses.${course}`]: deleteField()});
   loadPayments();
 };
 
-/* Download invoice PDF */
+window.restorePayment = async (studentId, course)=>{
+  const ref = doc(db,"students",studentId);
+  await updateDoc(ref, {[`courses.${course}.status`]:"pending"});
+  deletedPayments = deletedPayments.filter(d=>!(d.studentId===studentId && d.course===course));
+  loadPayments();
+};
+
+/* PDF Download */
 window.downloadInvoice = (inv, name, course, price)=>{
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF();
@@ -194,6 +221,30 @@ window.downloadInvoice = (inv, name, course, price)=>{
   pdf.save(`${inv}.pdf`);
 };
 
+/* Recycle bin toggle */
+window.toggleBin = ()=>{
+  showBin = !showBin;
+  if(showBin){
+    grid.innerHTML = "";
+    if(deletedPayments.length === 0){
+      grid.innerHTML = "<p>Recycle bin is empty.</p>";
+      return;
+    }
+    deletedPayments.forEach(d=>{
+      grid.innerHTML += `
+        <div class="card">
+          <div class="info">Student ID: ${d.studentId}</div>
+          <div class="info">Course: ${d.course}</div>
+          <button class="restore" onclick="restorePayment('${d.studentId}','${d.course}')">Restore</button>
+        </div>
+      `;
+    });
+  } else {
+    loadPayments();
+  }
+};
+
+/* Initial load */
 loadPayments();
 </script>
 </body>
