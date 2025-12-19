@@ -35,6 +35,17 @@ header{
 
 header h1{margin:0;font-size:22px}
 
+header button{
+  padding:10px 16px;
+  border:none;
+  border-radius:12px;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.binBtn{background:#e5e7eb}
+.adminBtn{background:var(--blue);color:#fff}
+
 main{padding:30px;max-width:1300px;margin:auto}
 
 .grid{
@@ -49,6 +60,9 @@ main{padding:30px;max-width:1300px;margin:auto}
   padding:22px;
   box-shadow:0 12px 30px rgba(0,0,0,.08);
   position:relative;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
 }
 
 .status{
@@ -80,6 +94,7 @@ main{padding:30px;max-width:1300px;margin:auto}
 .approve{background:var(--green);color:#fff}
 .cancel{background:var(--orange);color:#fff}
 .delete{background:var(--red);color:#fff}
+.restore{background:var(--blue);color:#fff}
 .download{background:#0ea5e9;color:#fff}
 </style>
 </head>
@@ -88,6 +103,10 @@ main{padding:30px;max-width:1300px;margin:auto}
 
 <header>
   <h1>💳 Manage Course Payments</h1>
+  <div>
+    <button class="binBtn" onclick="toggleBin()">🗑 Recycle Bin</button>
+    <button class="adminBtn">Admin Dashboard</button>
+  </div>
 </header>
 
 <main>
@@ -96,88 +115,95 @@ main{padding:30px;max-width:1300px;margin:auto}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
-  getFirestore, collection, getDocs, doc, updateDoc, deleteField
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, updateDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+/* 🔥 FIREBASE CONFIG */
 const firebaseConfig = {
   apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain: "students-login-29409.firebaseapp.com",
-  projectId: "students-login-29409"
+  projectId: "students-login-29409",
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const grid = document.getElementById("grid");
+let showBin = false;
+let deleted = []; // empty recycle bin
 
-/* Load all student courses */
-async function loadPayments() {
+async function loadData(){
   grid.innerHTML = "";
   const snap = await getDocs(collection(db,"students"));
-  let hasRecords = false;
+  let records = [];
 
   snap.forEach(docSnap=>{
-    const student = docSnap.data();
-    if(!student.courses) return;
+    const d = docSnap.data();
+    if(!d.courses) return;
 
-    Object.entries(student.courses).forEach(([courseName, info])=>{
-      if(!info || !info.status) return; // skip invalid/null
-
-      hasRecords = true;
-      const statusClass = info.status === "paid" ? "paid" : "pending";
-
-      grid.innerHTML += `
-        <div class="card">
-          <div class="status ${statusClass}">
-            ${info.status === "paid" ? "Paid" : "Pending"}
-          </div>
-
-          <h3>${student.name}</h3>
-          <div class="info">📧 ${student.email}</div>
-          <div class="info">📞 ${student.phone}</div>
-          <div class="info">🧾 Invoice: ${info.invoiceNumber || 'N/A'}</div>
-          <div class="info">💳 Method: ${info.method || 'N/A'}</div>
-          <div class="course">📘 ${courseName}</div>
-
-          <div class="actions">
-            ${info.status === "pending"
-              ? `<button class="approve" onclick="approve('${docSnap.id}','${courseName}')">Approve</button>`
-              : `<button class="cancel" onclick="cancel('${docSnap.id}','${courseName}')">Cancel</button>`
-            }
-            <button class="download" onclick="downloadInvoice('${info.invoiceNumber}','${student.name}','${courseName}','${info.price || 0}')">Download Invoice</button>
-            <button class="delete" onclick="deleteCourse('${docSnap.id}','${courseName}')">Delete</button>
-          </div>
-        </div>
-      `;
+    Object.entries(d.courses).forEach(([course, info])=>{
+      if(!info || !info.status) return; // skip invalid
+      records.push({
+        studentId: docSnap.id,
+        name: d.name,
+        email: d.email,
+        phone: d.phone,
+        course,
+        ...info
+      });
     });
   });
 
-  if(!hasRecords){
-    grid.innerHTML = "<p>No pending or paid approvals found.</p>";
+  if(records.length === 0){
+    grid.innerHTML = "<p>No payment records found.</p>";
+    return;
   }
+
+  records.forEach((r, i)=>{
+    const statusClass = r.status === "paid" ? "paid" : "pending";
+    grid.innerHTML += `
+      <div class="card">
+        <div class="status ${statusClass}">${r.status === "paid" ? "Paid" : "Pending"}</div>
+        <div>
+          <h3>${r.name}</h3>
+          <div class="info">📧 ${r.email}</div>
+          <div class="info">📞 ${r.phone}</div>
+          <div class="info">🧾 Invoice: ${r.invoiceNumber}</div>
+          <div class="info">💳 Method: ${r.method}</div>
+          <div class="course">📘 ${r.course}</div>
+        </div>
+        <div class="actions">
+          ${r.status === "pending"
+            ? `<button class="approve" onclick="approve('${r.studentId}','${r.course}')">Approve Payment</button>`
+            : `<button class="cancel" onclick="cancel('${r.studentId}','${r.course}')">Cancel Payment</button>`}
+          <button class="download" onclick="downloadInvoice('${r.invoiceNumber}','${r.name}','${r.course}','${r.price}')">Download Invoice</button>
+          <button class="delete" onclick="deleteRecord('${r.studentId}','${r.course}')">Delete</button>
+        </div>
+      </div>
+    `;
+  });
 }
 
-/* ACTIONS */
-window.approve = async (studentId, courseName)=>{
+/* 🔁 ACTIONS */
+window.approve = async (studentId, course)=>{
   const ref = doc(db,"students",studentId);
-  await updateDoc(ref,{[`courses.${courseName}.status`]:"paid"});
-  loadPayments();
+  await updateDoc(ref,{[`courses.${course}.status`]:"paid"});
+  loadData();
 };
 
-window.cancel = async (studentId, courseName)=>{
+window.cancel = async (studentId, course)=>{
   const ref = doc(db,"students",studentId);
-  await updateDoc(ref,{[`courses.${courseName}`]: deleteField()});
-  loadPayments();
+  // Remove course entirely to revert student to "Pay to Start"
+  await updateDoc(ref,{[`courses.${course}`]: deleteField()});
+  loadData();
 };
 
-window.deleteCourse = async (studentId, courseName)=>{
+window.deleteRecord = async (studentId, course)=>{
   const ref = doc(db,"students",studentId);
-  await updateDoc(ref,{[`courses.${courseName}`]: deleteField()});
-  loadPayments();
+  await updateDoc(ref,{[`courses.${course}`]: deleteField()});
+  deleted.push({studentId, course});
+  loadData();
 };
 
-/* PDF */
 window.downloadInvoice = (inv, name, course, price)=>{
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF();
@@ -189,7 +215,10 @@ window.downloadInvoice = (inv, name, course, price)=>{
   pdf.save(`${inv}.pdf`);
 };
 
-loadPayments();
+window.toggleBin = ()=>{ alert("Recycle bin is empty (fresh start)"); };
+
+loadData();
 </script>
+
 </body>
 </html>
