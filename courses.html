@@ -43,6 +43,7 @@ header button{
 
 .main{padding:30px;max-width:1200px;margin:auto}
 
+/* IDENTITY */
 .identity{
   background:#fff;
   border-radius:18px;
@@ -51,13 +52,13 @@ header button{
   box-shadow:0 8px 20px rgba(0,0,0,.06);
   display:flex;
   justify-content:space-between;
-  align-items:center;
   gap:16px;
 }
 
 .identity span{font-size:13px;color:#6b7280}
-.identity strong{font-size:15px;color:#111827;word-break:break-all}
+.identity strong{font-size:15px;word-break:break-all}
 
+/* COURSES */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
@@ -85,16 +86,17 @@ header button{
   font-weight:600;
   color:#fff;
 }
+
 .pending{background:var(--pending)}
 .paid{background:var(--paid)}
 
-.modules{margin:15px 0}
 .modules li{
-  margin-bottom:6px;
   list-style:none;
+  margin-bottom:6px;
   padding-left:20px;
   position:relative;
 }
+
 .modules li::before{
   content:"✔";
   position:absolute;
@@ -123,7 +125,6 @@ button.action[disabled]{
 </head>
 
 <body>
-
 <header>
   <button class="home" onclick="location.href='#'">🏠 Home</button>
   <button class="dashboard" onclick="location.href='student.htm'">⬅ Dashboard</button>
@@ -134,11 +135,11 @@ button.action[disabled]{
 <div class="identity">
   <div>
     <span>Email</span>
-    <strong id="studentEmail">Loading…</strong>
+    <strong id="studentEmail">Loading...</strong>
   </div>
   <div>
     <span>User ID</span>
-    <strong id="studentId">Loading…</strong>
+    <strong id="studentId">Loading...</strong>
   </div>
 </div>
 
@@ -150,13 +151,7 @@ button.action[disabled]{
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import {
-  getFirestore,
-  doc,
-  getDoc,
-  updateDoc,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 /* FIREBASE CONFIG */
 const firebaseConfig = {
@@ -169,7 +164,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-/* COURSES MASTER LIST */
+/* COURSES */
 const courses = [
   {name:"Food Business Management Course",price:49,modules:["Introduction to Food Business","Operations & Compliance","Food Safety Management","Marketing & Distribution"]},
   {name:"Financial Management for Food Processors",price:59,modules:["Costing & Pricing","Cash Flow Management","Budgeting & Forecasting","Profitability Analysis"]},
@@ -180,36 +175,56 @@ const courses = [
 
 const grid = document.getElementById("coursesGrid");
 
-/* AUTH + LOAD */
+/* AUTH */
 onAuthStateChanged(auth, async user=>{
   if(!user){
-    alert("Session expired. Please login again.");
     location.href="student.htm";
     return;
   }
 
   const uid = user.uid;
-  const snap = await getDoc(doc(db,"students",uid));
-  if(!snap.exists()) return alert("Student record not found");
+  const studentRef = doc(db,"students",uid);
+  const studentSnap = await getDoc(studentRef);
 
-  const data = snap.data();
-  document.getElementById("studentEmail").textContent = data.email;
+  if(!studentSnap.exists()){
+    alert("Student record not found");
+    return;
+  }
+
+  const student = studentSnap.data();
+  document.getElementById("studentEmail").textContent = student.email;
   document.getElementById("studentId").textContent = uid.substring(0,10).toUpperCase();
 
-  const myCourses = data.courses || {};
+  const paidCourses = student.coursesPaid || [];
+
+  // Get pending payments
+  const pendingSnap = await getDocs(
+    query(
+      collection(db,"payments"),
+      where("studentId","==",uid),
+      where("status","==","pending")
+    )
+  );
+
+  const pendingCourses = pendingSnap.docs.map(d=>d.data().courseName);
+
+  renderCourses(paidCourses,pendingCourses);
+});
+
+function renderCourses(paidCourses,pendingCourses){
   grid.innerHTML = "";
 
   courses.forEach(c=>{
-    const entry = myCourses[c.name];
-    let badge="", button="";
+    let badge = "";
+    let button = "";
 
-    if(entry?.status === "pending"){
-      badge = `<div class="badge pending">Pending Approval</div>`;
-      button = `<button class="action" disabled>Awaiting Approval</button>`;
-    }
-    else if(entry?.status === "paid"){
+    if(paidCourses.includes(c.name)){
       badge = `<div class="badge paid">Paid</div>`;
-      button = `<button class="action">Start Course</button>`;
+      button = `<button class="action" onclick="location.href='#'">Start Course</button>`;
+    }
+    else if(pendingCourses.includes(c.name)){
+      badge = `<div class="badge pending">Pending Payment</div>`;
+      button = `<button class="action" disabled>Awaiting Approval</button>`;
     }
     else{
       button = `<button class="action" onclick="pay('${c.name}',${c.price})">Pay to Start</button>`;
@@ -229,24 +244,14 @@ onAuthStateChanged(auth, async user=>{
       </div>
     `;
   });
+}
 
-  /* PAYMENT REQUEST */
-  window.pay = async (course, price)=>{
-    const invoice = "INV-" + Math.floor(100000 + Math.random() * 900000);
-
-    await updateDoc(doc(db,"students",uid),{
-      [`courses.${course}`]:{
-        status:"pending",
-        price,
-        invoice,
-        requestedAt: serverTimestamp()
-      }
-    });
-
-    alert("Payment request sent. Await admin approval.");
-    location.reload();
-  };
-});
+/* PAY */
+window.pay = (course,price)=>{
+  localStorage.setItem("courseName",course);
+  localStorage.setItem("coursePrice",price);
+  location.href="student-details.html";
+};
 </script>
 
 </body>
