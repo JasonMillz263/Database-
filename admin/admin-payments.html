@@ -2,185 +2,167 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Manage Payments | Food Business Academy</title>
+<title>Admin Payment Approvals | Food Business Academy</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
 <style>
-body{
-  margin:0;
-  background:linear-gradient(135deg,#eef2ff,#f5f7ff);
-  font-family:'Poppins',sans-serif;
+:root{
+  --blue:#2563eb;
+  --green:#16a34a;
+  --bg:#f5f7ff;
+  --card:#ffffff;
+  --text:#1f2937;
+  --pending:#f59e0b;
 }
 
-.container{
-  max-width:1200px;
-  margin:auto;
-  padding:24px;
+*{box-sizing:border-box;font-family:'Poppins',sans-serif}
+body{margin:0;background:var(--bg);color:var(--text)}
+
+.main{padding:30px;max-width:1200px;margin:auto}
+h1{margin-bottom:20px}
+
+.table{
+  background:var(--card);
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:0 15px 35px rgba(0,0,0,.08);
 }
 
-h1{
-  font-size:28px;
-  margin-bottom:20px;
-}
-
-.grid{
+.row, .header{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
-  gap:20px;
+  grid-template-columns: 1.2fr 1.5fr 1.5fr 1fr 1fr 1fr;
+  padding:14px 18px;
+  align-items:center;
 }
 
-.card{
-  background:#fff;
-  border-radius:22px;
-  padding:20px;
-  box-shadow:0 20px 40px rgba(0,0,0,.08);
-  position:relative;
-  transition:.3s;
+.header{
+  background:#eef2ff;
+  font-weight:600;
+  font-size:14px;
 }
 
-.card:hover{transform:translateY(-6px)}
+.row{
+  border-top:1px solid #e5e7eb;
+  font-size:14px;
+}
 
 .badge{
-  position:absolute;
-  top:18px;
-  right:18px;
-  padding:6px 14px;
+  padding:5px 10px;
   border-radius:999px;
   font-size:12px;
   font-weight:600;
+  display:inline-block;
+  background:var(--pending);
   color:#fff;
 }
 
-.pending{background:#f59e0b}
-.approved{background:#22c55e}
-
-.name{
-  font-size:18px;
-  font-weight:600;
-}
-
-.email{
-  font-size:13px;
-  opacity:.7;
-  margin-bottom:12px;
-  word-break:break-all;
-}
-
-.detail{
-  font-size:14px;
-  margin:6px 0;
-}
-
-.detail strong{
-  color:#111827;
-}
-
-.actions{
-  margin-top:16px;
-}
-
 button{
-  width:100%;
-  padding:12px;
+  padding:8px 14px;
   border:none;
-  border-radius:14px;
+  border-radius:10px;
+  background:var(--green);
+  color:#fff;
   font-weight:600;
   cursor:pointer;
 }
 
-.approve{
-  background:linear-gradient(135deg,#2563eb,#6d28d9);
-  color:#fff;
-}
-
-.disabled{
-  background:#e5e7eb;
+button[disabled]{
+  opacity:.5;
   cursor:not-allowed;
 }
 </style>
 </head>
 
 <body>
-<div class="container">
-  <h1>💳 Manage Payments</h1>
-  <div id="paymentsGrid" class="grid">
-    <div>Loading payments…</div>
-  </div>
-</div>
+<main class="main">
+  <h1>💳 Pending Payment Approvals</h1>
 
-<script>
-firebase.initializeApp({
+  <div class="table">
+    <div class="header">
+      <div>Invoice</div>
+      <div>Student</div>
+      <div>Course</div>
+      <div>Price</div>
+      <div>Status</div>
+      <div>Action</div>
+    </div>
+    <div id="paymentsBody"></div>
+  </div>
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import {
+  getFirestore, collection, query, where, getDocs,
+  doc, updateDoc, arrayUnion
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+/* 🔥 FIREBASE CONFIG */
+const firebaseConfig = {
   apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain: "students-login-29409.firebaseapp.com",
-  projectId: "students-login-29409"
+  projectId: "students-login-29409",
+  storageBucket: "students-login-29409.firebasestorage.app",
+  messagingSenderId: "634331456872",
+  appId: "1:634331456872:web:6dae360c5e28d8356562dd",
+  measurementId: "G-96XXYG1VR2"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const body = document.getElementById("paymentsBody");
+
+/* 🔐 ADMIN CHECK */
+onAuthStateChanged(auth, async (user) => {
+  if (!user) return location.href = "login.html";
+
+  const adminSnap = await getDocs(
+    query(collection(db,"admins"), where("__name__","==",user.uid))
+  );
+
+  if (adminSnap.empty) {
+    alert("Access denied. Admins only.");
+    return location.href = "login.html";
+  }
+
+  loadPendingPayments();
 });
 
-const auth = firebase.auth();
-const db = firebase.firestore();
+/* 📥 LOAD PENDING PAYMENTS */
+async function loadPendingPayments(){
+  body.innerHTML = "";
 
-/* 🔐 ADMIN GUARD */
-auth.onAuthStateChanged(async user=>{
-  if(!user){
-    location.replace("../index.html");
+  const q = query(
+    collection(db,"payments"),
+    where("status","==","pending")
+  );
+
+  const snapshot = await getDocs(q);
+
+  if(snapshot.empty){
+    body.innerHTML = `<div class="row">No pending payments</div>`;
     return;
   }
 
-  const admin = await db.collection("admins").doc(user.uid).get();
-  if(!admin.exists){
-    alert("Admins only");
-    auth.signOut();
-    return;
-  }
-
-  loadPayments();
-});
-
-/* 📥 LOAD PAYMENTS */
-async function loadPayments(){
-  const snap = await db.collection("payments")
-    .orderBy("createdAt","desc")
-    .get();
-
-  const grid = document.getElementById("paymentsGrid");
-
-  if(snap.empty){
-    grid.innerHTML = "<div>No payment requests found.</div>";
-    return;
-  }
-
-  grid.innerHTML = "";
-
-  snap.forEach(docSnap=>{
+  snapshot.forEach(docSnap=>{
     const p = docSnap.data();
 
-    grid.innerHTML += `
-      <div class="card">
-        <div class="badge ${p.status}">
-          ${p.status.toUpperCase()}
-        </div>
-
-        <div class="name">${p.studentName}</div>
-        <div class="email">${p.email}</div>
-
-        <div class="detail"><strong>Course:</strong> ${p.courseName}</div>
-        <div class="detail"><strong>Price:</strong> $${p.price}</div>
-        <div class="detail"><strong>Payment:</strong> ${p.paymentMethod}</div>
-        <div class="detail"><strong>Invoice:</strong> ${p.invoiceNumber}</div>
-
-        <div class="actions">
-          ${
-            p.status === "pending"
-            ? `<button class="approve" onclick="approvePayment('${docSnap.id}')">
-                Approve Payment
-              </button>`
-            : `<button class="disabled" disabled>Approved</button>`
-          }
+    body.innerHTML += `
+      <div class="row">
+        <div>${p.invoiceNumber}</div>
+        <div>${p.email}</div>
+        <div>${p.courseName}</div>
+        <div>$${p.price}</div>
+        <div><span class="badge">Pending</span></div>
+        <div>
+          <button onclick="approvePayment('${docSnap.id}','${p.studentId}','${p.courseName}')">
+            Approve
+          </button>
         </div>
       </div>
     `;
@@ -188,26 +170,23 @@ async function loadPayments(){
 }
 
 /* ✅ APPROVE PAYMENT */
-async function approvePayment(paymentId){
-  if(!confirm("Approve this payment?")) return;
+window.approvePayment = async (paymentId, studentId, courseName) => {
+  if (!confirm("Approve this payment?")) return;
 
-  const ref = db.collection("payments").doc(paymentId);
-  const snap = await ref.get();
-  const p = snap.data();
+  // 1. Update payment status
+  await updateDoc(doc(db,"payments",paymentId),{
+    status:"approved"
+  });
 
-  // Update student
-  const studentRef = db.collection("students").doc(p.studentId);
-  await studentRef.set({
-    coursesPaid: firebase.firestore.FieldValue.arrayUnion(p.courseName),
-    [`progress.${p.courseName}`]: 0
-  },{merge:true});
+  // 2. Unlock course for student
+  await updateDoc(doc(db,"students",studentId),{
+    coursesPaid: arrayUnion(courseName)
+  });
 
-  // Update payment
-  await ref.update({ status:"approved" });
-
-  alert("Payment approved successfully");
-  loadPayments();
-}
+  alert("Payment approved & course unlocked");
+  loadPendingPayments();
+};
 </script>
+
 </body>
 </html>
