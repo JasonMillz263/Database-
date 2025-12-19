@@ -91,9 +91,7 @@ button{
 }
 button.pending-btn{background:var(--pending);cursor:not-allowed}
 button.success-btn{background:var(--success)}
-button.cancel-btn{
-  background:var(--danger);
-}
+button.cancel-btn{background:var(--danger);}
 </style>
 </head>
 
@@ -116,8 +114,8 @@ button.cancel-btn{
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import {
-  getFirestore, collection, addDoc, query, where, getDocs,
-  doc, getDoc, deleteDoc, serverTimestamp
+  getFirestore, collection, query, where, getDocs,
+  doc, getDoc
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 /* 🔥 FIREBASE CONFIG */
@@ -134,7 +132,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-/* 📚 COURSES */
 const courses = [
   {name:"Food Business Management Course", price:49, modules:["Introduction to Food Business","Operations & Compliance","Food Safety Management","Marketing & Distribution"]},
   {name:"Financial Management for Food Processors", price:59, modules:["Costing & Pricing","Cash Flow Management","Budgeting & Forecasting","Profitability Analysis"]},
@@ -146,6 +143,7 @@ const courses = [
 const grid = document.getElementById("coursesGrid");
 
 async function loadCourses(user){
+  // 🔹 Load student payments
   const paymentsSnap = await getDocs(
     query(collection(db,"payments"), where("studentId","==",user.uid))
   );
@@ -176,7 +174,8 @@ async function loadCourses(user){
       buttons = `<button class="success-btn" onclick="startCourse('${course.name}')">Start Course</button>`;
     }
     else {
-      buttons = `<button onclick="createInvoice('${course.name}', ${course.price})">Pay to Start</button>`;
+      // 🔹 Redirect to student-details.html for details/payment
+      buttons = `<button onclick="proceedToDetails('${course.name}', ${course.price})">Pay to Start</button>`;
     }
 
     grid.innerHTML += `
@@ -201,26 +200,16 @@ onAuthStateChanged(auth, async user => {
   loadCourses(user);
 });
 
-/* 🧾 CREATE INVOICE */
-window.createInvoice = async (courseName, price) => {
-  if (!confirm(`Generate invoice for ${courseName}?`)) return;
-
-  const user = auth.currentUser;
-
-  await addDoc(collection(db,"payments"),{
-    studentId:user.uid,
-    email:user.email,
-    courseName,
-    price,
-    status:"pending",
-    invoiceNumber:`FBA-${Date.now()}`,
-    createdAt:serverTimestamp()
-  });
-
-  loadCourses(user);
+/* 🔹 Redirect to student-details page to fill details before invoice */
+window.proceedToDetails = (courseName, price) => {
+  const params = new URLSearchParams();
+  params.set("courseName", courseName);
+  params.set("price", price);
+  window.location.href = `student-details.html?${params.toString()}`;
 };
 
-/* ❌ CANCEL INVOICE */
+/* ❌ CANCEL PENDING INVOICE */
+import { deleteDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 window.cancelInvoice = async (invoiceId) => {
   if (!confirm("Cancel this invoice?")) return;
   await deleteDoc(doc(db,"payments",invoiceId));
