@@ -11,30 +11,51 @@
 <style>
 body{margin:0;background:#f4f6fb;font-family:Poppins}
 header{
-  background:#fff;padding:20px 30px;
-  display:flex;justify-content:space-between;align-items:center;
+  background:#fff;
+  padding:20px 30px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
   box-shadow:0 6px 20px rgba(0,0,0,.08)
 }
+header button{
+  padding:10px 16px;
+  border:none;
+  border-radius:12px;
+  font-weight:600;
+  cursor:pointer
+}
+.binBtn{background:#e5e7eb}
+.adminBtn{background:#2563eb;color:#fff}
+
 .grid{
   padding:30px;
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(360px,1fr));
+  grid-template-columns:repeat(auto-fit,minmax(380px,1fr));
   gap:24px
 }
+
 .card{
   background:#fff;
   border-radius:20px;
   padding:22px;
   box-shadow:0 12px 30px rgba(0,0,0,.1);
-  position:relative;
+  position:relative
 }
+
 .status{
-  position:absolute;top:18px;right:18px;
-  padding:6px 14px;border-radius:999px;
-  font-size:12px;font-weight:600;color:#fff
+  position:absolute;
+  top:18px;
+  right:18px;
+  padding:6px 14px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:600;
+  color:#fff
 }
 .pending{background:#f59e0b}
 .paid{background:#22c55e}
+
 .actions button{
   width:100%;
   padding:10px;
@@ -54,15 +75,27 @@ header{
 <body>
 
 <header>
-  <h2>💳 Admin – Manage Course Payments</h2>
+  <h2>💳 Manage Course Payments</h2>
+  <div>
+    <button class="binBtn" onclick="toggleBin()">🗑 Recycle Bin</button>
+    <button class="adminBtn" onclick="location.href='admin-dashboard.html'">
+      ⬅ Admin Dashboard
+    </button>
+  </div>
 </header>
 
 <div class="grid" id="grid"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, updateDoc, deleteField } 
-from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  doc,
+  updateDoc,
+  deleteField
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
@@ -74,16 +107,22 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const grid = document.getElementById("grid");
 
+let recycleBin = [];
+let showBin = false;
+
 async function loadPayments(){
   grid.innerHTML = "";
   const snap = await getDocs(collection(db,"students"));
 
-  snap.forEach(s=>{
-    const d = s.data();
+  snap.forEach(student=>{
+    const d = student.data();
     if(!d.courses) return;
 
     Object.entries(d.courses).forEach(([course, info])=>{
       if(!info || !info.status) return;
+
+      if(showBin && !recycleBin.includes(`${student.id}_${course}`)) return;
+      if(!showBin && recycleBin.includes(`${student.id}_${course}`)) return;
 
       grid.innerHTML += `
         <div class="card">
@@ -92,6 +131,7 @@ async function loadPayments(){
           </div>
 
           <h3>${d.name || "Student"}</h3>
+          <p><strong>ID:</strong> ${student.id}</p>
           <p>📧 ${d.email}</p>
           <p>📞 ${d.phone || "N/A"}</p>
           <p>🧾 Invoice: ${info.invoiceNumber}</p>
@@ -100,21 +140,25 @@ async function loadPayments(){
           <div class="actions">
             ${info.status === "pending"
               ? `<button class="approve"
-                  onclick="approve('${s.id}','${course}')">
+                  onclick="approve('${student.id}','${course}')">
                   Approve Payment</button>`
               : `<button class="cancel"
-                  onclick="cancel('${s.id}','${course}')">
+                  onclick="cancel('${student.id}','${course}')">
                   Cancel Payment</button>`
             }
 
             <button class="download"
-              onclick="invoice('${info.invoiceNumber}',
-              '${d.name}','${course}','${info.price}')">
+              onclick="downloadInvoice(
+                '${info.invoiceNumber}',
+                '${d.name}',
+                '${course}',
+                '${info.price}'
+              )">
               Download Invoice
             </button>
 
             <button class="delete"
-              onclick="cancel('${s.id}','${course}')">
+              onclick="deleteRecord('${student.id}','${course}')">
               Delete Record
             </button>
           </div>
@@ -124,6 +168,7 @@ async function loadPayments(){
   });
 }
 
+/* ACTIONS */
 window.approve = async (uid, course)=>{
   await updateDoc(doc(db,"students",uid),{
     [`courses.${course}.status`]:"paid"
@@ -138,7 +183,18 @@ window.cancel = async (uid, course)=>{
   loadPayments();
 };
 
-window.invoice = (inv,name,course,price)=>{
+window.deleteRecord = (uid, course)=>{
+  recycleBin.push(`${uid}_${course}`);
+  loadPayments();
+};
+
+window.toggleBin = ()=>{
+  showBin = !showBin;
+  loadPayments();
+};
+
+/* PDF */
+window.downloadInvoice = (inv,name,course,price)=>{
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF();
   pdf.text("Food Business Academy",20,20);
