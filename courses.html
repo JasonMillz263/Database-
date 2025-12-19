@@ -33,8 +33,8 @@ h1{margin-bottom:25px}
   box-shadow:0 15px 35px rgba(0,0,0,.15);
 }
 
-.student-card strong{font-size:14px;opacity:.85}
-.student-card p{margin:6px 0;font-weight:600}
+.student-card strong{font-size:13px;opacity:.85}
+.student-card p{margin:6px 0;font-weight:600;word-break:break-all}
 
 .grid{
   display:grid;
@@ -102,8 +102,8 @@ button.success-btn{
 <body>
 <main class="main">
 
-  <!-- STUDENT CARD -->
-  <div class="student-card" id="studentCard">
+  <!-- STUDENT IDENTITY CARD -->
+  <div class="student-card">
     <strong>Student Email</strong>
     <p id="studentEmail">Loading...</p>
     <strong>Student ID</strong>
@@ -119,11 +119,12 @@ button.success-btn{
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import { 
+import {
   getFirestore, collection, addDoc, query, where, getDocs,
-  serverTimestamp, updateDoc, doc, arrayUnion
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
+/* 🔥 FIREBASE CONFIG */
 const firebaseConfig = {
   apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain: "students-login-29409.firebaseapp.com",
@@ -138,6 +139,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+/* 📚 COURSES (UNCHANGED) */
 const courses = [
   {name:"Food Business Management Course", price:49, modules:["Introduction to Food Business","Operations & Compliance","Food Safety Management","Marketing & Distribution"]},
   {name:"Financial Management for Food Processors", price:59, modules:["Costing & Pricing","Cash Flow Management","Budgeting & Forecasting","Profitability Analysis"]},
@@ -148,78 +150,87 @@ const courses = [
 
 const grid = document.getElementById("coursesGrid");
 
+/* 🔐 AUTH CHECK */
 onAuthStateChanged(auth, async (user) => {
-  if(!user) return location.href="login.html";
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
 
   document.getElementById("studentEmail").textContent = user.email;
   document.getElementById("studentId").textContent = user.uid;
 
+  // Fetch student payments
   const q = query(
-    collection(db,"payments"),
-    where("studentId","==",user.uid)
+    collection(db, "payments"),
+    where("studentId", "==", user.uid)
   );
-  const snapshot = await getDocs(q);
 
+  const snapshot = await getDocs(q);
   const paymentMap = {};
-  snapshot.forEach(doc=>{
+
+  snapshot.forEach(doc => {
     paymentMap[doc.data().courseName] = doc.data();
   });
 
   grid.innerHTML = "";
 
-  courses.forEach(c=>{
-    const payment = paymentMap[c.name];
-
+  courses.forEach(course => {
+    const payment = paymentMap[course.name];
     let badge = "";
     let button = "";
 
-    if(payment?.status === "pending"){
+    if (payment?.status === "pending") {
       badge = `<div class="badge pending">Awaiting Approval</div>`;
       button = `<button class="pending-btn" disabled>Pending</button>`;
     }
-    else if(payment?.status === "approved"){
+    else if (payment?.status === "approved") {
       badge = `<div class="badge approved">Approved</div>`;
-      button = `<button class="success-btn" onclick="startCourse('${c.name}')">Start Course</button>`;
+      button = `<button class="success-btn" onclick="startCourse('${course.name}')">Start Course</button>`;
     }
-    else{
-      button = `<button onclick="createInvoice('${c.name}',${c.price})">Pay to Start</button>`;
+    else {
+      button = `<button onclick="createInvoice('${course.name}', ${course.price})">Pay to Start</button>`;
     }
 
     grid.innerHTML += `
       <div class="card">
         ${badge}
-        <h3>${c.name}</h3>
-        <ul class="modules">${c.modules.map(m=>`<li>${m}</li>`).join("")}</ul>
-        <div class="price">$${c.price}</div>
+        <h3>${course.name}</h3>
+        <ul class="modules">
+          ${course.modules.map(m => `<li>${m}</li>`).join("")}
+        </ul>
+        <div class="price">$${course.price}</div>
         ${button}
       </div>
     `;
   });
 });
 
+/* 🧾 CREATE INVOICE (NO SHORTCUT) */
 window.createInvoice = async (courseName, price) => {
   const user = auth.currentUser;
-  if(!user) return;
+  if (!user) return;
 
-  await addDoc(collection(db,"payments"),{
-    studentId:user.uid,
-    studentName:user.displayName || "Student",
-    email:user.email,
+  const docRef = await addDoc(collection(db, "payments"), {
+    studentId: user.uid,
+    studentName: user.displayName || "Student",
+    email: user.email,
     courseName,
     price,
-    paymentMethod:"Manual",
-    invoiceNumber:`FBA-${Date.now()}`,
-    status:"pending",
-    createdAt:serverTimestamp()
+    paymentMethod: "Manual",
+    invoiceNumber: `FBA-${Date.now()}`,
+    status: "pending",
+    createdAt: serverTimestamp()
   });
 
-  alert("Invoice created. Awaiting admin approval.");
-  location.reload();
+  // Redirect to invoice + instructions page
+  window.location.href = `student-details.html?invoiceId=${docRef.id}`;
 };
 
+/* ▶ START COURSE */
 window.startCourse = (courseName) => {
   alert("Starting course: " + courseName);
-  // redirect to course dashboard
+  // redirect to course dashboard later
 };
 </script>
 
