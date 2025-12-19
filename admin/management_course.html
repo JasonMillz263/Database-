@@ -1,38 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Admin Panel — Initialize Full Firestore</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<style>
-body{font-family:'Segoe UI',sans-serif;background:#f4f6f9;margin:0;padding:0;color:#333;}
-header{background:linear-gradient(135deg,#4A90E2,#007AFF);color:white;padding:20px;text-align:center;font-size:1.5rem;font-weight:bold;letter-spacing:1px;}
-.container{max-width:900px;margin:30px auto;background:white;padding:25px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,0.1);}
-h2{color:#007AFF;margin-bottom:10px;}
-button{background:#007AFF;color:white;border:none;padding:12px 20px;border-radius:8px;cursor:pointer;font-size:1rem;font-weight:bold;transition:background 0.3s, transform 0.2s;display:flex;align-items:center;gap:8px;}
-button:hover{background:#005BBB;transform:translateY(-2px);}
-</style>
+<title>Firestore Init</title>
 </head>
 <body>
-<header>
-<i class="fas fa-cogs"></i> Admin Panel — Initialize Full Firestore
-</header>
 
-<div class="container">
-<h2><i class="fas fa-database"></i> Initialize Full Firestore Structure</h2>
-<p>This will create all 5 courses, modules, lessons, quizzes, and placeholder collections for payments, progress, and certificates.</p>
-<button onclick="initFirestore()"><i class="fas fa-play-circle"></i> Initialize Firestore</button>
-</div>
+<button onclick="init()">Initialize Firestore</button>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, doc, setDoc, collection } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC_lKWa4cM4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain: "students-login-29409.firebaseapp.com",
   projectId: "students-login-29409",
-  storageBucket: "students-login-29409.firebasestorage.app",
+  storageBucket: "students-login-29409.appspot.com",
   messagingSenderId: "634331456872",
   appId: "1:634331456872:web:6dae360c5e28d8356562dd"
 };
@@ -40,93 +24,33 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const courses = [
-  { id: "food_business_management", title: "Food Business Management Course", description:"Learn to manage your food business efficiently." },
-  { id: "financial_management", title: "Financial Management for Food Processors", description:"Manage finances for food processing." },
-  { id: "value_addition", title: "Food Value Addition Course for Farmers", description:"Increase the value of your farm products." },
-  { id: "new_product_dev", title: "New Product Development and Management", description:"Develop and manage new food products." },
-  { id: "management", title: "Management", description:"General management skills for food business." }
-];
-
-window.initFirestore = async () => {
+window.init = async () => {
   try {
-    for(const c of courses){
-      // 1️⃣ Courses
-      const courseRef = doc(db,'courses',c.id);
-      await setDoc(courseRef,{
-        title:c.title,
-        description:c.description,
-        published:true,
-        createdAt:new Date()
-      });
 
-      // 2️⃣ Modules & Lessons
-      for(let i=1;i<=2;i++){ // create 2 modules placeholder
-        const moduleId = `module_${i}`;
-        const moduleRef = doc(collection(db,'courses',c.id,'modules'),moduleId);
-        await setDoc(moduleRef,{title:`Module ${i}`, order:i});
-
-        for(let j=1;j<=2;j++){ // 2 lessons per module
-          const lessonRef = doc(collection(db,'courses',c.id,'modules',moduleId,'lessons'),`lesson_${j}`);
-          await setDoc(lessonRef,{
-            title:`Lesson ${j} Placeholder`,
-            contentHTML:'',
-            videoURL:'',
-            images:[],
-            ttsEnabled:false,
-            createdAt:new Date()
-          });
-        }
-      }
-
-      // 3️⃣ Quizzes
-      for(let q=1;q<=2;q++){ // 2 placeholder quizzes per course
-        const quizRef = doc(collection(db,'courses',c.id,'quizzes'),`quiz_${q}`);
-        await setDoc(quizRef,{
-          question:`Placeholder question ${q}`,
-          options:['A','B','C','D'],
-          correctIndex:0,
-          createdAt:new Date()
-        });
-      }
-
-      console.log(`✅ ${c.title} initialized`);
-    }
-
-    // 4️⃣ Payments, Progress, Certificates (empty placeholders)
-    const paymentsRef = collection(db,'payments');
-    const progressRef = collection(db,'progress');
-    const certificatesRef = collection(db,'certificates');
-
-    // Add one placeholder document for each to create collection
-    await setDoc(doc(paymentsRef,'placeholder_payment'),{
-      userId:'user_1',
-      courseId:'food_business_management',
-      status:'approved',
-      paidAt:new Date()
-    });
-    await setDoc(doc(progressRef,'placeholder_progress'),{
-      userId:'user_1',
-      courseId:'food_business_management',
-      completedLessons:[],
-      score:0,
-      completed:false,
-      lastVisitedLessonId:'',
-      updatedAt:new Date()
-    });
-    await setDoc(doc(certificatesRef,'placeholder_certificate'),{
-      userId:'user_1',
-      courseId:'food_business_management',
-      issuedAt:new Date(),
-      certificateURL:''
+    // COURSE
+    await setDoc(doc(db, "courses", "course_1"), {
+      title: "Test Course",
+      published: true
     });
 
-    alert("✅ Full Firestore structure initialized successfully!");
-  } catch(err){
-    console.error("Error initializing Firestore:", err);
-    alert("❌ Error initializing Firestore, check console");
+    // MODULE
+    await setDoc(doc(db, "courses/course_1/modules", "module_1"), {
+      title: "Module 1"
+    });
+
+    // LESSON
+    await setDoc(doc(db, "courses/course_1/modules/module_1/lessons", "lesson_1"), {
+      title: "Lesson 1"
+    });
+
+    alert("✅ Firestore initialized");
+
+  } catch (e) {
+    console.error(e);
+    alert("❌ Failed — check console");
   }
 };
 </script>
+
 </body>
 </html>
