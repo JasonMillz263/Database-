@@ -1,255 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Courses Offered | Food Business Academy</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
-<!DOCTYPE html>  <html lang="en">  
-<head>  
-<meta charset="UTF-8">  
-<title>Courses Offered | Food Business Academy</title>  
-<meta name="viewport" content="width=device-width, initial-scale=1.0">  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">  <style>  
-:root{  
-  --blue:#2563eb;  
-  --purple:#6d28d9;  
-  --bg:#f5f7ff;  
-  --card:#ffffff;  
-  --text:#1f2937;  
-  --pending:#f59e0b;  
-  --paid:#22c55e;  
-}  
-  
-*{box-sizing:border-box;font-family:'Poppins',sans-serif}  
-body{margin:0;background:var(--bg);color:var(--text)}  
-  
-header{  
-  background:#fff;  
-  padding:15px 25px;  
-  display:flex;  
-  justify-content:space-between;  
-  align-items:center;  
-  box-shadow:0 6px 18px rgba(0,0,0,.06)  
-}  
-  
-header button{  
-  padding:10px 16px;  
-  border:none;  
-  border-radius:12px;  
-  font-weight:600;  
-  cursor:pointer;  
-}  
-  
-.home{background:#e5e7eb}  
-.dashboard{background:var(--blue);color:#fff}  
-  
-.main{padding:30px;max-width:1200px;margin:auto}  
-  
-/* ===== IDENTITY CARD ===== */  
-.identity{  
-  background:#fff;  
-  border-radius:18px;  
-  padding:18px 22px;  
-  margin-bottom:25px;  
-  box-shadow:0 8px 20px rgba(0,0,0,.06);  
-  display:flex;  
-  justify-content:space-between;  
-  align-items:center;  
-  gap:16px;  
-}  
-  
-.identity .block{  
-  display:flex;  
-  flex-direction:column;  
-}  
-  
-.identity span{  
-  font-size:13px;  
-  color:#6b7280;  
-}  
-  
-.identity strong{  
-  font-size:15px;  
-  color:#111827;  
-  word-break:break-all;  
-}  
-  
-/* MOBILE STACK */  
-@media (max-width:600px){  
-  .identity{  
-    flex-direction:column;  
-    align-items:flex-start;  
-  }  
-  .identity .block{  
-    width:100%;  
-  }  
-}  
-  
-/* ===== COURSES ===== */  
-.grid{  
-  display:grid;  
-  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));  
-  gap:20px;  
-}  
-  
-.card{  
-  background:var(--card);  
-  border-radius:20px;  
-  padding:22px;  
-  box-shadow:0 15px 35px rgba(0,0,0,.08);  
-  position:relative;  
-  display:flex;  
-  flex-direction:column;  
-  justify-content:space-between;  
-}  
-  
-.badge{  
-  position:absolute;  
-  top:16px;  
-  right:16px;  
-  padding:6px 12px;  
-  border-radius:999px;  
-  font-size:12px;  
-  font-weight:600;  
-  color:#fff;  
-}  
-.pending{background:var(--pending)}  
-.paid{background:var(--paid)}  
-  
-.modules{margin:15px 0}  
-.modules li{  
-  margin-bottom:6px;  
-  list-style:none;  
-  padding-left:20px;  
-  position:relative;  
-}  
-.modules li::before{  
-  content:"✔";  
-  position:absolute;  
-  left:0;  
-  color:var(--blue);  
-}  
-  
-.price{font-size:18px;font-weight:700;margin:12px 0}  
-  
-button.action{  
-  width:100%;  
-  padding:12px;  
-  border:none;  
-  border-radius:14px;  
-  font-weight:600;  
-  background:linear-gradient(135deg,var(--blue),var(--purple));  
-  color:#fff;  
-  cursor:pointer;  
-}  
-  
-button.action[disabled]{  
-  background:var(--pending);  
-  cursor:not-allowed;  
-}  
-</style>  </head>  <body>  <header>  
-  <button class="home" onclick="location.href='#'">🏠 Home</button>  
-  <button class="dashboard" onclick="location.href='student.htm'">⬅ Student Dashboard</button>  
-</header>  <main class="main">    <!-- IDENTITY CARD -->    <div class="identity">  
-    <div class="block">  
-      <span>Email</span>  
-      <strong id="studentEmail">Loading...</strong>  
-    </div>  <div class="block">  
-  <span>User ID</span>  
-  <strong id="studentId">Loading...</strong>  
-</div>
+<style>
+:root{
+  --blue:#2563eb;
+  --purple:#6d28d9;
+  --bg:#f5f7ff;
+  --card:#ffffff;
+  --text:#1f2937;
+  --pending:#f59e0b;
+}
 
-  </div>    <h1>📘 Courses Offered</h1>  
-  <div class="grid" id="coursesGrid"></div>  </main>  <!-- FIREBASE + LOGIC -->  <script type="module">  
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";  
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";  
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";  
-  
-/* FIREBASE CONFIG */  
-const firebaseConfig = {  
-  apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",  
-  authDomain: "students-login-29409.firebaseapp.com",  
-  projectId: "students-login-29409",  
-  storageBucket: "students-login-29409.firebasestorage.app",  
-  messagingSenderId: "634331456872",  
-  appId: "1:634331456872:web:6dae360c5e28d8356562dd",  
-  measurementId: "G-96XXYG1VR2"  
-};  
-  
-const app = initializeApp(firebaseConfig);  
-const auth = getAuth(app);  
-const db = getFirestore(app);  
-  
-/* COURSES DATA */  
-const courses = [  
-  {name:"Food Business Management Course",price:49,modules:["Introduction to Food Business","Operations & Compliance","Food Safety Management","Marketing & Distribution"]},  
-  {name:"Financial Management for Food Processors",price:59,modules:["Costing & Pricing","Cash Flow Management","Budgeting & Forecasting","Profitability Analysis"]},  
-  {name:"Food Value Addition Course for Farmers",price:45,modules:["Post-Harvest Handling","Processing Techniques","Packaging & Storage","Market Readiness"]},  
-  {name:"New Product Development and Management",price:69,modules:["Idea Generation","Product Testing","Regulatory Approval","Product Launch Strategy"]},  
-  {name:"Management",price:39,modules:["Leadership Skills","Team Management","Decision Making","Business Ethics"]}  
-];  
-  
-const grid = document.getElementById("coursesGrid");  
-  
-/* AUTH + LOAD STUDENT */  
-onAuthStateChanged(auth, async user=>{  
-  if(!user){  
-    alert("Session expired. Please login again.");  
-    location.href="student.htm";  
-    return;  
-  }  
-  
-  const uid = user.uid;  
-  const snap = await getDoc(doc(db,"students",uid));  
-  
-  if(!snap.exists()){  
-    alert("Student record not found.");  
-    return;  
-  }  
-  
-  const data = snap.data();  
-  const email = data.email;  
-  
-  document.getElementById("studentEmail").textContent = email;  
-  document.getElementById("studentId").textContent = uid.substring(0,10).toUpperCase();  
-  
-  /* LOAD COURSE STATUS */  
-  const statusData = JSON.parse(localStorage.getItem("courseStatus")) || {};  
-  const myStatus = statusData[email] || {};  
-  
-  grid.innerHTML = "";  
-  
-  courses.forEach(c=>{  
-    const status = myStatus[c.name];  
-    let badge="", button="";  
-  
-    if(status==="pending"){  
-      badge='<div class="badge pending">Pending Payment</div>';  
-      button='<button class="action" disabled>Awaiting Approval</button>';  
-    }  
-    else if(status==="paid"){  
-      badge='<div class="badge paid">Paid</div>';  
-      button='<button class="action" onclick="location.href=\'#\'">Start Course</button>';  
-    }  
-    else{  
-      button=`<button class="action" onclick="pay('${c.name}',${c.price})">Pay to Start</button>`;  
-    }  
-  
-    grid.innerHTML += `  
-      <div class="card">  
-        ${badge}  
-        <div>  
-          <h3>${c.name}</h3>  
-          <ul class="modules">  
-            ${c.modules.map(m=>`<li>${m}</li>`).join("")}  
-          </ul>  
-          <div class="price">$${c.price}</div>  
-        </div>  
-        ${button}  
-      </div>  
-    `;  
-  });  
-  
-  window.pay = (course,price)=>{  
-    localStorage.setItem("courseName",course);  
-    localStorage.setItem("coursePrice",price);  
-    location.href="student-details.html";  
-  };  
-});  
-</script>  </body>  
-</html>  
+*{box-sizing:border-box;font-family:'Poppins',sans-serif}
+body{margin:0;background:var(--bg);color:var(--text)}
+
+.main{padding:30px;max-width:1200px;margin:auto}
+h1{margin-bottom:25px}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:20px;
+}
+
+.card{
+  background:var(--card);
+  border-radius:20px;
+  padding:22px;
+  box-shadow:0 15px 35px rgba(0,0,0,.08);
+  position:relative;
+}
+
+.badge{
+  position:absolute;
+  top:16px;
+  right:16px;
+  background:var(--pending);
+  color:#fff;
+  padding:6px 12px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:600;
+}
+
+.modules{margin:15px 0}
+.modules li{
+  margin-bottom:6px;
+  list-style:none;
+  padding-left:20px;
+  position:relative;
+}
+.modules li::before{
+  content:"✔";
+  position:absolute;
+  left:0;
+  color:var(--blue);
+}
+
+.price{font-size:18px;font-weight:700;margin:10px 0}
+
+button{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:14px;
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  color:#fff;
+  font-weight:600;
+  cursor:pointer;
+}
+button[disabled]{
+  background:var(--pending);
+  cursor:not-allowed;
+}
+</style>
+</head>
+
+<body>
+
+<main class="main">
+  <h1>📘 Courses Offered</h1>
+  <div class="grid" id="coursesGrid"></div>
+</main>
+
+<!-- FIREBASE LOGIC -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  query,
+  where,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+/* Firebase config */
+const firebaseConfig = {
+  apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+  authDomain: "students-login-29409.firebaseapp.com",
+  projectId: "students-login-29409",
+  storageBucket: "students-login-29409.firebasestorage.app",
+  messagingSenderId: "634331456872",
+  appId: "1:634331456872:web:6dae360c5e28d8356562dd",
+  measurementId: "G-96XXYG1VR2"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+/* Courses */
+const courses = [
+  {name:"Food Business Management Course", price:49, modules:["Introduction to Food Business","Operations & Compliance","Food Safety Management","Marketing & Distribution"]},
+  {name:"Financial Management for Food Processors", price:59, modules:["Costing & Pricing","Cash Flow Management","Budgeting & Forecasting","Profitability Analysis"]},
+  {name:"Food Value Addition Course for Farmers", price:45, modules:["Post-Harvest Handling","Processing Techniques","Packaging & Storage","Market Readiness"]},
+  {name:"New Product Development and Management", price:69, modules:["Idea Generation","Product Testing","Regulatory Approval","Product Launch Strategy"]},
+  {name:"Management", price:39, modules:["Leadership Skills","Team Management","Decision Making","Business Ethics"]}
+];
+
+const grid = document.getElementById("coursesGrid");
+
+/* Auth + Load payments */
+onAuthStateChanged(auth, async user => {
+  if (!user) {
+    alert("Please login to continue");
+    return;
+  }
+
+  const uid = user.uid;
+  const email = user.email;
+
+  // Load this student's payments
+  const paymentsSnap = await getDocs(
+    query(collection(db, "payments"), where("studentId", "==", uid))
+  );
+
+  const paymentStatus = {};
+  paymentsSnap.forEach(doc => {
+    const p = doc.data();
+    paymentStatus[p.courseName] = p.status;
+  });
+
+  grid.innerHTML = "";
+
+  courses.forEach(c => {
+    const isPending = paymentStatus[c.name] === "pending";
+
+    grid.innerHTML += `
+      <div class="card">
+        ${isPending ? '<div class="badge">Pending Payment</div>' : ''}
+        <h3>${c.name}</h3>
+        <ul class="modules">
+          ${c.modules.map(m => `<li>${m}</li>`).join("")}
+        </ul>
+        <div class="price">$${c.price}</div>
+        <button ${isPending ? "disabled" : ""} 
+          onclick="pay('${c.name}', ${c.price})">
+          ${isPending ? "Pending Payment" : "Pay to Start"}
+        </button>
+      </div>
+    `;
+  });
+
+  /* Pay function – creates Firestore payment */
+  window.pay = async (course, price) => {
+    await addDoc(collection(db, "payments"), {
+      studentId: uid,
+      studentName: user.displayName || "Student",
+      email: email,
+      courseName: course,
+      price: price,
+      paymentMethod: "Manual",
+      invoiceNumber: `FBA-${Date.now()}`,
+      status: "pending",
+      createdAt: serverTimestamp()
+    });
+
+    alert("Invoice generated. Awaiting approval.");
+    location.reload();
+  };
+});
+</script>
+
+</body>
+</html>
