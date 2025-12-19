@@ -1,19 +1,26 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Firestore Init</title>
+<title>Firestore Structure Initializer</title>
 </head>
 <body>
 
-<button onclick="init()">Initialize Firestore</button>
+<h2>Initialize Firestore Structure</h2>
+<button onclick="initFirestore()">Initialize</button>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  collection
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+/* 🔹 Firebase config (CLEAN) */
 const firebaseConfig = {
-  apiKey: "AIzaSyC_lKWa4cM4cM4cT337KkRw4sp7raQHl9aZWk",
+  apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain: "students-login-29409.firebaseapp.com",
   projectId: "students-login-29409",
   storageBucket: "students-login-29409.appspot.com",
@@ -24,30 +31,97 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-window.init = async () => {
+/* 🔹 Predefined courses */
+const courses = [
+  { id:"food_business_management", title:"Food Business Management Course", description:"Course description here..." },
+  { id:"financial_management", title:"Financial Management for Food Processors", description:"Course description here..." },
+  { id:"value_addition", title:"Food Value Addition Course for Farmers", description:"Course description here..." },
+  { id:"new_product_dev", title:"New Product Development and Management", description:"Course description here..." },
+  { id:"management", title:"Management", description:"Course description here..." }
+];
+
+window.initFirestore = async () => {
   try {
 
-    // COURSE
-    await setDoc(doc(db, "courses", "course_1"), {
-      title: "Test Course",
-      published: true
+    /* 🔹 COURSES → MODULES → LESSONS */
+    for (const course of courses) {
+
+      await setDoc(doc(db, "courses", course.id), {
+        title: course.title,
+        description: course.description,
+        published: true,
+        createdAt: new Date()
+      });
+
+      for (let m = 1; m <= 2; m++) {
+        const moduleId = `module_${m}`;
+
+        await setDoc(
+          doc(db, "courses", course.id, "modules", moduleId),
+          { title: `Module ${m}`, order: m }
+        );
+
+        for (let l = 1; l <= 2; l++) {
+          await setDoc(
+            doc(db, "courses", course.id, "modules", moduleId, "lessons", `lesson_${l}`),
+            {
+              title: `Lesson ${l}`,
+              contentHTML: "",
+              videoURL: "",
+              images: [],
+              ttsEnabled: false,
+              createdAt: new Date()
+            }
+          );
+        }
+      }
+
+      /* 🔹 QUIZZES */
+      for (let q = 1; q <= 2; q++) {
+        await setDoc(
+          doc(db, "courses", course.id, "quizzes", `quiz_${q}`),
+          {
+            question: `Question ${q}`,
+            options: ["A", "B", "C", "D"],
+            correctIndex: 0,
+            createdAt: new Date()
+          }
+        );
+      }
+    }
+
+    /* 🔹 PAYMENTS (placeholder) */
+    await setDoc(doc(db, "payments", "payment_1"), {
+      userId: "user_1",
+      courseId: "food_business_management",
+      status: "approved",
+      paidAt: new Date()
     });
 
-    // MODULE
-    await setDoc(doc(db, "courses/course_1/modules", "module_1"), {
-      title: "Module 1"
+    /* 🔹 PROGRESS (userId_courseId) */
+    await setDoc(doc(db, "progress", "user_1_food_business_management"), {
+      userId: "user_1",
+      courseId: "food_business_management",
+      completedLessons: [],
+      score: 0,
+      completed: false,
+      lastVisitedLessonId: "",
+      updatedAt: new Date()
     });
 
-    // LESSON
-    await setDoc(doc(db, "courses/course_1/modules/module_1/lessons", "lesson_1"), {
-      title: "Lesson 1"
+    /* 🔹 CERTIFICATES */
+    await setDoc(doc(db, "certificates", "cert_1"), {
+      userId: "user_1",
+      courseId: "food_business_management",
+      issuedAt: new Date(),
+      certificateURL: ""
     });
 
-    alert("✅ Firestore initialized");
+    alert("✅ Firestore structure initialized successfully");
 
-  } catch (e) {
-    console.error(e);
-    alert("❌ Failed — check console");
+  } catch (err) {
+    console.error(err);
+    alert("❌ Initialization failed – check console");
   }
 };
 </script>
