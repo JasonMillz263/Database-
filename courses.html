@@ -16,6 +16,7 @@
   --text:#1f2937;
   --pending:#f59e0b;
   --success:#16a34a;
+  --danger:#dc2626;
 }
 *{box-sizing:border-box;font-family:'Poppins',sans-serif}
 body{margin:0;background:var(--bg);color:var(--text)}
@@ -86,9 +87,13 @@ button{
   color:#fff;
   font-weight:600;
   cursor:pointer;
+  margin-bottom:8px;
 }
 button.pending-btn{background:var(--pending);cursor:not-allowed}
 button.success-btn{background:var(--success)}
+button.cancel-btn{
+  background:var(--danger);
+}
 </style>
 </head>
 
@@ -112,7 +117,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebas
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import {
   getFirestore, collection, addDoc, query, where, getDocs,
-  doc, getDoc, serverTimestamp
+  doc, getDoc, deleteDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 /* 🔥 FIREBASE CONFIG */
@@ -122,8 +127,7 @@ const firebaseConfig = {
   projectId: "students-login-29409",
   storageBucket: "students-login-29409.firebasestorage.app",
   messagingSenderId: "634331456872",
-  appId: "1:634331456872:web:6dae360c5e28d8356562dd",
-  measurementId: "G-96XXYG1VR2"
+  appId: "1:634331456872:web:6dae360c5e28d8356562dd"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -141,44 +145,38 @@ const courses = [
 
 const grid = document.getElementById("coursesGrid");
 
-onAuthStateChanged(auth, async (user) => {
-  if (!user) return location.href = "login.html";
-
-  studentEmail.textContent = user.email;
-  studentId.textContent = user.uid;
-
-  // 🔐 Load student access
-  const studentSnap = await getDoc(doc(db,"students",user.uid));
-  const coursesPaid = studentSnap.exists()
-    ? (studentSnap.data().coursesPaid || [])
-    : [];
-
-  // 💳 Load payments
+async function loadCourses(user){
   const paymentsSnap = await getDocs(
     query(collection(db,"payments"), where("studentId","==",user.uid))
   );
 
   const paymentMap = {};
-  paymentsSnap.forEach(d => paymentMap[d.data().courseName] = d.data());
+  paymentsSnap.forEach(d => paymentMap[d.data().courseName] = {
+    id: d.id,
+    ...d.data()
+  });
 
   grid.innerHTML = "";
 
   courses.forEach(course => {
-    const hasAccess = coursesPaid.includes(course.name);
     const payment = paymentMap[course.name];
 
-    let badge = "", button = "";
+    let badge = "", buttons = "";
 
-    if (hasAccess) {
-      badge = `<div class="badge approved">Approved</div>`;
-      button = `<button class="success-btn" onclick="startCourse('${course.name}')">Start Course</button>`;
-    }
-    else if (payment?.status === "pending") {
+    if (payment?.status === "pending") {
       badge = `<div class="badge pending">Awaiting Approval</div>`;
-      button = `<button class="pending-btn" disabled>Pending</button>`;
+      buttons = `
+        <button class="pending-btn" disabled>Pending</button>
+        <button class="cancel-btn" onclick="cancelInvoice('${payment.id}')">
+          Cancel Invoice
+        </button>`;
+    }
+    else if (payment?.status === "approved") {
+      badge = `<div class="badge approved">Approved</div>`;
+      buttons = `<button class="success-btn" onclick="startCourse('${course.name}')">Start Course</button>`;
     }
     else {
-      button = `<button onclick="createInvoice('${course.name}', ${course.price})">Pay to Start</button>`;
+      buttons = `<button onclick="createInvoice('${course.name}', ${course.price})">Pay to Start</button>`;
     }
 
     grid.innerHTML += `
@@ -189,50 +187,44 @@ onAuthStateChanged(auth, async (user) => {
           ${course.modules.map(m => `<li>${m}</li>`).join("")}
         </ul>
         <div class="price">$${course.price}</div>
-        ${button}
+        ${buttons}
       </div>
     `;
   });
+}
+
+/* 🔐 AUTH */
+onAuthStateChanged(auth, async user => {
+  if (!user) return location.href="login.html";
+  studentEmail.textContent = user.email;
+  studentId.textContent = user.uid;
+  loadCourses(user);
 });
 
-/* 🧾 CREATE INVOICE (FIXED & SAFE) */
+/* 🧾 CREATE INVOICE */
 window.createInvoice = async (courseName, price) => {
+  if (!confirm(`Generate invoice for ${courseName}?`)) return;
+
   const user = auth.currentUser;
-  if (!user) return;
 
-  const confirmed = confirm(
-    `Generate invoice for:\n\n${courseName}\n$${price}\n\nProceed?`
-  );
-  if (!confirmed) return;
-
-  // Prevent duplicate pending invoices
-  const existingQ = query(
-    collection(db,"payments"),
-    where("studentId","==",user.uid),
-    where("courseName","==",courseName),
-    where("status","==","pending")
-  );
-  const existingSnap = await getDocs(existingQ);
-
-  if (!existingSnap.empty) {
-    window.location.href =
-      `student-details.html?invoiceId=${existingSnap.docs[0].id}`;
-    return;
-  }
-
-  const docRef = await addDoc(collection(db,"payments"), {
-    studentId: user.uid,
-    studentName: user.displayName || "Student",
-    email: user.email,
+  await addDoc(collection(db,"payments"),{
+    studentId:user.uid,
+    email:user.email,
     courseName,
     price,
-    paymentMethod: "Manual",
-    invoiceNumber: `FBA-${Date.now()}`,
-    status: "pending",
-    createdAt: serverTimestamp()
+    status:"pending",
+    invoiceNumber:`FBA-${Date.now()}`,
+    createdAt:serverTimestamp()
   });
 
-  window.location.href = `student-details.html?invoiceId=${docRef.id}`;
+  loadCourses(user);
+};
+
+/* ❌ CANCEL INVOICE */
+window.cancelInvoice = async (invoiceId) => {
+  if (!confirm("Cancel this invoice?")) return;
+  await deleteDoc(doc(db,"payments",invoiceId));
+  loadCourses(auth.currentUser);
 };
 
 /* ▶ START COURSE */
