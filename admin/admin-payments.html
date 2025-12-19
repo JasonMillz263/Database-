@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Manage Payments | Food Business Academy</title>
+<title>Admin – Manage Payments</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
@@ -97,7 +97,7 @@ main{padding:30px;max-width:1300px;margin:auto}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
-  getFirestore, collection, getDocs, doc, updateDoc
+  getFirestore, collection, getDocs, doc, updateDoc, deleteField
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -111,77 +111,73 @@ const db = getFirestore(app);
 
 const grid = document.getElementById("grid");
 
-/* 🔄 LOAD EXISTING APPROVALS */
-async function loadPayments(){
+/* Load all student courses */
+async function loadPayments() {
   grid.innerHTML = "";
-
   const snap = await getDocs(collection(db,"students"));
-  let found = false;
+  let hasRecords = false;
 
   snap.forEach(docSnap=>{
     const student = docSnap.data();
     if(!student.courses) return;
 
-    Object.entries(student.courses).forEach(([course, data])=>{
-      if(!data || !data.status) return;   // ✅ critical fix
+    Object.entries(student.courses).forEach(([courseName, info])=>{
+      if(!info || !info.status) return; // skip invalid/null
 
-      found = true;
-      const statusClass = data.status === "paid" ? "paid" : "pending";
+      hasRecords = true;
+      const statusClass = info.status === "paid" ? "paid" : "pending";
 
       grid.innerHTML += `
         <div class="card">
           <div class="status ${statusClass}">
-            ${data.status === "paid" ? "Paid" : "Pending"}
+            ${info.status === "paid" ? "Paid" : "Pending"}
           </div>
 
           <h3>${student.name}</h3>
           <div class="info">📧 ${student.email}</div>
           <div class="info">📞 ${student.phone}</div>
-          <div class="info">🧾 Invoice: ${data.invoiceNumber}</div>
-          <div class="info">💳 Method: ${data.method}</div>
-          <div class="course">📘 ${course}</div>
+          <div class="info">🧾 Invoice: ${info.invoiceNumber || 'N/A'}</div>
+          <div class="info">💳 Method: ${info.method || 'N/A'}</div>
+          <div class="course">📘 ${courseName}</div>
 
           <div class="actions">
-            ${data.status === "pending"
-              ? `<button class="approve" onclick="approve('${docSnap.id}','${course}')">Approve</button>`
-              : `<button class="cancel" onclick="cancel('${docSnap.id}','${course}')">Cancel Approval</button>`
+            ${info.status === "pending"
+              ? `<button class="approve" onclick="approve('${docSnap.id}','${courseName}')">Approve</button>`
+              : `<button class="cancel" onclick="cancel('${docSnap.id}','${courseName}')">Cancel</button>`
             }
-            <button class="download" onclick="downloadInvoice('${data.invoiceNumber}','${student.name}','${course}','${data.price}')">Download Invoice</button>
-            <button class="delete" onclick="remove('${docSnap.id}','${course}')">Delete</button>
+            <button class="download" onclick="downloadInvoice('${info.invoiceNumber}','${student.name}','${courseName}','${info.price || 0}')">Download Invoice</button>
+            <button class="delete" onclick="deleteCourse('${docSnap.id}','${courseName}')">Delete</button>
           </div>
         </div>
       `;
     });
   });
 
-  if(!found){
+  if(!hasRecords){
     grid.innerHTML = "<p>No pending or paid approvals found.</p>";
   }
 }
 
-/* ✅ ACTIONS */
-window.approve = async (id, course)=>{
-  await updateDoc(doc(db,"students",id),{
-    [`courses.${course}.status`]:"paid"
-  });
+/* ACTIONS */
+window.approve = async (studentId, courseName)=>{
+  const ref = doc(db,"students",studentId);
+  await updateDoc(ref,{[`courses.${courseName}.status`]:"paid"});
   loadPayments();
 };
 
-window.cancel = async (id, course)=>{
-  await updateDoc(doc(db,"students",id),{
-    [`courses.${course}`]: null
-  });
+window.cancel = async (studentId, courseName)=>{
+  const ref = doc(db,"students",studentId);
+  await updateDoc(ref,{[`courses.${courseName}`]: deleteField()});
   loadPayments();
 };
 
-window.remove = async (id, course)=>{
-  await updateDoc(doc(db,"students",id),{
-    [`courses.${course}`]: null
-  });
+window.deleteCourse = async (studentId, courseName)=>{
+  const ref = doc(db,"students",studentId);
+  await updateDoc(ref,{[`courses.${courseName}`]: deleteField()});
   loadPayments();
 };
 
-/* 📄 PDF */
+/* PDF */
 window.downloadInvoice = (inv, name, course, price)=>{
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF();
@@ -195,6 +191,5 @@ window.downloadInvoice = (inv, name, course, price)=>{
 
 loadPayments();
 </script>
-
 </body>
 </html>
