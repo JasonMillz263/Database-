@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
 <title>Admin – Manage Payments</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -97,6 +97,7 @@ import {
   deleteField
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+/* FIREBASE CONFIG */
 const firebaseConfig = {
   apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain: "students-login-29409.firebaseapp.com",
@@ -105,24 +106,31 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
 const grid = document.getElementById("grid");
 
 let recycleBin = [];
 let showBin = false;
 
-async function loadPayments(){
+/* LOAD PAYMENTS */
+async function loadPayments() {
   grid.innerHTML = "";
-  const snap = await getDocs(collection(db,"students"));
 
-  snap.forEach(student=>{
+  const snap = await getDocs(collection(db, "students"));
+
+  snap.forEach(student => {
     const d = student.data();
-    if(!d.courses) return;
 
-    Object.entries(d.courses).forEach(([course, info])=>{
-      if(!info || !info.status) return;
+    if (!d.courses || typeof d.courses !== "object") return;
 
-      if(showBin && !recycleBin.includes(`${student.id}_${course}`)) return;
-      if(!showBin && recycleBin.includes(`${student.id}_${course}`)) return;
+    Object.keys(d.courses).forEach(courseName => {
+      const info = d.courses[courseName];
+      if (!info || !info.status) return;
+
+      const key = `${student.id}_${courseName}`;
+
+      if (showBin && !recycleBin.includes(key)) return;
+      if (!showBin && recycleBin.includes(key)) return;
 
       grid.innerHTML += `
         <div class="card">
@@ -130,35 +138,36 @@ async function loadPayments(){
             ${info.status.toUpperCase()}
           </div>
 
-          <h3>${d.name || "Student"}</h3>
+          <h3>${d.fullName || "Student"}</h3>
           <p><strong>ID:</strong> ${student.id}</p>
-          <p>📧 ${d.email}</p>
+          <p>📧 ${d.email || "N/A"}</p>
           <p>📞 ${d.phone || "N/A"}</p>
-          <p>🧾 Invoice: ${info.invoiceNumber}</p>
-          <p>📘 ${course}</p>
+          <p>🧾 Invoice: ${info.invoiceNumber || "-"}</p>
+          <p>📘 ${courseName}</p>
 
           <div class="actions">
-            ${info.status === "pending"
-              ? `<button class="approve"
-                  onclick="approve('${student.id}','${course}')">
-                  Approve Payment</button>`
-              : `<button class="cancel"
-                  onclick="cancel('${student.id}','${course}')">
-                  Cancel Payment</button>`
+            ${
+              info.status === "pending"
+                ? `<button class="approve"
+                    onclick="approve('${student.id}','${courseName}')">
+                    Approve Payment</button>`
+                : `<button class="cancel"
+                    onclick="cancel('${student.id}','${courseName}')">
+                    Cancel Payment</button>`
             }
 
             <button class="download"
               onclick="downloadInvoice(
                 '${info.invoiceNumber}',
-                '${d.name}',
-                '${course}',
-                '${info.price}'
+                '${d.fullName}',
+                '${courseName}',
+                '${info.price || "0"}'
               )">
               Download Invoice
             </button>
 
             <button class="delete"
-              onclick="deleteRecord('${student.id}','${course}')">
+              onclick="deleteRecord('${student.id}','${courseName}')">
               Delete Record
             </button>
           </div>
@@ -169,39 +178,39 @@ async function loadPayments(){
 }
 
 /* ACTIONS */
-window.approve = async (uid, course)=>{
-  await updateDoc(doc(db,"students",uid),{
-    [`courses.${course}.status`]:"paid"
+window.approve = async (uid, course) => {
+  await updateDoc(doc(db, "students", uid), {
+    [`courses.${course}.status`]: "paid"
   });
   loadPayments();
 };
 
-window.cancel = async (uid, course)=>{
-  await updateDoc(doc(db,"students",uid),{
+window.cancel = async (uid, course) => {
+  await updateDoc(doc(db, "students", uid), {
     [`courses.${course}`]: deleteField()
   });
   loadPayments();
 };
 
-window.deleteRecord = (uid, course)=>{
+window.deleteRecord = (uid, course) => {
   recycleBin.push(`${uid}_${course}`);
   loadPayments();
 };
 
-window.toggleBin = ()=>{
+window.toggleBin = () => {
   showBin = !showBin;
   loadPayments();
 };
 
-/* PDF */
-window.downloadInvoice = (inv,name,course,price)=>{
+/* PDF INVOICE */
+window.downloadInvoice = (inv, name, course, price) => {
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF();
-  pdf.text("Food Business Academy",20,20);
-  pdf.text(`Invoice: ${inv}`,20,35);
-  pdf.text(`Name: ${name}`,20,45);
-  pdf.text(`Course: ${course}`,20,55);
-  pdf.text(`Amount: $${price}`,20,65);
+  pdf.text("Food Business Academy", 20, 20);
+  pdf.text(`Invoice: ${inv}`, 20, 35);
+  pdf.text(`Name: ${name}`, 20, 45);
+  pdf.text(`Course: ${course}`, 20, 55);
+  pdf.text(`Amount: $${price}`, 20, 65);
   pdf.save(`${inv}.pdf`);
 };
 
