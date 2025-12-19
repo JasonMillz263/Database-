@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Manage Payments</title>
+<title>Admin – Manage Payments</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
@@ -11,26 +11,48 @@
 <style>
 :root{
   --bg:#f4f6fb;
-  --card:#fff;
+  --card:#ffffff;
   --blue:#2563eb;
   --green:#22c55e;
   --red:#ef4444;
+  --orange:#f97316;
   --pending:#f59e0b;
+  --text:#1f2937;
+  --muted:#6b7280;
 }
 
-*{box-sizing:border-box;font-family:Poppins}
+*{box-sizing:border-box;font-family:'Poppins',sans-serif}
 body{margin:0;background:var(--bg)}
 
 header{
   background:#fff;
-  padding:20px;
+  padding:20px 30px;
   display:flex;
   justify-content:space-between;
+  align-items:center;
   box-shadow:0 6px 20px rgba(0,0,0,.06);
 }
 
-main{padding:30px;max-width:1200px;margin:auto}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:24px}
+header h1{margin:0;font-size:22px}
+
+header button{
+  padding:10px 16px;
+  border:none;
+  border-radius:12px;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.binBtn{background:#e5e7eb}
+.adminBtn{background:var(--blue);color:#fff}
+
+main{padding:30px;max-width:1300px;margin:auto}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(360px,1fr));
+  gap:24px;
+}
 
 .card{
   background:var(--card);
@@ -38,6 +60,9 @@ main{padding:30px;max-width:1200px;margin:auto}
   padding:22px;
   box-shadow:0 12px 30px rgba(0,0,0,.08);
   position:relative;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
 }
 
 .status{
@@ -46,25 +71,28 @@ main{padding:30px;max-width:1200px;margin:auto}
   right:18px;
   padding:6px 12px;
   border-radius:999px;
-  color:#fff;
   font-size:12px;
+  font-weight:600;
+  color:#fff;
 }
-
 .pending{background:var(--pending)}
 .paid{background:var(--green)}
 
+.info{font-size:14px;color:var(--muted);margin-bottom:6px}
+.course{font-weight:600;margin:10px 0}
+
 .actions button{
   width:100%;
-  margin-top:8px;
   padding:10px;
   border:none;
   border-radius:12px;
   font-weight:600;
+  margin-top:8px;
   cursor:pointer;
 }
 
 .approve{background:var(--green);color:#fff}
-.cancel{background:#f97316;color:#fff}
+.cancel{background:var(--orange);color:#fff}
 .delete{background:var(--red);color:#fff}
 .restore{background:var(--blue);color:#fff}
 .download{background:#0ea5e9;color:#fff}
@@ -74,102 +102,135 @@ main{padding:30px;max-width:1200px;margin:auto}
 <body>
 
 <header>
-  <h2>💳 Manage Payments</h2>
-  <button onclick="toggleBin()">🗑 Recycle Bin</button>
+  <h1>💳 Manage Course Payments</h1>
+  <div>
+    <button class="binBtn" onclick="toggleBin()">🗑 Recycle Bin</button>
+    <button class="adminBtn">Admin Dashboard</button>
+  </div>
 </header>
 
 <main>
   <div class="grid" id="grid"></div>
 </main>
 
-<script>
-const grid=document.getElementById("grid");
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getFirestore, collection, getDocs, doc, updateDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-let payments=JSON.parse(localStorage.getItem("payments"))||[];
-let deleted=JSON.parse(localStorage.getItem("deletedPayments"))||[];
-let statusData=JSON.parse(localStorage.getItem("courseStatus"))||{};
-let showBin=false;
+/* 🔥 FIREBASE CONFIG */
+const firebaseConfig = {
+  apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+  authDomain: "students-login-29409.firebaseapp.com",
+  projectId: "students-login-29409",
+};
 
-render();
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-function render(){
-  grid.innerHTML="";
-  const list=showBin?deleted:payments;
-  if(list.length===0){grid.innerHTML="<p>No records found.</p>";return;}
+const grid = document.getElementById("grid");
+let showBin = false;
+let deleted = [];   // fresh empty recycle bin
 
-  list.forEach((p,i)=>{
-    const status=statusData[p.email]?.[p.course]||"pending";
+async function loadData(){
+  grid.innerHTML = "";
 
-    grid.innerHTML+=`
-    <div class="card">
-      <div class="status ${status}">${status.toUpperCase()}</div>
-      <h3>${p.name}</h3>
-      <p>${p.email}</p>
-      <p>${p.course}</p>
-      <p>Invoice: ${p.invoiceNumber}</p>
-      <p>Method: ${p.method}</p>
+  const snap = await getDocs(collection(db,"students"));
+  let records = [];
 
-      <div class="actions">
-        ${!showBin && status==="pending"?`<button class="approve" onclick="approve('${p.email}','${p.course}')">Approve</button>`:""}
-        ${!showBin && status==="paid"?`<button class="cancel" onclick="cancel('${p.email}','${p.course}')">Cancel Approval</button>`:""}
-        ${!showBin?`<button class="download" onclick="download('${p.invoiceNumber}','${p.name}','${p.course}','${p.price}')">Invoice</button>`:""}
-        ${!showBin?`<button class="delete" onclick="remove(${i})">Delete</button>`:`<button class="restore" onclick="restore(${i})">Restore</button>`}
+  snap.forEach(docSnap=>{
+    const d = docSnap.data();
+    if(!d.courses) return;
+
+    Object.entries(d.courses).forEach(([course, info])=>{
+      records.push({
+        studentId: docSnap.id,
+        name: d.name,
+        email: d.email,
+        phone: d.phone,
+        course,
+        ...info
+      });
+    });
+  });
+
+  if(records.length === 0){
+    grid.innerHTML = "<p>No payment records found.</p>";
+    return;
+  }
+
+  records.forEach((r, i)=>{
+    const statusClass = r.status === "paid" ? "paid" : "pending";
+
+    grid.innerHTML += `
+      <div class="card">
+        <div class="status ${statusClass}">
+          ${r.status === "paid" ? "Paid" : "Pending"}
+        </div>
+
+        <div>
+          <h3>${r.name}</h3>
+          <div class="info">📧 ${r.email}</div>
+          <div class="info">📞 ${r.phone}</div>
+          <div class="info">🧾 Invoice: ${r.invoiceNumber}</div>
+          <div class="info">💳 Method: ${r.method}</div>
+          <div class="course">📘 ${r.course}</div>
+        </div>
+
+        <div class="actions">
+          ${r.status === "pending"
+            ? `<button class="approve" onclick="approve('${r.studentId}','${r.course}')">Approve Payment</button>`
+            : `<button class="cancel" onclick="cancel('${r.studentId}','${r.course}')">Cancel Payment</button>`
+          }
+          <button class="download" onclick="downloadInvoice('${r.invoiceNumber}','${r.name}','${r.course}','${r.price}')">Download Invoice</button>
+          <button class="delete" onclick="deleteRecord(${i})">Delete</button>
+        </div>
       </div>
-    </div>`;
+    `;
   });
 }
 
-function approve(email,course){
-  if(!statusData[email])statusData[email]={};
-  statusData[email][course]="paid";
-  localStorage.setItem("courseStatus",JSON.stringify(statusData));
-  render();
-}
+/* 🔁 ACTIONS */
+window.approve = async (studentId, course)=>{
+  const ref = doc(db,"students",studentId);
+  await updateDoc(ref,{
+    [`courses.${course}.status`]:"paid"
+  });
+  loadData();
+};
 
-function cancel(email,course){
-  statusData[email][course]="pending";
-  localStorage.setItem("courseStatus",JSON.stringify(statusData));
-  render();
-}
+window.cancel = async (studentId, course)=>{
+  const ref = doc(db,"students",studentId);
+  await updateDoc(ref,{
+    [`courses.${course}`]: null
+  });
+  loadData();
+};
 
-function remove(i){
-  const p=payments[i];
-  if(statusData[p.email]){
-    delete statusData[p.email][p.course];
-    if(Object.keys(statusData[p.email]).length===0) delete statusData[p.email];
-  }
-  deleted.push(p);
-  payments.splice(i,1);
-  localStorage.setItem("payments",JSON.stringify(payments));
-  localStorage.setItem("deletedPayments",JSON.stringify(deleted));
-  localStorage.setItem("courseStatus",JSON.stringify(statusData));
-  render();
-}
+window.deleteRecord = (index)=>{
+  deleted.push(index);
+  alert("Moved to recycle bin (demo)");
+};
 
-function restore(i){
-  const p=deleted[i];
-  if(!statusData[p.email])statusData[p.email]={};
-  statusData[p.email][p.course]="pending";
-  payments.push(p);
-  deleted.splice(i,1);
-  localStorage.setItem("payments",JSON.stringify(payments));
-  localStorage.setItem("deletedPayments",JSON.stringify(deleted));
-  localStorage.setItem("courseStatus",JSON.stringify(statusData));
-  render();
-}
-
-function toggleBin(){showBin=!showBin;render();}
-
-function download(inv,name,course,price){
-  const {jsPDF}=window.jspdf;
-  const pdf=new jsPDF();
+/* 📄 PDF */
+window.downloadInvoice = (inv, name, course, price)=>{
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF();
   pdf.text("Food Business Academy",20,20);
   pdf.text(`Invoice: ${inv}`,20,35);
   pdf.text(`Name: ${name}`,20,45);
   pdf.text(`Course: ${course}`,20,55);
   pdf.text(`Amount: $${price}`,20,65);
   pdf.save(`${inv}.pdf`);
-}
+};
+
+window.toggleBin = ()=>{
+  alert("Recycle bin is empty (fresh start)");
+};
+
+loadData();
 </script>
 
 </body>
