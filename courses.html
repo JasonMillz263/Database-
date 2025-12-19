@@ -86,14 +86,9 @@ h1{margin-bottom:25px}
   position:absolute;
   left:0;
   color:var(--blue);
-  font-size:14px;
 }
 
-.price{
-  font-size:18px;
-  font-weight:700;
-  margin:12px 0;
-}
+.price{font-size:18px;font-weight:700;margin:12px 0}
 
 button.action{
   width:100%;
@@ -127,104 +122,53 @@ button.action[disabled]{
 
 <script>
 const email = localStorage.getItem("studentEmail");
+if(!email){
+  alert("Session expired. Please login again.");
+  location.href = "student.htm";
+}
 
-/* COURSE DATA (UNCHANGED STRUCTURE) */
 const courses = [
-  {
-    name:"Food Business Management Course",
-    price:49,
-    modules:[
-      "Introduction to Food Business",
-      "Operations & Compliance",
-      "Food Safety Management",
-      "Marketing & Distribution"
-    ]
-  },
-  {
-    name:"Financial Management for Food Processors",
-    price:59,
-    modules:[
-      "Costing & Pricing",
-      "Cash Flow Management",
-      "Budgeting & Forecasting",
-      "Profitability Analysis"
-    ]
-  },
-  {
-    name:"Food Value Addition Course for Farmers",
-    price:45,
-    modules:[
-      "Post-Harvest Handling",
-      "Processing Techniques",
-      "Packaging & Storage",
-      "Market Readiness"
-    ]
-  },
-  {
-    name:"New Product Development and Management",
-    price:69,
-    modules:[
-      "Idea Generation",
-      "Product Testing",
-      "Regulatory Approval",
-      "Product Launch Strategy"
-    ]
-  },
-  {
-    name:"Management",
-    price:39,
-    modules:[
-      "Leadership Skills",
-      "Team Management",
-      "Decision Making",
-      "Business Ethics"
-    ]
-  }
+  {name:"Food Business Management Course",price:49,modules:["Introduction to Food Business","Operations & Compliance","Food Safety Management","Marketing & Distribution"]},
+  {name:"Financial Management for Food Processors",price:59,modules:["Costing & Pricing","Cash Flow Management","Budgeting & Forecasting","Profitability Analysis"]},
+  {name:"Food Value Addition Course for Farmers",price:45,modules:["Post-Harvest Handling","Processing Techniques","Packaging & Storage","Market Readiness"]},
+  {name:"New Product Development and Management",price:69,modules:["Idea Generation","Product Testing","Regulatory Approval","Product Launch Strategy"]},
+  {name:"Management",price:39,modules:["Leadership Skills","Team Management","Decision Making","Business Ethics"]}
 ];
 
-/* LOAD STATUS */
 const statusData = JSON.parse(localStorage.getItem("courseStatus")) || {};
-const studentStatus = statusData[email] || {};
-
+const myStatus = statusData[email] || {};
 const grid = document.getElementById("coursesGrid");
 
 courses.forEach(c=>{
-  const status = studentStatus[c.name];
+  const status = myStatus[c.name];
 
-  let badge = "";
-  let button = "";
-
-  if(status === "pending"){
-    badge = '<div class="badge pending">Pending Payment</div>';
-    button = '<button class="action" disabled>Awaiting Approval</button>';
-  }
-  else if(status === "paid"){
-    badge = '<div class="badge paid">Paid</div>';
-    button = '<button class="action" onclick="location.href=\'#\'">Start Course</button>';
-  }
-  else{
-    button = `<button class="action" onclick="pay('${c.name}',${c.price})">Pay to Start</button>`;
+  let badge="",button="";
+  if(status==="pending"){
+    badge='<div class="badge pending">Pending Payment</div>';
+    button='<button class="action" disabled>Awaiting Approval</button>';
+  }else if(status==="paid"){
+    badge='<div class="badge paid">Paid</div>';
+    button='<button class="action" onclick="location.href=\'#\'">Start Course</button>';
+  }else{
+    button=`<button class="action" onclick="pay('${c.name}',${c.price})">Pay to Start</button>`;
   }
 
-  grid.innerHTML += `
+  grid.innerHTML+=`
     <div class="card">
       ${badge}
       <div>
         <h3>${c.name}</h3>
-        <ul class="modules">
-          ${c.modules.map(m=>`<li>${m}</li>`).join("")}
-        </ul>
+        <ul class="modules">${c.modules.map(m=>`<li>${m}</li>`).join("")}</ul>
         <div class="price">$${c.price}</div>
       </div>
       ${button}
-    </div>
-  `;
+    </div>`;
 });
 
-function pay(course, price){
-  localStorage.setItem("courseName", course);
-  localStorage.setItem("coursePrice", price);
-  window.location.href = "student-details.html";
+function pay(course,price){
+  localStorage.setItem("courseName",course);
+  localStorage.setItem("coursePrice",price);
+  location.href="student-details.html";
 }
 </script>
 
