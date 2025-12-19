@@ -17,8 +17,10 @@
   --pending:#f59e0b;
   --paid:#22c55e;
 }
+
 *{box-sizing:border-box;font-family:'Poppins',sans-serif}
 body{margin:0;background:var(--bg);color:var(--text)}
+
 header{
   background:#fff;
   padding:15px 25px;
@@ -27,6 +29,7 @@ header{
   align-items:center;
   box-shadow:0 6px 18px rgba(0,0,0,.06)
 }
+
 header button{
   padding:10px 16px;
   border:none;
@@ -34,8 +37,10 @@ header button{
   font-weight:600;
   cursor:pointer;
 }
+
 .home{background:#e5e7eb}
 .dashboard{background:var(--blue);color:#fff}
+
 .main{padding:30px;max-width:1200px;margin:auto}
 
 .identity{
@@ -46,7 +51,17 @@ header button{
   box-shadow:0 8px 20px rgba(0,0,0,.06);
   display:flex;
   justify-content:space-between;
+  align-items:center;
   gap:16px;
+}
+
+.identity .block{display:flex;flex-direction:column}
+.identity span{font-size:13px;color:#6b7280}
+.identity strong{font-size:15px;color:#111827;word-break:break-all}
+
+@media (max-width:600px){
+  .identity{flex-direction:column;align-items:flex-start}
+  .identity .block{width:100%}
 }
 
 .grid{
@@ -79,9 +94,10 @@ header button{
 .pending{background:var(--pending)}
 .paid{background:var(--paid)}
 
+.modules{margin:15px 0}
 .modules li{
-  list-style:none;
   margin-bottom:6px;
+  list-style:none;
   padding-left:20px;
   position:relative;
 }
@@ -91,7 +107,9 @@ header button{
   left:0;
   color:var(--blue);
 }
+
 .price{font-size:18px;font-weight:700;margin:12px 0}
+
 button.action{
   width:100%;
   padding:12px;
@@ -102,6 +120,7 @@ button.action{
   color:#fff;
   cursor:pointer;
 }
+
 button.action[disabled]{
   background:var(--pending);
   cursor:not-allowed;
@@ -110,19 +129,20 @@ button.action[disabled]{
 </head>
 
 <body>
+
 <header>
-  <button class="home">🏠 Home</button>
-  <button class="dashboard" onclick="location.href='student.htm'">⬅ Dashboard</button>
+  <button class="home" onclick="location.href='#'">🏠 Home</button>
+  <button class="dashboard" onclick="location.href='student.htm'">⬅ Student Dashboard</button>
 </header>
 
 <main class="main">
 
 <div class="identity">
-  <div>
+  <div class="block">
     <span>Email</span>
     <strong id="studentEmail">Loading...</strong>
   </div>
-  <div>
+  <div class="block">
     <span>User ID</span>
     <strong id="studentId">Loading...</strong>
   </div>
@@ -137,27 +157,24 @@ button.action[disabled]{
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
-  getFirestore,
-  doc,
-  getDoc,
-  collection,
-  query,
-  where,
-  getDocs,
-  addDoc,
-  serverTimestamp
+  getFirestore, doc, getDoc, collection,
+  addDoc, getDocs, query, where, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-/* FIREBASE */
-const app = initializeApp({
+const firebaseConfig = {
   apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain: "students-login-29409.firebaseapp.com",
-  projectId: "students-login-29409"
-});
+  projectId: "students-login-29409",
+  storageBucket: "students-login-29409.firebasestorage.app",
+  messagingSenderId: "634331456872",
+  appId: "1:634331456872:web:6dae360c5e28d8356562dd",
+  measurementId: "G-96XXYG1VR2"
+};
+
+const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-/* COURSES */
 const courses = [
   {name:"Food Business Management Course",price:49,modules:["Introduction to Food Business","Operations & Compliance","Food Safety Management","Marketing & Distribution"]},
   {name:"Financial Management for Food Processors",price:59,modules:["Costing & Pricing","Cash Flow Management","Budgeting & Forecasting","Profitability Analysis"]},
@@ -168,106 +185,84 @@ const courses = [
 
 const grid = document.getElementById("coursesGrid");
 
-/* AUTH */
-onAuthStateChanged(auth, async user=>{
-  if(!user){
-    location.href="student.htm";
-    return;
-  }
+onAuthStateChanged(auth, async user => {
+  if (!user) return location.href="student.htm";
 
   const uid = user.uid;
   const studentSnap = await getDoc(doc(db,"students",uid));
-  const student = studentSnap.data();
+  if (!studentSnap.exists()) return alert("Student record not found");
 
+  const student = studentSnap.data();
   document.getElementById("studentEmail").textContent = student.email;
   document.getElementById("studentId").textContent = uid.substring(0,10).toUpperCase();
 
-  const paidCourses = student.coursesPaid || [];
-
-  const pendingSnap = await getDocs(
-    query(
-      collection(db,"payments"),
-      where("studentId","==",uid),
-      where("status","==","pending")
-    )
+  const paymentsSnap = await getDocs(
+    query(collection(db,"payments"), where("studentId","==",uid))
   );
 
-  const pendingCourses = pendingSnap.docs.map(d=>d.data().courseName);
+  const paymentStatus = {};
+  paymentsSnap.forEach(p=>{
+    const d=p.data();
+    paymentStatus[d.courseName]=d.status;
+  });
 
-  renderCourses(paidCourses, pendingCourses);
-});
-
-/* RENDER (FIXED) */
-function renderCourses(paidCourses = [], pendingCourses = []){
-  grid.innerHTML = "";
+  const paidCourses = student.coursesPaid || [];
+  grid.innerHTML="";
 
   courses.forEach(c=>{
-    let badge = "";
-    let button = "";
+    let badge="", button="";
 
     if(paidCourses.includes(c.name)){
-      badge = `<div class="badge paid">Paid</div>`;
-      button = `<button class="action">Start Course</button>`;
+      badge=`<div class="badge paid">Paid</div>`;
+      button=`<button class="action">Start Course</button>`;
     }
-    else if(pendingCourses.includes(c.name)){
-      badge = `<div class="badge pending">Pending Payment</div>`;
-      button = `<button class="action" disabled>Awaiting Approval</button>`;
+    else if(paymentStatus[c.name]==="pending"){
+      badge=`<div class="badge pending">Pending Payment</div>`;
+      button=`<button class="action" disabled>Awaiting Approval</button>`;
     }
     else{
-      button = `<button class="action" onclick="pay('${c.name}',${c.price})">Pay to Start</button>`;
+      button=`<button class="action" onclick="pay('${c.name}',${c.price})">Pay to Start</button>`;
     }
 
-    grid.innerHTML += `
+    grid.innerHTML+=`
       <div class="card">
         ${badge}
         <div>
           <h3>${c.name}</h3>
-          <ul class="modules">
-            ${c.modules.map(m=>`<li>${m}</li>`).join("")}
-          </ul>
+          <ul class="modules">${c.modules.map(m=>`<li>${m}</li>`).join("")}</ul>
           <div class="price">$${c.price}</div>
         </div>
         ${button}
       </div>
     `;
   });
-}
 
-/* PAY */
-window.pay = async (course, price)=>{
-  const user = auth.currentUser;
-  if(!user) return;
-
-  const existing = await getDocs(
-    query(
+  window.pay = async(course,price)=>{
+    const check = await getDocs(query(
       collection(db,"payments"),
-      where("studentId","==",user.uid),
+      where("studentId","==",uid),
       where("courseName","==",course),
       where("status","==","pending")
-    )
-  );
-  if(!existing.empty){
-    alert("Already awaiting approval");
-    return;
-  }
+    ));
+    if(!check.empty) return alert("Payment already pending");
 
-  const student = (await getDoc(doc(db,"students",user.uid))).data();
+    await addDoc(collection(db,"payments"),{
+      studentId:uid,
+      studentName:student.fullName||"Student",
+      email:student.email,
+      courseName:course,
+      price,
+      paymentMethod:"Manual",
+      invoiceNumber:`FBA-${Date.now()}`,
+      status:"pending",
+      createdAt:serverTimestamp()
+    });
 
-  await addDoc(collection(db,"payments"),{
-    studentId:user.uid,
-    studentName:student.fullName || "Student",
-    email:student.email,
-    courseName:course,
-    price,
-    paymentMethod:"Manual",
-    invoiceNumber:`FBA-${Date.now()}`,
-    status:"pending",
-    createdAt:serverTimestamp()
-  });
-
-  alert("Payment submitted. Awaiting approval.");
-  location.reload();
-};
+    alert("Invoice generated. Awaiting approval.");
+    location.reload();
+  };
+});
 </script>
+
 </body>
 </html>
