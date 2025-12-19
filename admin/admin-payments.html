@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Admin – Payment Management</title>
+<title>Manage Payments | Food Business Academy</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
@@ -14,24 +14,20 @@
 <style>
 body{
   margin:0;
-  font-family:Poppins;
   background:linear-gradient(135deg,#eef2ff,#f5f7ff);
+  font-family:'Poppins',sans-serif;
 }
 
 .container{
   max-width:1200px;
   margin:auto;
-  padding:20px;
+  padding:24px;
 }
 
-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
+h1{
+  font-size:28px;
   margin-bottom:20px;
 }
-
-header h1{margin:0}
 
 .grid{
   display:grid;
@@ -40,18 +36,20 @@ header h1{margin:0}
 }
 
 .card{
-  background:#ffffffcc;
-  backdrop-filter:blur(14px);
+  background:#fff;
   border-radius:22px;
   padding:20px;
   box-shadow:0 20px 40px rgba(0,0,0,.08);
   position:relative;
+  transition:.3s;
 }
+
+.card:hover{transform:translateY(-6px)}
 
 .badge{
   position:absolute;
-  top:16px;
-  right:16px;
+  top:18px;
+  right:18px;
   padding:6px 14px;
   border-radius:999px;
   font-size:12px;
@@ -60,58 +58,63 @@ header h1{margin:0}
 }
 
 .pending{background:#f59e0b}
-.paid{background:#22c55e}
+.approved{background:#22c55e}
 
-.name{font-size:18px;font-weight:600}
-.email{font-size:13px;opacity:.7}
+.name{
+  font-size:18px;
+  font-weight:600;
+}
 
-.course{margin:14px 0;font-weight:600}
-.meta{font-size:13px;opacity:.8}
+.email{
+  font-size:13px;
+  opacity:.7;
+  margin-bottom:12px;
+  word-break:break-all;
+}
+
+.detail{
+  font-size:14px;
+  margin:6px 0;
+}
+
+.detail strong{
+  color:#111827;
+}
 
 .actions{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:10px;
   margin-top:16px;
 }
 
 button{
+  width:100%;
+  padding:12px;
   border:none;
-  padding:10px;
-  border-radius:12px;
-  cursor:pointer;
+  border-radius:14px;
   font-weight:600;
+  cursor:pointer;
 }
 
-.approve{background:#22c55e;color:#fff}
-.reject{background:#ef4444;color:#fff}
+.approve{
+  background:linear-gradient(135deg,#2563eb,#6d28d9);
+  color:#fff;
+}
 
-.empty{
-  grid-column:1/-1;
-  text-align:center;
-  padding:40px;
-  opacity:.6;
+.disabled{
+  background:#e5e7eb;
+  cursor:not-allowed;
 }
 </style>
 </head>
 
 <body>
-
 <div class="container">
-
-<header>
   <h1>💳 Manage Payments</h1>
-  <button onclick="location.href='admin-dashboard.html'">⬅ Dashboard</button>
-</header>
-
-<div id="paymentsGrid" class="grid">
-  <div class="empty">Loading payments…</div>
-</div>
-
+  <div id="paymentsGrid" class="grid">
+    <div>Loading payments…</div>
+  </div>
 </div>
 
 <script>
-/* FIREBASE INIT */
 firebase.initializeApp({
   apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain: "students-login-29409.firebaseapp.com",
@@ -120,11 +123,13 @@ firebase.initializeApp({
 
 const auth = firebase.auth();
 const db = firebase.firestore();
-const grid = document.getElementById("paymentsGrid");
 
-/* ADMIN GUARD */
+/* 🔐 ADMIN GUARD */
 auth.onAuthStateChanged(async user=>{
-  if(!user) return location.replace("../index.html");
+  if(!user){
+    location.replace("../index.html");
+    return;
+  }
 
   const admin = await db.collection("admins").doc(user.uid).get();
   if(!admin.exists){
@@ -136,72 +141,73 @@ auth.onAuthStateChanged(async user=>{
   loadPayments();
 });
 
-/* LOAD PAYMENTS */
+/* 📥 LOAD PAYMENTS */
 async function loadPayments(){
+  const snap = await db.collection("payments")
+    .orderBy("createdAt","desc")
+    .get();
+
+  const grid = document.getElementById("paymentsGrid");
+
+  if(snap.empty){
+    grid.innerHTML = "<div>No payment requests found.</div>";
+    return;
+  }
+
   grid.innerHTML = "";
 
-  const snap = await db.collection("students").get();
-  let found = false;
+  snap.forEach(docSnap=>{
+    const p = docSnap.data();
 
-  snap.forEach(doc=>{
-    const s = doc.data();
-    if(!s.courses) return;
-
-    Object.entries(s.courses).forEach(([course,info])=>{
-      if(info.status !== "pending" && info.status !== "paid") return;
-
-      found = true;
-
-      grid.innerHTML += `
-        <div class="card">
-          <div class="badge ${info.status}">
-            ${info.status.toUpperCase()}
-          </div>
-
-          <div class="name">${s.fullName || "Student"}</div>
-          <div class="email">${s.email || "—"}</div>
-
-          <div class="course">${course}</div>
-
-          <div class="meta">Invoice: ${info.invoice || "—"}</div>
-          <div class="meta">Amount: $${info.price}</div>
-
-          <div class="actions">
-            ${
-              info.status === "pending"
-                ? `<button class="approve" onclick="approve('${doc.id}','${course}')">Approve</button>
-                   <button class="reject" onclick="reject('${doc.id}','${course}')">Reject</button>`
-                : `<button disabled>Approved</button>
-                   <button class="reject" onclick="reject('${doc.id}','${course}')">Remove</button>`
-            }
-          </div>
+    grid.innerHTML += `
+      <div class="card">
+        <div class="badge ${p.status}">
+          ${p.status.toUpperCase()}
         </div>
-      `;
-    });
-  });
 
-  if(!found){
-    grid.innerHTML = `<div class="empty">No payment records found</div>`;
-  }
+        <div class="name">${p.studentName}</div>
+        <div class="email">${p.email}</div>
+
+        <div class="detail"><strong>Course:</strong> ${p.courseName}</div>
+        <div class="detail"><strong>Price:</strong> $${p.price}</div>
+        <div class="detail"><strong>Payment:</strong> ${p.paymentMethod}</div>
+        <div class="detail"><strong>Invoice:</strong> ${p.invoiceNumber}</div>
+
+        <div class="actions">
+          ${
+            p.status === "pending"
+            ? `<button class="approve" onclick="approvePayment('${docSnap.id}')">
+                Approve Payment
+              </button>`
+            : `<button class="disabled" disabled>Approved</button>`
+          }
+        </div>
+      </div>
+    `;
+  });
 }
 
-/* ACTIONS */
-async function approve(uid, course){
-  await db.collection("students").doc(uid).update({
-    [`courses.${course}.status`]:"paid",
-    [`courses.${course}.approvedAt`]:firebase.firestore.FieldValue.serverTimestamp()
-  });
-  loadPayments();
-}
+/* ✅ APPROVE PAYMENT */
+async function approvePayment(paymentId){
+  if(!confirm("Approve this payment?")) return;
 
-async function reject(uid, course){
-  if(!confirm("Reject this payment?")) return;
-  await db.collection("students").doc(uid).update({
-    [`courses.${course}`]:firebase.firestore.FieldValue.delete()
-  });
+  const ref = db.collection("payments").doc(paymentId);
+  const snap = await ref.get();
+  const p = snap.data();
+
+  // Update student
+  const studentRef = db.collection("students").doc(p.studentId);
+  await studentRef.set({
+    coursesPaid: firebase.firestore.FieldValue.arrayUnion(p.courseName),
+    [`progress.${p.courseName}`]: 0
+  },{merge:true});
+
+  // Update payment
+  await ref.update({ status:"approved" });
+
+  alert("Payment approved successfully");
   loadPayments();
 }
 </script>
-
 </body>
 </html>
