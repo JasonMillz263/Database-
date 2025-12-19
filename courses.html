@@ -4,9 +4,7 @@
 <meta charset="UTF-8">
 <title>Courses Offered | Food Business Academy</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-
 <style>
 :root{
   --blue:#2563eb;
@@ -20,10 +18,8 @@
 }
 *{box-sizing:border-box;font-family:'Poppins',sans-serif}
 body{margin:0;background:var(--bg);color:var(--text)}
-
 .main{padding:30px;max-width:1200px;margin:auto}
 h1{margin-bottom:25px}
-
 .student-card{
   background:linear-gradient(135deg,var(--blue),var(--purple));
   color:#fff;
@@ -34,13 +30,11 @@ h1{margin-bottom:25px}
 }
 .student-card strong{font-size:13px;opacity:.85}
 .student-card p{margin:6px 0;font-weight:600;word-break:break-all}
-
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
   gap:20px;
 }
-
 .card{
   background:var(--card);
   border-radius:20px;
@@ -48,7 +42,6 @@ h1{margin-bottom:25px}
   box-shadow:0 15px 35px rgba(0,0,0,.08);
   position:relative;
 }
-
 .badge{
   position:absolute;
   top:16px;
@@ -61,7 +54,6 @@ h1{margin-bottom:25px}
 }
 .pending{background:var(--pending)}
 .approved{background:var(--success)}
-
 .modules{margin:15px 0}
 .modules li{
   margin-bottom:6px;
@@ -75,9 +67,7 @@ h1{margin-bottom:25px}
   left:0;
   color:var(--blue);
 }
-
 .price{font-size:18px;font-weight:700;margin:10px 0}
-
 button{
   width:100%;
   padding:12px;
@@ -203,7 +193,6 @@ window.createInvoice = async (courseName, price) => {
   const confirmed = confirm(`Generate invoice for:\n\n${courseName}\n$${price}\n\nProceed?`);
   if (!confirmed) return;
 
-  // Prevent duplicate pending invoices
   const existingQ = query(
     collection(db,"payments"),
     where("studentId","==",user.uid),
@@ -236,61 +225,25 @@ window.createInvoice = async (courseName, price) => {
 window.cancelInvoice = async (invoiceId) => {
   if (!confirm("Cancel this invoice?")) return;
   await deleteDoc(doc(db,"payments",invoiceId));
-  // reload the courses grid
-  onAuthStateChanged(auth, async (user) => {
-    if(user) {
-      const studentSnap = await getDoc(doc(db,"students",user.uid));
-      const coursesPaid = studentSnap.exists() ? (studentSnap.data().coursesPaid || []) : [];
-
-      const paymentsSnap = await getDocs(
-        query(collection(db,"payments"), where("studentId","==",user.uid))
-      );
-
-      const paymentMap = {};
-      paymentsSnap.forEach(d => paymentMap[d.data().courseName] = {...d.data(), id: d.id});
-
-      grid.innerHTML = "";
-
-      courses.forEach(course => {
-        const hasAccess = coursesPaid.includes(course.name);
-        const payment = paymentMap[course.name];
-
-        let badge = "", button = "";
-
-        if (hasAccess) {
-          badge = `<div class="badge approved">Approved</div>`;
-          button = `<button class="success-btn" onclick="startCourse('${course.name}')">Start Course</button>`;
-        } else if (payment?.status === "pending") {
-          badge = `<div class="badge pending">Awaiting Approval</div>`;
-          button = `
-            <button class="pending-btn" disabled>Pending</button>
-            <button class="cancel-btn" onclick="cancelInvoice('${payment.id}')">Cancel Invoice</button>
-          `;
-        } else {
-          button = `<button onclick="createInvoice('${course.name}', ${course.price})">Pay to Start</button>`;
-        }
-
-        grid.innerHTML += `
-          <div class="card">
-            ${badge}
-            <h3>${course.name}</h3>
-            <ul class="modules">
-              ${course.modules.map(m => `<li>${m}</li>`).join("")}
-            </ul>
-            <div class="price">$${course.price}</div>
-            ${button}
-          </div>
-        `;
-      });
-    }
-  });
+  location.reload();
 };
 
-/* ▶ START COURSE */
+/* ▶ START COURSE (redirects to the correct page) */
 window.startCourse = (courseName) => {
-  alert("Starting course: " + courseName);
+  const coursePages = {
+    "Management": "course-management.html",
+    "Food Business Management Course": "course-food-business-management.html",
+    "Financial Management for Food Processors": "course-financial-management.html",
+    "Food Value Addition Course for Farmers": "course-value-addition.html",
+    "New Product Development and Management": "course-product-development.html"
+  };
+  const page = coursePages[courseName];
+  if (page) {
+    window.location.href = page;
+  } else {
+    alert("Course page not found.");
+  }
 };
 </script>
-
 </body>
 </html>
