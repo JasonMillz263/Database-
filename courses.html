@@ -17,7 +17,6 @@
   --pending:#f59e0b;
   --success:#16a34a;
 }
-
 *{box-sizing:border-box;font-family:'Poppins',sans-serif}
 body{margin:0;background:var(--bg);color:var(--text)}
 
@@ -32,7 +31,6 @@ h1{margin-bottom:25px}
   margin-bottom:30px;
   box-shadow:0 15px 35px rgba(0,0,0,.15);
 }
-
 .student-card strong{font-size:13px;opacity:.85}
 .student-card p{margin:6px 0;font-weight:600;word-break:break-all}
 
@@ -89,39 +87,32 @@ button{
   font-weight:600;
   cursor:pointer;
 }
-button.pending-btn{
-  background:var(--pending);
-  cursor:not-allowed;
-}
-button.success-btn{
-  background:var(--success);
-}
+button.pending-btn{background:var(--pending);cursor:not-allowed}
+button.success-btn{background:var(--success)}
 </style>
 </head>
 
 <body>
 <main class="main">
 
-  <!-- STUDENT IDENTITY CARD -->
-  <div class="student-card">
-    <strong>Student Email</strong>
-    <p id="studentEmail">Loading...</p>
-    <strong>Student ID</strong>
-    <p id="studentId">Loading...</p>
-  </div>
+<div class="student-card">
+  <strong>Student Email</strong>
+  <p id="studentEmail">Loading...</p>
+  <strong>Student ID</strong>
+  <p id="studentId">Loading...</p>
+</div>
 
-  <h1>📘 Courses Offered</h1>
-  <div class="grid" id="coursesGrid"></div>
+<h1>📘 Courses Offered</h1>
+<div class="grid" id="coursesGrid"></div>
 
 </main>
 
-<!-- FIREBASE -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import {
   getFirestore, collection, addDoc, query, where, getDocs,
-  serverTimestamp
+  doc, getDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 /* 🔥 FIREBASE CONFIG */
@@ -139,7 +130,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-/* 📚 COURSES (UNCHANGED) */
+/* 📚 COURSES */
 const courses = [
   {name:"Food Business Management Course", price:49, modules:["Introduction to Food Business","Operations & Compliance","Food Safety Management","Marketing & Distribution"]},
   {name:"Financial Management for Food Processors", price:59, modules:["Costing & Pricing","Cash Flow Management","Budgeting & Forecasting","Profitability Analysis"]},
@@ -150,43 +141,41 @@ const courses = [
 
 const grid = document.getElementById("coursesGrid");
 
-/* 🔐 AUTH CHECK */
 onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    window.location.href = "login.html";
-    return;
-  }
+  if (!user) return location.href = "login.html";
 
-  document.getElementById("studentEmail").textContent = user.email;
-  document.getElementById("studentId").textContent = user.uid;
+  studentEmail.textContent = user.email;
+  studentId.textContent = user.uid;
 
-  // Fetch student payments
-  const q = query(
-    collection(db, "payments"),
-    where("studentId", "==", user.uid)
+  // 🔐 Load student access
+  const studentSnap = await getDoc(doc(db,"students",user.uid));
+  const coursesPaid = studentSnap.exists()
+    ? (studentSnap.data().coursesPaid || [])
+    : [];
+
+  // 💳 Load payments
+  const paymentsSnap = await getDocs(
+    query(collection(db,"payments"), where("studentId","==",user.uid))
   );
 
-  const snapshot = await getDocs(q);
   const paymentMap = {};
-
-  snapshot.forEach(doc => {
-    paymentMap[doc.data().courseName] = doc.data();
-  });
+  paymentsSnap.forEach(d => paymentMap[d.data().courseName] = d.data());
 
   grid.innerHTML = "";
 
   courses.forEach(course => {
+    const hasAccess = coursesPaid.includes(course.name);
     const payment = paymentMap[course.name];
-    let badge = "";
-    let button = "";
 
-    if (payment?.status === "pending") {
-      badge = `<div class="badge pending">Awaiting Approval</div>`;
-      button = `<button class="pending-btn" disabled>Pending</button>`;
-    }
-    else if (payment?.status === "approved") {
+    let badge = "", button = "";
+
+    if (hasAccess) {
       badge = `<div class="badge approved">Approved</div>`;
       button = `<button class="success-btn" onclick="startCourse('${course.name}')">Start Course</button>`;
+    }
+    else if (payment?.status === "pending") {
+      badge = `<div class="badge pending">Awaiting Approval</div>`;
+      button = `<button class="pending-btn" disabled>Pending</button>`;
     }
     else {
       button = `<button onclick="createInvoice('${course.name}', ${course.price})">Pay to Start</button>`;
@@ -206,12 +195,32 @@ onAuthStateChanged(auth, async (user) => {
   });
 });
 
-/* 🧾 CREATE INVOICE (NO SHORTCUT) */
+/* 🧾 CREATE INVOICE (FIXED & SAFE) */
 window.createInvoice = async (courseName, price) => {
   const user = auth.currentUser;
   if (!user) return;
 
-  const docRef = await addDoc(collection(db, "payments"), {
+  const confirmed = confirm(
+    `Generate invoice for:\n\n${courseName}\n$${price}\n\nProceed?`
+  );
+  if (!confirmed) return;
+
+  // Prevent duplicate pending invoices
+  const existingQ = query(
+    collection(db,"payments"),
+    where("studentId","==",user.uid),
+    where("courseName","==",courseName),
+    where("status","==","pending")
+  );
+  const existingSnap = await getDocs(existingQ);
+
+  if (!existingSnap.empty) {
+    window.location.href =
+      `student-details.html?invoiceId=${existingSnap.docs[0].id}`;
+    return;
+  }
+
+  const docRef = await addDoc(collection(db,"payments"), {
     studentId: user.uid,
     studentName: user.displayName || "Student",
     email: user.email,
@@ -223,14 +232,12 @@ window.createInvoice = async (courseName, price) => {
     createdAt: serverTimestamp()
   });
 
-  // Redirect to invoice + instructions page
   window.location.href = `student-details.html?invoiceId=${docRef.id}`;
 };
 
 /* ▶ START COURSE */
 window.startCourse = (courseName) => {
   alert("Starting course: " + courseName);
-  // redirect to course dashboard later
 };
 </script>
 
