@@ -115,7 +115,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebas
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import {
   getFirestore, collection, query, where, getDocs,
-  doc, getDoc
+  doc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 /* 🔥 FIREBASE CONFIG */
@@ -143,7 +143,6 @@ const courses = [
 const grid = document.getElementById("coursesGrid");
 
 async function loadCourses(user){
-  // 🔹 Load student payments
   const paymentsSnap = await getDocs(
     query(collection(db,"payments"), where("studentId","==",user.uid))
   );
@@ -158,23 +157,18 @@ async function loadCourses(user){
 
   courses.forEach(course => {
     const payment = paymentMap[course.name];
-
     let badge = "", buttons = "";
 
-    if (payment?.status === "pending") {
+    if(payment?.status === "pending"){
       badge = `<div class="badge pending">Awaiting Approval</div>`;
       buttons = `
         <button class="pending-btn" disabled>Pending</button>
-        <button class="cancel-btn" onclick="cancelInvoice('${payment.id}')">
-          Cancel Invoice
-        </button>`;
-    }
-    else if (payment?.status === "approved") {
+        <button class="cancel-btn" onclick="cancelInvoice('${payment.id}')">Cancel Invoice</button>`;
+    } else if(payment?.status === "approved"){
       badge = `<div class="badge approved">Approved</div>`;
       buttons = `<button class="success-btn" onclick="startCourse('${course.name}')">Start Course</button>`;
-    }
-    else {
-      // 🔹 Redirect to student-details.html for details/payment
+    } else {
+      // Original system: redirect to student-details.html for filling details
       buttons = `<button onclick="proceedToDetails('${course.name}', ${course.price})">Pay to Start</button>`;
     }
 
@@ -194,13 +188,13 @@ async function loadCourses(user){
 
 /* 🔐 AUTH */
 onAuthStateChanged(auth, async user => {
-  if (!user) return location.href="login.html";
+  if(!user) return location.href="login.html";
   studentEmail.textContent = user.email;
   studentId.textContent = user.uid;
   loadCourses(user);
 });
 
-/* 🔹 Redirect to student-details page to fill details before invoice */
+/* 🔹 Redirect to student-details page */
 window.proceedToDetails = (courseName, price) => {
   const params = new URLSearchParams();
   params.set("courseName", courseName);
@@ -208,15 +202,14 @@ window.proceedToDetails = (courseName, price) => {
   window.location.href = `student-details.html?${params.toString()}`;
 };
 
-/* ❌ CANCEL PENDING INVOICE */
-import { deleteDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+/* ❌ Cancel pending invoice */
 window.cancelInvoice = async (invoiceId) => {
-  if (!confirm("Cancel this invoice?")) return;
+  if(!confirm("Cancel this invoice?")) return;
   await deleteDoc(doc(db,"payments",invoiceId));
   loadCourses(auth.currentUser);
 };
 
-/* ▶ START COURSE */
+/* ▶ Start course */
 window.startCourse = (courseName) => {
   alert("Starting course: " + courseName);
 };
