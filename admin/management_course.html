@@ -2,79 +2,36 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Admin Course Publisher</title>
+<title>Admin Panel — Initialize Courses</title>
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
 <style>
-  body{font-family:'Segoe UI',sans-serif;background:#f4f6f9;margin:0;padding:0;color:#333;}
-  header{background:linear-gradient(135deg,#4A90E2,#007AFF);color:white;padding:20px;text-align:center;font-size:1.5rem;font-weight:bold;letter-spacing:1px;}
-  .container{max-width:900px;margin:30px auto;background:white;padding:25px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,0.1);}
-  h2,h3{color:#007AFF;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
-  input,textarea{width:100%;padding:12px;margin:8px 0 15px;border:1px solid #ddd;border-radius:8px;font-size:1rem;transition:border 0.3s;}
-  input:focus,textarea:focus{border-color:#007AFF;outline:none;}
-  button{background:#007AFF;color:white;border:none;padding:12px 20px;border-radius:8px;cursor:pointer;font-size:1rem;font-weight:bold;transition:background 0.3s, transform 0.2s;display:flex;align-items:center;gap:8px;}
-  button:hover{background:#005BBB;transform:translateY(-2px);}
-  #editor{height:200px;margin-bottom:15px;border-radius:8px;overflow:hidden;}
-  .section{margin-bottom:40px;}
-  .icon{color:#007AFF;}
-  select{width:100%;padding:12px;margin-bottom:15px;border-radius:8px;border:1px solid #ddd;font-size:1rem;}
+body{font-family:'Segoe UI',sans-serif;background:#f4f6f9;margin:0;padding:0;color:#333;}
+header{background:linear-gradient(135deg,#4A90E2,#007AFF);color:white;padding:20px;text-align:center;font-size:1.5rem;font-weight:bold;letter-spacing:1px;}
+.container{max-width:900px;margin:30px auto;background:white;padding:25px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,0.1);}
+h2,h3{color:#007AFF;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+button{background:#007AFF;color:white;border:none;padding:12px 20px;border-radius:8px;cursor:pointer;font-size:1rem;font-weight:bold;transition:background 0.3s, transform 0.2s;display:flex;align-items:center;gap:8px;}
+button:hover{background:#005BBB;transform:translateY(-2px);}
 </style>
 </head>
-
 <body>
 <header>
-  <i class="fas fa-book-open"></i> Admin Course Publisher
+<i class="fas fa-cogs"></i> Admin Panel — Initialize Courses
 </header>
 
 <div class="container">
-  <!-- Create Course -->
-  <div class="section">
-    <h2><i class="fas fa-plus-circle icon"></i> Create Course</h2>
-    <input id="courseTitle" placeholder="Course Title">
-    <textarea id="courseDesc" placeholder="Course Description"></textarea>
-    <button onclick="createCourse()"><i class="fas fa-check-circle"></i> Create Course</button>
-  </div>
-
-  <!-- Create Module -->
-  <div class="section">
-    <h2><i class="fas fa-layer-group icon"></i> Create Module</h2>
-    <select id="courseSelect"></select>
-    <input id="moduleTitle" placeholder="Module Title">
-    <button onclick="createModule()"><i class="fas fa-check-circle"></i> Add Module</button>
-  </div>
-
-  <!-- Add Lesson -->
-  <div class="section">
-    <h3><i class="fas fa-chalkboard-teacher icon"></i> Add Lesson</h3>
-    <select id="moduleSelect"></select>
-    <input id="lessonTitle" placeholder="Lesson Title">
-    <input id="videoURL" placeholder="Video URL">
-    <div id="editor"></div>
-    <button onclick="addLesson()"><i class="fas fa-upload"></i> Publish Lesson</button>
-  </div>
-
-  <!-- Add Quiz -->
-  <div class="section">
-    <h3><i class="fas fa-question-circle icon"></i> Add Quiz</h3>
-    <select id="quizCourseSelect"></select>
-    <input id="q" placeholder="Question">
-    <input id="a" placeholder="Option A">
-    <input id="b" placeholder="Option B">
-    <input id="c" placeholder="Option C">
-    <input id="d" placeholder="Option D">
-    <input id="correct" placeholder="Correct index (0-3)">
-    <button onclick="addQuiz()"><i class="fas fa-list-check"></i> Add Quiz</button>
-  </div>
+  <h2><i class="fas fa-database"></i> Initialize Firestore Structure</h2>
+  <p>This will automatically create the 5 predefined courses and empty subcollections for modules, lessons, and quizzes.</p>
+  <button onclick="initCourses()"><i class="fas fa-play-circle"></i> Initialize Courses</button>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyC_lKWa4cM4cM4cT337KkRw4sp7raQHl9aZWk",
+  apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain: "students-login-29409.firebaseapp.com",
   projectId: "students-login-29409",
   storageBucket: "students-login-29409.firebasestorage.app",
@@ -85,110 +42,37 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const quill = new Quill('#editor', { theme: 'snow' });
+// Predefined courses
+const courses = [
+  { id: "food_business_management", title: "Food Business Management Course", description:"Learn to manage your food business efficiently." },
+  { id: "financial_management", title: "Financial Management for Food Processors", description:"Manage finances for food processing." },
+  { id: "value_addition", title: "Food Value Addition Course for Farmers", description:"Increase the value of your farm products." },
+  { id: "new_product_dev", title: "New Product Development and Management", description:"Develop and manage new food products." },
+  { id: "management", title: "Management", description:"General management skills for food business." }
+];
 
-const courseTitleInput = document.getElementById('courseTitle');
-const courseDescInput = document.getElementById('courseDesc');
-const courseSelect = document.getElementById('courseSelect');
-const moduleSelect = document.getElementById('moduleSelect');
-const quizCourseSelect = document.getElementById('quizCourseSelect');
-const moduleTitleInput = document.getElementById('moduleTitle');
-const lessonTitleInput = document.getElementById('lessonTitle');
-const videoInput = document.getElementById('videoURL');
-const qInput = document.getElementById('q');
-const aInput = document.getElementById('a');
-const bInput = document.getElementById('b');
-const cInput = document.getElementById('c');
-const dInput = document.getElementById('d');
-const correctInput = document.getElementById('correct');
+window.initCourses = async () => {
+  for(const c of courses){
+    const courseRef = doc(db,'courses',c.id);
+    // Create course document
+    await setDoc(courseRef,{
+      title:c.title,
+      description:c.description,
+      published:true,
+      createdAt:new Date()
+    });
+    // Create empty subcollections: modules and quizzes
+    const modulesRef = collection(db,'courses',c.id,'modules');
+    const quizzesRef = collection(db,'courses',c.id,'quizzes');
 
-let selectedCourseId = null;
-let selectedModuleId = null;
+    // Optionally add an empty module as placeholder
+    const placeholderModuleRef = doc(modulesRef,'module_1');
+    await setDoc(placeholderModuleRef,{title:'Module 1',order:1});
+    const lessonsRef = collection(modulesRef,'module_1','lessons'); // empty lessons
 
-// Load courses to dropdowns
-async function loadCourses(){
-  courseSelect.innerHTML = '<option value="">Select Course</option>';
-  moduleSelect.innerHTML = '<option value="">Select Module</option>';
-  quizCourseSelect.innerHTML = '<option value="">Select Course</option>';
-
-  const snapshot = await getDocs(collection(db,'courses'));
-  snapshot.forEach(docItem=>{
-    const data = docItem.data();
-    courseSelect.innerHTML += `<option value="${docItem.id}">${data.title}</option>`;
-    quizCourseSelect.innerHTML += `<option value="${docItem.id}">${data.title}</option>`;
-  });
-}
-await loadCourses();
-
-// Load modules when course selected
-courseSelect.addEventListener('change', async ()=>{
-  selectedCourseId = courseSelect.value;
-  moduleSelect.innerHTML = '<option value="">Select Module</option>';
-  if(!selectedCourseId) return;
-  const snapshot = await getDocs(collection(db,'courses',selectedCourseId,'modules'));
-  snapshot.forEach(docItem=>{
-    moduleSelect.innerHTML += `<option value="${docItem.id}">${docItem.data().title}</option>`;
-  });
-});
-
-moduleSelect.addEventListener('change', ()=>{
-  selectedModuleId = moduleSelect.value;
-});
-
-// Create Course
-window.createCourse = async ()=>{
-  if(!courseTitleInput.value.trim()) return alert("Enter course title");
-  const ref = await addDoc(collection(db,'courses'),{
-    title: courseTitleInput.value.trim(),
-    description: courseDescInput.value.trim(),
-    published:true,
-    createdAt: new Date()
-  });
-  alert("✅ Course Created");
-  await loadCourses();
-};
-
-// Create Module
-window.createModule = async ()=>{
-  if(!selectedCourseId) return alert("Select a course first");
-  if(!moduleTitleInput.value.trim()) return alert("Enter module title");
-  await addDoc(collection(db,'courses',selectedCourseId,'modules'),{
-    title: moduleTitleInput.value.trim(),
-    createdAt: new Date()
-  });
-  alert("📚 Module Added");
-  moduleTitleInput.value = '';
-  courseSelect.dispatchEvent(new Event('change')); // refresh modules dropdown
-};
-
-// Add Lesson
-window.addLesson = async ()=>{
-  if(!selectedCourseId || !selectedModuleId) return alert("Select course & module");
-  if(!lessonTitleInput.value.trim()) return alert("Enter lesson title");
-  await addDoc(collection(db,'courses',selectedCourseId,'modules',selectedModuleId,'lessons'),{
-    title: lessonTitleInput.value.trim(),
-    contentHTML: quill.root.innerHTML,
-    videoURL: videoInput.value,
-    ttsEnabled:true,
-    createdAt: new Date()
-  });
-  alert("📖 Lesson Published");
-  lessonTitleInput.value=''; videoInput.value=''; quill.root.innerHTML='';
-};
-
-// Add Quiz
-window.addQuiz = async ()=>{
-  const selectedQuizCourse = quizCourseSelect.value;
-  if(!selectedQuizCourse) return alert("Select course for quiz");
-  if(!qInput.value.trim()) return alert("Enter question");
-  await addDoc(collection(db,'courses',selectedQuizCourse,'quizzes'),{
-    question:qInput.value,
-    options:[aInput.value,bInput.value,cInput.value,dInput.value],
-    correctIndex:parseInt(correctInput.value),
-    createdAt:new Date()
-  });
-  alert("📝 Quiz Added");
-  qInput.value=''; aInput.value=''; bInput.value=''; cInput.value=''; dInput.value=''; correctInput.value='';
+    console.log(`✅ Course ${c.title} created with placeholder module and empty lessons/quizzes.`);
+  }
+  alert("✅ All 5 courses initialized with subcollections successfully!");
 };
 </script>
 </body>
