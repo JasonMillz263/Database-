@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Student Dashboard</title>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+  authDomain: "students-login-29409.firebaseapp.com",
+  projectId: "students-login-29409"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+onAuthStateChanged(auth, async user=>{
+  if(!user) return alert("Login required");
+
+  const courses = await getDocs(collection(db,"courses"));
+  courses.forEach(doc=>{
+    document.body.innerHTML += `<h3>${doc.data().title}</h3>`;
+    loadQuizzes(doc.id,user.uid);
+  });
+});
+
+async function loadQuizzes(courseId,userId){
+  const quizzes = await getDocs(collection(db,"courses",courseId,"quizzes"));
+  let score = 0, total = 0;
+
+  quizzes.forEach(q=>{
+    total++;
+    document.body.innerHTML += `
+      <p>${q.data().question}</p>
+      ${q.data().options.map((o,i)=>
+        `<button onclick="answer(${i},${q.data().correctIndex})">${o}</button>`
+      ).join("")}
+    `;
+    window.answer=(i,c)=>{ if(i==c) score++; }
+  });
+
+  window.finish=async()=>{
+    if(score/total >= 0.7){
+      await setDoc(doc(db,"certificates",userId+"_"+courseId),{
+        userId,courseId,issuedAt:new Date()
+      });
+      alert("Certificate Generated!");
+      print();
+    }
+  }
+}
+</script>
+</head>
+<body>
+<button onclick="finish()">Finish Course</button>
+</body>
+</html>
