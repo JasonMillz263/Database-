@@ -151,7 +151,17 @@ button.action[disabled]{
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 /* FIREBASE CONFIG */
 const firebaseConfig = {
@@ -197,7 +207,7 @@ onAuthStateChanged(auth, async user=>{
 
   const paidCourses = student.coursesPaid || [];
 
-  // Get pending payments
+  // Fetch pending payments
   const pendingSnap = await getDocs(
     query(
       collection(db,"payments"),
@@ -208,10 +218,11 @@ onAuthStateChanged(auth, async user=>{
 
   const pendingCourses = pendingSnap.docs.map(d=>d.data().courseName);
 
-  renderCourses(paidCourses,pendingCourses);
+  renderCourses(paidCourses, pendingCourses, student);
 });
 
-function renderCourses(paidCourses,pendingCourses){
+/* RENDER */
+function renderCourses(paidCourses, pendingCourses, student){
   grid.innerHTML = "";
 
   courses.forEach(c=>{
@@ -246,11 +257,45 @@ function renderCourses(paidCourses,pendingCourses){
   });
 }
 
-/* PAY */
-window.pay = (course,price)=>{
-  localStorage.setItem("courseName",course);
-  localStorage.setItem("coursePrice",price);
-  location.href="student-details.html";
+/* PAY → AUTO CREATE PAYMENT RECORD */
+window.pay = async (course, price)=>{
+  const user = auth.currentUser;
+  if(!user) return;
+
+  // Prevent duplicate pending payment
+  const existing = await getDocs(
+    query(
+      collection(db,"payments"),
+      where("studentId","==",user.uid),
+      where("courseName","==",course),
+      where("status","==","pending")
+    )
+  );
+
+  if(!existing.empty){
+    alert("This course is already awaiting approval.");
+    return;
+  }
+
+  const studentSnap = await getDoc(doc(db,"students",user.uid));
+  const student = studentSnap.data();
+
+  const invoiceNumber = `FBA-${Date.now()}`;
+
+  await addDoc(collection(db,"payments"),{
+    studentId: user.uid,
+    studentName: student.fullName || student.displayName || "Unnamed Student",
+    email: student.email,
+    courseName: course,
+    price: price,
+    paymentMethod: "Manual Payment",
+    invoiceNumber: invoiceNumber,
+    status: "pending",
+    createdAt: serverTimestamp()
+  });
+
+  alert("Payment submitted successfully. Awaiting admin approval.");
+  location.reload();
 };
 </script>
 
