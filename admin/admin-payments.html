@@ -1,148 +1,131 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Courses Offered | Food Business Academy</title>
+<title>Manage Payments | Food Business Academy</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
 <style>
 :root{
-  --blue:#2563eb;
-  --purple:#6d28d9;
-  --bg:#f5f7ff;
+  --bg:#f4f6fb;
   --card:#ffffff;
-  --text:#1f2937;
+  --blue:#2563eb;
+  --green:#22c55e;
   --pending:#f59e0b;
-  --paid:#22c55e;
+  --text:#1f2937;
+  --muted:#6b7280;
 }
 
 *{box-sizing:border-box;font-family:'Poppins',sans-serif}
-body{margin:0;background:var(--bg);color:var(--text)}
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+}
 
 header{
   background:#fff;
-  padding:15px 25px;
+  padding:20px 30px;
   display:flex;
   justify-content:space-between;
   align-items:center;
-  box-shadow:0 6px 18px rgba(0,0,0,.06)
+  box-shadow:0 6px 20px rgba(0,0,0,.06);
+}
+
+header h1{
+  font-size:22px;
+  margin:0;
 }
 
 header button{
-  padding:10px 16px;
+  background:var(--blue);
+  color:#fff;
   border:none;
+  padding:10px 16px;
   border-radius:12px;
   font-weight:600;
   cursor:pointer;
 }
 
-.home{background:#e5e7eb}
-.dashboard{background:var(--blue);color:#fff}
-
-.main{padding:30px;max-width:1200px;margin:auto}
-
-/* ===== IDENTITY CARD ===== */
-.identity{
-  background:#fff;
-  border-radius:18px;
-  padding:18px 22px;
-  margin-bottom:25px;
-  box-shadow:0 8px 20px rgba(0,0,0,.06);
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:16px;
+main{
+  padding:30px;
+  max-width:1200px;
+  margin:auto;
 }
 
-.identity .block{
-  display:flex;
-  flex-direction:column;
-}
-
-.identity span{
-  font-size:13px;
-  color:#6b7280;
-}
-
-.identity strong{
-  font-size:15px;
-  color:#111827;
-  word-break:break-all;
-}
-
-/* MOBILE STACK */
-@media (max-width:600px){
-  .identity{
-    flex-direction:column;
-    align-items:flex-start;
-  }
-  .identity .block{
-    width:100%;
-  }
-}
-
-/* ===== COURSES ===== */
 .grid{
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-  gap:20px;
+  grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+  gap:24px;
 }
 
 .card{
   background:var(--card);
   border-radius:20px;
   padding:22px;
-  box-shadow:0 15px 35px rgba(0,0,0,.08);
-  position:relative;
+  box-shadow:0 12px 30px rgba(0,0,0,.08);
   display:flex;
   flex-direction:column;
   justify-content:space-between;
+  position:relative;
 }
 
-.badge{
+.status{
   position:absolute;
-  top:16px;
-  right:16px;
+  top:18px;
+  right:18px;
   padding:6px 12px;
   border-radius:999px;
   font-size:12px;
   font-weight:600;
   color:#fff;
 }
+
 .pending{background:var(--pending)}
-.paid{background:var(--paid)}
+.paid{background:var(--green)}
 
-.modules{margin:15px 0}
-.modules li{
+.card h3{
+  margin:0 0 6px;
+  font-size:18px;
+}
+
+.info{
+  font-size:14px;
+  color:var(--muted);
   margin-bottom:6px;
-  list-style:none;
-  padding-left:20px;
-  position:relative;
-}
-.modules li::before{
-  content:"✔";
-  position:absolute;
-  left:0;
-  color:var(--blue);
 }
 
-.price{font-size:18px;font-weight:700;margin:12px 0}
+.course{
+  margin:14px 0;
+  font-weight:600;
+}
 
-button.action{
+.actions{
+  margin-top:16px;
+}
+
+.actions button{
   width:100%;
   padding:12px;
   border:none;
   border-radius:14px;
   font-weight:600;
-  background:linear-gradient(135deg,var(--blue),var(--purple));
-  color:#fff;
   cursor:pointer;
 }
 
-button.action[disabled]{
-  background:var(--pending);
+.approve{
+  background:linear-gradient(135deg,var(--green),#16a34a);
+  color:#fff;
+}
+
+.disabled{
+  background:#e5e7eb;
+  color:#9ca3af;
   cursor:not-allowed;
 }
 </style>
@@ -151,127 +134,73 @@ button.action[disabled]{
 <body>
 
 <header>
-  <button class="home" onclick="location.href='#'">🏠 Home</button>
-  <button class="dashboard" onclick="location.href='student.htm'">⬅ Student Dashboard</button>
+  <h1>💳 Manage Payments</h1>
+  <button onclick="location.href='#'">🏠 Admin Dashboard</button>
 </header>
 
-<main class="main">
-
-  <!-- IDENTITY CARD -->
-  <div class="identity">
-    <div class="block">
-      <span>Email</span>
-      <strong id="studentEmail">Loading...</strong>
-    </div>
-
-    <div class="block">
-      <span>User ID</span>
-      <strong id="studentId">Loading...</strong>
-    </div>
-  </div>
-
-  <h1>📘 Courses Offered</h1>
-  <div class="grid" id="coursesGrid"></div>
-
+<main>
+  <div class="grid" id="paymentsGrid"></div>
 </main>
 
-<!-- FIREBASE + LOGIC -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<script>
+/*
+  DATA SOURCE
+  - student data stored from registration
+  - course status stored in courseStatus
+*/
 
-/* FIREBASE CONFIG */
-const firebaseConfig = {
-  apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
-  authDomain: "students-login-29409.firebaseapp.com",
-  projectId: "students-login-29409",
-  storageBucket: "students-login-29409.firebasestorage.app",
-  messagingSenderId: "634331456872",
-  appId: "1:634331456872:web:6dae360c5e28d8356562dd",
-  measurementId: "G-96XXYG1VR2"
-};
+const paymentsGrid = document.getElementById("paymentsGrid");
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+/* Example student data source (already saved during registration/payment) */
+const students = JSON.parse(localStorage.getItem("payments")) || [];
 
-/* COURSES DATA */
-const courses = [
-  {name:"Food Business Management Course",price:49,modules:["Introduction to Food Business","Operations & Compliance","Food Safety Management","Marketing & Distribution"]},
-  {name:"Financial Management for Food Processors",price:59,modules:["Costing & Pricing","Cash Flow Management","Budgeting & Forecasting","Profitability Analysis"]},
-  {name:"Food Value Addition Course for Farmers",price:45,modules:["Post-Harvest Handling","Processing Techniques","Packaging & Storage","Market Readiness"]},
-  {name:"New Product Development and Management",price:69,modules:["Idea Generation","Product Testing","Regulatory Approval","Product Launch Strategy"]},
-  {name:"Management",price:39,modules:["Leadership Skills","Team Management","Decision Making","Business Ethics"]}
-];
+/* Course status map */
+const courseStatus = JSON.parse(localStorage.getItem("courseStatus")) || {};
 
-const grid = document.getElementById("coursesGrid");
+if(students.length === 0){
+  paymentsGrid.innerHTML = "<p>No payments found.</p>";
+}
 
-/* AUTH + LOAD STUDENT */
-onAuthStateChanged(auth, async user=>{
-  if(!user){
-    alert("Session expired. Please login again.");
-    location.href="student.htm";
-    return;
-  }
+students.forEach((p, index) => {
+  const studentCourses = courseStatus[p.email] || {};
+  const status = studentCourses[p.course] || "pending";
 
-  const uid = user.uid;
-  const snap = await getDoc(doc(db,"students",uid));
-
-  if(!snap.exists()){
-    alert("Student record not found.");
-    return;
-  }
-
-  const data = snap.data();
-  const email = data.email;
-
-  document.getElementById("studentEmail").textContent = email;
-  document.getElementById("studentId").textContent = uid.substring(0,10).toUpperCase();
-
-  /* LOAD COURSE STATUS */
-  const statusData = JSON.parse(localStorage.getItem("courseStatus")) || {};
-  const myStatus = statusData[email] || {};
-
-  grid.innerHTML = "";
-
-  courses.forEach(c=>{
-    const status = myStatus[c.name];
-    let badge="", button="";
-
-    if(status==="pending"){
-      badge='<div class="badge pending">Pending Payment</div>';
-      button='<button class="action" disabled>Awaiting Approval</button>';
-    }
-    else if(status==="paid"){
-      badge='<div class="badge paid">Paid</div>';
-      button='<button class="action" onclick="location.href=\'#\'">Start Course</button>';
-    }
-    else{
-      button=`<button class="action" onclick="pay('${c.name}',${c.price})">Pay to Start</button>`;
-    }
-
-    grid.innerHTML += `
-      <div class="card">
-        ${badge}
-        <div>
-          <h3>${c.name}</h3>
-          <ul class="modules">
-            ${c.modules.map(m=>`<li>${m}</li>`).join("")}
-          </ul>
-          <div class="price">$${c.price}</div>
-        </div>
-        ${button}
+  paymentsGrid.innerHTML += `
+    <div class="card">
+      <div class="status ${status === 'paid' ? 'paid' : 'pending'}">
+        ${status === 'paid' ? 'Paid' : 'Pending'}
       </div>
-    `;
-  });
 
-  window.pay = (course,price)=>{
-    localStorage.setItem("courseName",course);
-    localStorage.setItem("coursePrice",price);
-    location.href="student-details.html";
-  };
+      <div>
+        <h3>${p.name}</h3>
+        <div class="info">📧 ${p.email}</div>
+        <div class="info">📞 ${p.phone || 'N/A'}</div>
+
+        <div class="course">📘 ${p.course}</div>
+      </div>
+
+      <div class="actions">
+        ${
+          status === "pending"
+          ? `<button class="approve" onclick="approvePayment('${p.email}','${p.course}')">Approve Payment</button>`
+          : `<button class="disabled" disabled>Payment Approved</button>`
+        }
+      </div>
+    </div>
+  `;
 });
+
+function approvePayment(email, course){
+  const statusData = JSON.parse(localStorage.getItem("courseStatus")) || {};
+  if(!statusData[email]) statusData[email] = {};
+
+  statusData[email][course] = "paid";
+
+  localStorage.setItem("courseStatus", JSON.stringify(statusData));
+
+  alert("Payment approved successfully ✅");
+  location.reload();
+}
 </script>
 
 </body>
