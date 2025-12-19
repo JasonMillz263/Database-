@@ -15,6 +15,7 @@
   --card:#ffffff;
   --text:#1f2937;
   --pending:#f59e0b;
+  --success:#16a34a;
 }
 
 *{box-sizing:border-box;font-family:'Poppins',sans-serif}
@@ -22,6 +23,18 @@ body{margin:0;background:var(--bg);color:var(--text)}
 
 .main{padding:30px;max-width:1200px;margin:auto}
 h1{margin-bottom:25px}
+
+.student-card{
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  color:#fff;
+  padding:20px;
+  border-radius:18px;
+  margin-bottom:30px;
+  box-shadow:0 15px 35px rgba(0,0,0,.15);
+}
+
+.student-card strong{font-size:14px;opacity:.85}
+.student-card p{margin:6px 0;font-weight:600}
 
 .grid{
   display:grid;
@@ -41,13 +54,14 @@ h1{margin-bottom:25px}
   position:absolute;
   top:16px;
   right:16px;
-  background:var(--pending);
   color:#fff;
   padding:6px 12px;
   border-radius:999px;
   font-size:12px;
   font-weight:600;
 }
+.pending{background:var(--pending)}
+.approved{background:var(--success)}
 
 .modules{margin:15px 0}
 .modules li{
@@ -75,35 +89,41 @@ button{
   font-weight:600;
   cursor:pointer;
 }
-button[disabled]{
+button.pending-btn{
   background:var(--pending);
   cursor:not-allowed;
+}
+button.success-btn{
+  background:var(--success);
 }
 </style>
 </head>
 
 <body>
-
 <main class="main">
+
+  <!-- STUDENT CARD -->
+  <div class="student-card" id="studentCard">
+    <strong>Student Email</strong>
+    <p id="studentEmail">Loading...</p>
+    <strong>Student ID</strong>
+    <p id="studentId">Loading...</p>
+  </div>
+
   <h1>📘 Courses Offered</h1>
   <div class="grid" id="coursesGrid"></div>
+
 </main>
 
-<!-- FIREBASE LOGIC -->
+<!-- FIREBASE -->
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  getDocs,
-  query,
-  where,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { 
+  getFirestore, collection, addDoc, query, where, getDocs,
+  serverTimestamp, updateDoc, doc, arrayUnion
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-/* Firebase config */
 const firebaseConfig = {
   apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain: "students-login-29409.firebaseapp.com",
@@ -118,7 +138,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-/* Courses */
 const courses = [
   {name:"Food Business Management Course", price:49, modules:["Introduction to Food Business","Operations & Compliance","Food Safety Management","Marketing & Distribution"]},
   {name:"Financial Management for Food Processors", price:59, modules:["Costing & Pricing","Cash Flow Management","Budgeting & Forecasting","Profitability Analysis"]},
@@ -129,66 +148,79 @@ const courses = [
 
 const grid = document.getElementById("coursesGrid");
 
-/* Auth + Load payments */
-onAuthStateChanged(auth, async user => {
-  if (!user) {
-    alert("Please login to continue");
-    return;
-  }
+onAuthStateChanged(auth, async (user) => {
+  if(!user) return location.href="login.html";
 
-  const uid = user.uid;
-  const email = user.email;
+  document.getElementById("studentEmail").textContent = user.email;
+  document.getElementById("studentId").textContent = user.uid;
 
-  // Load this student's payments
-  const paymentsSnap = await getDocs(
-    query(collection(db, "payments"), where("studentId", "==", uid))
+  const q = query(
+    collection(db,"payments"),
+    where("studentId","==",user.uid)
   );
+  const snapshot = await getDocs(q);
 
-  const paymentStatus = {};
-  paymentsSnap.forEach(doc => {
-    const p = doc.data();
-    paymentStatus[p.courseName] = p.status;
+  const paymentMap = {};
+  snapshot.forEach(doc=>{
+    paymentMap[doc.data().courseName] = doc.data();
   });
 
   grid.innerHTML = "";
 
-  courses.forEach(c => {
-    const isPending = paymentStatus[c.name] === "pending";
+  courses.forEach(c=>{
+    const payment = paymentMap[c.name];
+
+    let badge = "";
+    let button = "";
+
+    if(payment?.status === "pending"){
+      badge = `<div class="badge pending">Awaiting Approval</div>`;
+      button = `<button class="pending-btn" disabled>Pending</button>`;
+    }
+    else if(payment?.status === "approved"){
+      badge = `<div class="badge approved">Approved</div>`;
+      button = `<button class="success-btn" onclick="startCourse('${c.name}')">Start Course</button>`;
+    }
+    else{
+      button = `<button onclick="createInvoice('${c.name}',${c.price})">Pay to Start</button>`;
+    }
 
     grid.innerHTML += `
       <div class="card">
-        ${isPending ? '<div class="badge">Pending Payment</div>' : ''}
+        ${badge}
         <h3>${c.name}</h3>
-        <ul class="modules">
-          ${c.modules.map(m => `<li>${m}</li>`).join("")}
-        </ul>
+        <ul class="modules">${c.modules.map(m=>`<li>${m}</li>`).join("")}</ul>
         <div class="price">$${c.price}</div>
-        <button ${isPending ? "disabled" : ""} 
-          onclick="pay('${c.name}', ${c.price})">
-          ${isPending ? "Pending Payment" : "Pay to Start"}
-        </button>
+        ${button}
       </div>
     `;
   });
-
-  /* Pay function – creates Firestore payment */
-  window.pay = async (course, price) => {
-    await addDoc(collection(db, "payments"), {
-      studentId: uid,
-      studentName: user.displayName || "Student",
-      email: email,
-      courseName: course,
-      price: price,
-      paymentMethod: "Manual",
-      invoiceNumber: `FBA-${Date.now()}`,
-      status: "pending",
-      createdAt: serverTimestamp()
-    });
-
-    alert("Invoice generated. Awaiting approval.");
-    location.reload();
-  };
 });
+
+window.createInvoice = async (courseName, price) => {
+  const user = auth.currentUser;
+  if(!user) return;
+
+  await addDoc(collection(db,"payments"),{
+    studentId:user.uid,
+    studentName:user.displayName || "Student",
+    email:user.email,
+    courseName,
+    price,
+    paymentMethod:"Manual",
+    invoiceNumber:`FBA-${Date.now()}`,
+    status:"pending",
+    createdAt:serverTimestamp()
+  });
+
+  alert("Invoice created. Awaiting admin approval.");
+  location.reload();
+};
+
+window.startCourse = (courseName) => {
+  alert("Starting course: " + courseName);
+  // redirect to course dashboard
+};
 </script>
 
 </body>
