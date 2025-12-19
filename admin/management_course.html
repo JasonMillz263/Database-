@@ -2,23 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Firestore Structure Initializer</title>
+<title>Firestore Admin Structure Init</title>
 </head>
 <body>
 
-<h2>Initialize Firestore Structure</h2>
+<h2>Initialize Firestore (Admin Structure)</h2>
 <button onclick="initFirestore()">Initialize</button>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
-  getFirestore,
-  doc,
-  setDoc,
-  collection
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-/* 🔹 Firebase config (CLEAN) */
+/* 🔹 Firebase config */
 const firebaseConfig = {
   apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain: "students-login-29409.firebaseapp.com",
@@ -31,7 +26,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* 🔹 Predefined courses */
+/* 🔹 ADMIN ID (CHANGE IF NEEDED) */
+const ADMIN_ID = "admin_001";
+
+/* 🔹 COURSES */
 const courses = [
   { id:"food_business_management", title:"Food Business Management Course", description:"Course description here..." },
   { id:"financial_management", title:"Financial Management for Food Processors", description:"Course description here..." },
@@ -43,27 +41,47 @@ const courses = [
 window.initFirestore = async () => {
   try {
 
-    /* 🔹 COURSES → MODULES → LESSONS */
-    for (const course of courses) {
+    /* 🔹 CREATE ADMIN DOCUMENT */
+    await setDoc(doc(db, "course", ADMIN_ID), {
+      role: "admin",
+      createdAt: new Date()
+    });
 
-      await setDoc(doc(db, "courses", course.id), {
-        title: course.title,
-        description: course.description,
-        published: true,
-        createdAt: new Date()
-      });
+    /* 🔹 CREATE FULL COURSE STRUCTURE */
+    for (const c of courses) {
 
+      await setDoc(
+        doc(db, "course", ADMIN_ID, "courses", c.id),
+        {
+          title: c.title,
+          description: c.description,
+          published: true,
+          createdAt: new Date()
+        }
+      );
+
+      /* MODULES & LESSONS */
       for (let m = 1; m <= 2; m++) {
         const moduleId = `module_${m}`;
 
         await setDoc(
-          doc(db, "courses", course.id, "modules", moduleId),
+          doc(db, "course", ADMIN_ID, "courses", c.id, "modules", moduleId),
           { title: `Module ${m}`, order: m }
         );
 
         for (let l = 1; l <= 2; l++) {
           await setDoc(
-            doc(db, "courses", course.id, "modules", moduleId, "lessons", `lesson_${l}`),
+            doc(
+              db,
+              "course",
+              ADMIN_ID,
+              "courses",
+              c.id,
+              "modules",
+              moduleId,
+              "lessons",
+              `lesson_${l}`
+            ),
             {
               title: `Lesson ${l}`,
               contentHTML: "",
@@ -76,13 +94,13 @@ window.initFirestore = async () => {
         }
       }
 
-      /* 🔹 QUIZZES */
+      /* QUIZZES */
       for (let q = 1; q <= 2; q++) {
         await setDoc(
-          doc(db, "courses", course.id, "quizzes", `quiz_${q}`),
+          doc(db, "course", ADMIN_ID, "courses", c.id, "quizzes", `quiz_${q}`),
           {
             question: `Question ${q}`,
-            options: ["A", "B", "C", "D"],
+            options: ["A","B","C","D"],
             correctIndex: 0,
             createdAt: new Date()
           }
@@ -90,34 +108,12 @@ window.initFirestore = async () => {
       }
     }
 
-    /* 🔹 PAYMENTS (placeholder) */
-    await setDoc(doc(db, "payments", "payment_1"), {
-      userId: "user_1",
-      courseId: "food_business_management",
-      status: "approved",
-      paidAt: new Date()
-    });
+    /* 🔹 GLOBAL COLLECTIONS */
+    await setDoc(doc(db, "payments", "placeholder"), { init: true });
+    await setDoc(doc(db, "progress", "placeholder"), { init: true });
+    await setDoc(doc(db, "certificates", "placeholder"), { init: true });
 
-    /* 🔹 PROGRESS (userId_courseId) */
-    await setDoc(doc(db, "progress", "user_1_food_business_management"), {
-      userId: "user_1",
-      courseId: "food_business_management",
-      completedLessons: [],
-      score: 0,
-      completed: false,
-      lastVisitedLessonId: "",
-      updatedAt: new Date()
-    });
-
-    /* 🔹 CERTIFICATES */
-    await setDoc(doc(db, "certificates", "cert_1"), {
-      userId: "user_1",
-      courseId: "food_business_management",
-      issuedAt: new Date(),
-      certificateURL: ""
-    });
-
-    alert("✅ Firestore structure initialized successfully");
+    alert("✅ Firestore admin structure initialized successfully");
 
   } catch (err) {
     console.error(err);
