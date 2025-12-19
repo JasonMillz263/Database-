@@ -15,36 +15,39 @@
   --card:#ffffff;
   --text:#1f2937;
   --pending:#f59e0b;
+  --danger:#dc2626;
+  --gray:#6b7280;
 }
 
 *{box-sizing:border-box;font-family:'Poppins',sans-serif}
 body{margin:0;background:var(--bg);color:var(--text)}
 
-.main{padding:30px;max-width:1200px;margin:auto}
-h1{margin-bottom:20px}
+.main{padding:20px;max-width:1200px;margin:auto}
+h1{margin-bottom:20px;text-align:center}
 
-.table{
-  background:var(--card);
-  border-radius:18px;
-  overflow:hidden;
-  box-shadow:0 15px 35px rgba(0,0,0,.08);
-}
-
-.row, .header{
+.cards{
   display:grid;
-  grid-template-columns: 1.2fr 1.5fr 1.5fr 1fr 1fr 1fr;
-  padding:14px 18px;
-  align-items:center;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:20px;
 }
 
-.header{
-  background:#eef2ff;
-  font-weight:600;
-  font-size:14px;
+.card{
+  background:var(--card);
+  border-radius:16px;
+  padding:18px;
+  box-shadow:0 8px 20px rgba(0,0,0,.08);
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
 }
 
-.row{
-  border-top:1px solid #e5e7eb;
+.card h2{
+  font-size:16px;
+  margin:0 0 10px;
+}
+
+.card p{
+  margin:4px 0;
   font-size:14px;
 }
 
@@ -58,38 +61,36 @@ h1{margin-bottom:20px}
   color:#fff;
 }
 
-button{
-  padding:8px 14px;
-  border:none;
-  border-radius:10px;
-  background:var(--green);
-  color:#fff;
-  font-weight:600;
-  cursor:pointer;
+.actions{
+  display:flex;
+  gap:10px;
+  margin-top:12px;
 }
 
-button[disabled]{
-  opacity:.5;
-  cursor:not-allowed;
+button{
+  flex:1;
+  padding:8px 12px;
+  border:none;
+  border-radius:10px;
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  transition:.2s;
 }
+
+button.approve{background:var(--green);color:#fff}
+button.reset{background:var(--blue);color:#fff}
+button.delete{background:var(--danger);color:#fff}
+
+button:hover{opacity:.9}
+button[disabled]{opacity:.5;cursor:not-allowed}
 </style>
 </head>
 
 <body>
 <main class="main">
   <h1>💳 Pending Payment Approvals</h1>
-
-  <div class="table">
-    <div class="header">
-      <div>Invoice</div>
-      <div>Student</div>
-      <div>Course</div>
-      <div>Price</div>
-      <div>Status</div>
-      <div>Action</div>
-    </div>
-    <div id="paymentsBody"></div>
-  </div>
+  <div id="paymentsBody" class="cards"></div>
 </main>
 
 <script type="module">
@@ -97,7 +98,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebas
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import {
   getFirestore, collection, query, where, getDocs,
-  doc, updateDoc, arrayUnion
+  doc, updateDoc, deleteDoc, arrayUnion, arrayRemove
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 /* 🔥 FIREBASE CONFIG */
@@ -137,15 +138,11 @@ onAuthStateChanged(auth, async (user) => {
 async function loadPendingPayments(){
   body.innerHTML = "";
 
-  const q = query(
-    collection(db,"payments"),
-    where("status","==","pending")
-  );
-
+  const q = query(collection(db,"payments"), where("status","==","pending"));
   const snapshot = await getDocs(q);
 
   if(snapshot.empty){
-    body.innerHTML = `<div class="row">No pending payments</div>`;
+    body.innerHTML = `<div>No pending payments</div>`;
     return;
   }
 
@@ -153,16 +150,16 @@ async function loadPendingPayments(){
     const p = docSnap.data();
 
     body.innerHTML += `
-      <div class="row">
-        <div>${p.invoiceNumber}</div>
-        <div>${p.email}</div>
-        <div>${p.courseName}</div>
-        <div>$${p.price}</div>
-        <div><span class="badge">Pending</span></div>
-        <div>
-          <button onclick="approvePayment('${docSnap.id}','${p.studentId}','${p.courseName}')">
-            Approve
-          </button>
+      <div class="card">
+        <h2>Invoice #${p.invoiceNumber}</h2>
+        <p><strong>Student:</strong> ${p.email}</p>
+        <p><strong>Course:</strong> ${p.courseName}</p>
+        <p><strong>Price:</strong> $${p.price}</p>
+        <p><span class="badge">Pending</span></p>
+        <div class="actions">
+          <button class="approve" onclick="approvePayment('${docSnap.id}','${p.studentId}','${p.courseName}')">Approve</button>
+          <button class="reset" onclick="resetPayment('${docSnap.id}','${p.studentId}','${p.courseName}')">Reset</button>
+          <button class="delete" onclick="deletePayment('${docSnap.id}')">🗑️</button>
         </div>
       </div>
     `;
@@ -172,18 +169,26 @@ async function loadPendingPayments(){
 /* ✅ APPROVE PAYMENT */
 window.approvePayment = async (paymentId, studentId, courseName) => {
   if (!confirm("Approve this payment?")) return;
-
-  // 1. Update payment status
-  await updateDoc(doc(db,"payments",paymentId),{
-    status:"approved"
-  });
-
-  // 2. Unlock course for student
-  await updateDoc(doc(db,"students",studentId),{
-    coursesPaid: arrayUnion(courseName)
-  });
-
+  await updateDoc(doc(db,"payments",paymentId),{ status:"approved" });
+  await updateDoc(doc(db,"students",studentId),{ coursesPaid: arrayUnion(courseName) });
   alert("Payment approved & course unlocked");
+  loadPendingPayments();
+};
+
+/* 🔄 RESET PAYMENT */
+window.resetPayment = async (paymentId, studentId, courseName) => {
+  if (!confirm("Reset this payment to 'Pay to Start'?")) return;
+  await updateDoc(doc(db,"payments",paymentId),{ status:"reset" });
+  await updateDoc(doc(db,"students",studentId),{ coursesPaid: arrayRemove(courseName) });
+  alert("Payment reset to 'Pay to Start'");
+  loadPendingPayments();
+};
+
+/* 🗑️ DELETE PAYMENT */
+window.deletePayment = async (paymentId) => {
+  if (!confirm("Delete this payment request?")) return;
+  await deleteDoc(doc(db,"payments",paymentId));
+  alert("Payment request deleted");
   loadPendingPayments();
 };
 </script>
