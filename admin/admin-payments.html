@@ -1,220 +1,206 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Admin – Manage Payments</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<title>Admin – Payment Management</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
-body{margin:0;background:#f4f6fb;font-family:Poppins}
+body{
+  margin:0;
+  font-family:Poppins;
+  background:linear-gradient(135deg,#eef2ff,#f5f7ff);
+}
+
+.container{
+  max-width:1200px;
+  margin:auto;
+  padding:20px;
+}
+
 header{
-  background:#fff;
-  padding:20px 30px;
   display:flex;
   justify-content:space-between;
   align-items:center;
-  box-shadow:0 6px 20px rgba(0,0,0,.08)
+  margin-bottom:20px;
 }
-header button{
-  padding:10px 16px;
-  border:none;
-  border-radius:12px;
-  font-weight:600;
-  cursor:pointer
-}
-.binBtn{background:#e5e7eb}
-.adminBtn{background:#2563eb;color:#fff}
+
+header h1{margin:0}
 
 .grid{
-  padding:30px;
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(380px,1fr));
-  gap:24px
+  grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+  gap:20px;
 }
 
 .card{
-  background:#fff;
-  border-radius:20px;
-  padding:22px;
-  box-shadow:0 12px 30px rgba(0,0,0,.1);
-  position:relative
+  background:#ffffffcc;
+  backdrop-filter:blur(14px);
+  border-radius:22px;
+  padding:20px;
+  box-shadow:0 20px 40px rgba(0,0,0,.08);
+  position:relative;
 }
 
-.status{
+.badge{
   position:absolute;
-  top:18px;
-  right:18px;
+  top:16px;
+  right:16px;
   padding:6px 14px;
   border-radius:999px;
   font-size:12px;
   font-weight:600;
-  color:#fff
+  color:#fff;
 }
+
 .pending{background:#f59e0b}
 .paid{background:#22c55e}
 
-.actions button{
-  width:100%;
-  padding:10px;
-  border:none;
-  border-radius:12px;
-  font-weight:600;
-  margin-top:8px;
-  cursor:pointer
+.name{font-size:18px;font-weight:600}
+.email{font-size:13px;opacity:.7}
+
+.course{margin:14px 0;font-weight:600}
+.meta{font-size:13px;opacity:.8}
+
+.actions{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+  margin-top:16px;
 }
+
+button{
+  border:none;
+  padding:10px;
+  border-radius:12px;
+  cursor:pointer;
+  font-weight:600;
+}
+
 .approve{background:#22c55e;color:#fff}
-.cancel{background:#f97316;color:#fff}
-.delete{background:#ef4444;color:#fff}
-.download{background:#0ea5e9;color:#fff}
+.reject{background:#ef4444;color:#fff}
+
+.empty{
+  grid-column:1/-1;
+  text-align:center;
+  padding:40px;
+  opacity:.6;
+}
 </style>
 </head>
 
 <body>
 
+<div class="container">
+
 <header>
-  <h2>💳 Manage Course Payments</h2>
-  <div>
-    <button class="binBtn" onclick="toggleBin()">🗑 Recycle Bin</button>
-    <button class="adminBtn" onclick="location.href='admin-dashboard.html'">
-      ⬅ Admin Dashboard
-    </button>
-  </div>
+  <h1>💳 Manage Payments</h1>
+  <button onclick="location.href='admin-dashboard.html'">⬅ Dashboard</button>
 </header>
 
-<div class="grid" id="grid"></div>
+<div id="paymentsGrid" class="grid">
+  <div class="empty">Loading payments…</div>
+</div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  doc,
-  updateDoc,
-  deleteField
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+</div>
 
-/* FIREBASE CONFIG */
-const firebaseConfig = {
+<script>
+/* FIREBASE INIT */
+firebase.initializeApp({
   apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain: "students-login-29409.firebaseapp.com",
   projectId: "students-login-29409"
-};
+});
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const grid = document.getElementById("paymentsGrid");
 
-const grid = document.getElementById("grid");
+/* ADMIN GUARD */
+auth.onAuthStateChanged(async user=>{
+  if(!user) return location.replace("../index.html");
 
-let recycleBin = [];
-let showBin = false;
+  const admin = await db.collection("admins").doc(user.uid).get();
+  if(!admin.exists){
+    alert("Admins only");
+    auth.signOut();
+    return;
+  }
+
+  loadPayments();
+});
 
 /* LOAD PAYMENTS */
-async function loadPayments() {
+async function loadPayments(){
   grid.innerHTML = "";
 
-  const snap = await getDocs(collection(db, "students"));
+  const snap = await db.collection("students").get();
+  let found = false;
 
-  snap.forEach(student => {
-    const d = student.data();
+  snap.forEach(doc=>{
+    const s = doc.data();
+    if(!s.courses) return;
 
-    if (!d.courses || typeof d.courses !== "object") return;
+    Object.entries(s.courses).forEach(([course,info])=>{
+      if(info.status !== "pending" && info.status !== "paid") return;
 
-    Object.keys(d.courses).forEach(courseName => {
-      const info = d.courses[courseName];
-      if (!info || !info.status) return;
-
-      const key = `${student.id}_${courseName}`;
-
-      if (showBin && !recycleBin.includes(key)) return;
-      if (!showBin && recycleBin.includes(key)) return;
+      found = true;
 
       grid.innerHTML += `
         <div class="card">
-          <div class="status ${info.status}">
+          <div class="badge ${info.status}">
             ${info.status.toUpperCase()}
           </div>
 
-          <h3>${d.fullName || "Student"}</h3>
-          <p><strong>ID:</strong> ${student.id}</p>
-          <p>📧 ${d.email || "N/A"}</p>
-          <p>📞 ${d.phone || "N/A"}</p>
-          <p>🧾 Invoice: ${info.invoiceNumber || "-"}</p>
-          <p>📘 ${courseName}</p>
+          <div class="name">${s.fullName || "Student"}</div>
+          <div class="email">${s.email || "—"}</div>
+
+          <div class="course">${course}</div>
+
+          <div class="meta">Invoice: ${info.invoice || "—"}</div>
+          <div class="meta">Amount: $${info.price}</div>
 
           <div class="actions">
             ${
               info.status === "pending"
-                ? `<button class="approve"
-                    onclick="approve('${student.id}','${courseName}')">
-                    Approve Payment</button>`
-                : `<button class="cancel"
-                    onclick="cancel('${student.id}','${courseName}')">
-                    Cancel Payment</button>`
+                ? `<button class="approve" onclick="approve('${doc.id}','${course}')">Approve</button>
+                   <button class="reject" onclick="reject('${doc.id}','${course}')">Reject</button>`
+                : `<button disabled>Approved</button>
+                   <button class="reject" onclick="reject('${doc.id}','${course}')">Remove</button>`
             }
-
-            <button class="download"
-              onclick="downloadInvoice(
-                '${info.invoiceNumber}',
-                '${d.fullName}',
-                '${courseName}',
-                '${info.price || "0"}'
-              )">
-              Download Invoice
-            </button>
-
-            <button class="delete"
-              onclick="deleteRecord('${student.id}','${courseName}')">
-              Delete Record
-            </button>
           </div>
         </div>
       `;
     });
   });
+
+  if(!found){
+    grid.innerHTML = `<div class="empty">No payment records found</div>`;
+  }
 }
 
 /* ACTIONS */
-window.approve = async (uid, course) => {
-  await updateDoc(doc(db, "students", uid), {
-    [`courses.${course}.status`]: "paid"
+async function approve(uid, course){
+  await db.collection("students").doc(uid).update({
+    [`courses.${course}.status`]:"paid",
+    [`courses.${course}.approvedAt`]:firebase.firestore.FieldValue.serverTimestamp()
   });
   loadPayments();
-};
+}
 
-window.cancel = async (uid, course) => {
-  await updateDoc(doc(db, "students", uid), {
-    [`courses.${course}`]: deleteField()
+async function reject(uid, course){
+  if(!confirm("Reject this payment?")) return;
+  await db.collection("students").doc(uid).update({
+    [`courses.${course}`]:firebase.firestore.FieldValue.delete()
   });
   loadPayments();
-};
-
-window.deleteRecord = (uid, course) => {
-  recycleBin.push(`${uid}_${course}`);
-  loadPayments();
-};
-
-window.toggleBin = () => {
-  showBin = !showBin;
-  loadPayments();
-};
-
-/* PDF INVOICE */
-window.downloadInvoice = (inv, name, course, price) => {
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF();
-  pdf.text("Food Business Academy", 20, 20);
-  pdf.text(`Invoice: ${inv}`, 20, 35);
-  pdf.text(`Name: ${name}`, 20, 45);
-  pdf.text(`Course: ${course}`, 20, 55);
-  pdf.text(`Amount: $${price}`, 20, 65);
-  pdf.save(`${inv}.pdf`);
-};
-
-loadPayments();
+}
 </script>
 
 </body>
