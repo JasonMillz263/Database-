@@ -102,7 +102,6 @@ hr{margin:25px 0}
 <!-- Quill -->
 <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 
-<!-- Firebase + Logic -->
 <script type="module">
 
 /* ========== FIREBASE ========== */
@@ -207,35 +206,61 @@ function courseData(status){
 
 /* ========== PUBLISH ========== */
 window.publishCourse = async function(){
-  const ref = await addDoc(collection(db,"courses"), courseData("published"));
-  currentCourseId = ref.id;
-  alert("✅ Course Published");
-  postActions.style.display = "block";
+  console.log("🚀 Publish clicked");
+
+  if(!courseTitle.value || !moduleTitle.value){
+    alert("Missing course title or module name");
+    return;
+  }
+
+  try {
+    const docRef = await addDoc(collection(db, "courses"), courseData("published"));
+    currentCourseId = docRef.id;
+    console.log("✅ Course saved with ID:", docRef.id);
+    alert("✅ Course Published");
+    postActions.style.display = "block";
+
+  } catch (error) {
+    console.error("❌ Firestore write failed:", error);
+    alert("Firestore error: " + error.message);
+  }
 };
 
 /* ========== DRAFT ========== */
 window.saveDraft = async function(){
-  await addDoc(collection(db,"drafts"), courseData("draft"));
-  alert("💾 Draft Saved");
+  try {
+    await addDoc(collection(db, "drafts"), courseData("draft"));
+    alert("💾 Draft Saved");
+  } catch(error){
+    console.error(error);
+    alert("Failed to save draft: " + error.message);
+  }
 };
 
 /* ========== VIEW ========== */
 window.viewCourse = function(){
+  if(!currentCourseId) return alert("No course ID found");
   window.open(`student-course.html?id=${currentCourseId}`, "_blank");
 };
 
 /* ========== DELETE → RECYCLE BIN ========== */
 window.deleteCourse = async function(){
+  if(!currentCourseId) return alert("No course ID found");
   if(!confirm("Move course to recycle bin?")) return;
 
-  const courseRef = doc(db,"courses",currentCourseId);
-  const snap = await getDoc(courseRef);
+  try {
+    const courseRef = doc(db,"courses",currentCourseId);
+    const snap = await getDoc(courseRef);
 
-  if(snap.exists()){
-    await setDoc(doc(db,"recycleBin",currentCourseId), snap.data());
-    await deleteDoc(courseRef);
-    alert("🗑 Course moved to recycle bin");
-    location.reload();
+    if(snap.exists()){
+      await setDoc(doc(db,"recycleBin",currentCourseId), snap.data());
+      await deleteDoc(courseRef);
+      alert("🗑 Course moved to recycle bin");
+      location.reload();
+    }
+  } catch(error){
+    console.error(error);
+    alert("Failed to delete course: " + error.message);
   }
 };
 
