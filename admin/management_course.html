@@ -5,7 +5,10 @@
 <title>Admin Publisher | E-Learning</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+<!-- Quill -->
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 
 <style>
@@ -13,8 +16,20 @@ body{margin:0;font-family:Poppins;background:#f4f4f4}
 header{background:#111;color:#fff;padding:15px}
 .container{max-width:1100px;margin:auto;padding:20px}
 .panel{background:#fff;border-radius:12px;padding:20px}
-input,textarea{width:100%;padding:10px;margin-bottom:12px;border-radius:6px;border:1px solid #ccc}
-button{padding:12px 20px;border:none;border-radius:6px;font-size:15px;cursor:pointer}
+input,textarea{
+  width:100%;
+  padding:10px;
+  margin-bottom:12px;
+  border-radius:6px;
+  border:1px solid #ccc
+}
+button{
+  padding:12px 20px;
+  border:none;
+  border-radius:6px;
+  font-size:15px;
+  cursor:pointer
+}
 .publish{background:#4B0E17;color:#fff}
 .draft{background:#555;color:#fff}
 .view{background:#0074D9;color:#fff}
@@ -36,20 +51,21 @@ hr{margin:25px 0}
 <div class="panel">
 
 <label>Course Title</label>
-<input id="courseTitle">
+<input id="courseTitle" placeholder="Food Business Fundamentals">
 
 <label>Module Name</label>
-<input id="moduleTitle">
+<input id="moduleTitle" placeholder="Introduction to Food Business">
 
 <label>Module Content</label>
 <div id="editor"></div>
 
-<label>Module Video URL</label>
-<input id="videoUrl">
+<label>Module Video URL (optional)</label>
+<input id="videoUrl" placeholder="https://youtube.com/...">
 
 <hr>
 
-<h3>Quiz</h3>
+<h3>Quiz / Questions</h3>
+
 <input id="question" placeholder="Question">
 <input id="opt1" placeholder="Option A">
 <input id="opt2" placeholder="Option B">
@@ -61,9 +77,11 @@ hr{margin:25px 0}
 
 <hr>
 
-<h3>Certificate</h3>
-<label><input type="checkbox" id="enableCert"> Enable Certificate</label>
-<textarea id="certText" placeholder="Certificate text"></textarea>
+<h3>Certificate Settings</h3>
+<label>
+  <input type="checkbox" id="enableCert"> Enable Certificate
+</label>
+<textarea id="certText" placeholder="This certifies that {{name}} has completed {{course}}"></textarea>
 
 <hr>
 
@@ -81,15 +99,18 @@ hr{margin:25px 0}
 </div>
 </div>
 
+<!-- Quill -->
 <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 
+<!-- Firebase + Logic -->
 <script type="module">
-/* ========= FIREBASE ========= */
+
+/* ========== FIREBASE ========== */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { 
-  getFirestore, 
-  collection, 
-  addDoc, 
+import {
+  getFirestore,
+  collection,
+  addDoc,
   serverTimestamp,
   doc,
   getDoc,
@@ -109,28 +130,69 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* ========= QUILL ========= */
-const quill = new Quill('#editor', { theme:'snow' });
+console.log("✅ Firebase initialized");
 
+/* ========== IMAGE HANDLER ========== */
+function imageHandler(){
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.click();
+
+  input.onchange = () => {
+    const file = input.files[0];
+    if(!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const range = quill.getSelection();
+      quill.insertEmbed(range.index, 'image', reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+}
+
+/* ========== QUILL ========== */
+const quill = new Quill('#editor', {
+  theme: 'snow',
+  modules: {
+    toolbar: {
+      container: [
+        [{ header: [1,2,3,false] }],
+        ['bold','italic','underline'],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        ['link','image'],
+        ['clean']
+      ],
+      handlers: {
+        image: imageHandler
+      }
+    }
+  }
+});
+
+/* ========== QUIZ ========== */
 let quizzes = [];
 let currentCourseId = null;
 
-/* ========= QUIZ ========= */
 window.addQuiz = function(){
+  if(!question.value) return alert("Enter a question");
+
   quizzes.push({
     question: question.value,
     options: [opt1.value,opt2.value,opt3.value],
     correctAnswer: answer.value
   });
+
   quizList.innerHTML += `<div class="quiz">${question.value}</div>`;
   question.value = opt1.value = opt2.value = opt3.value = answer.value = "";
 };
 
-/* ========= DATA ========= */
+/* ========== DATA BUILDER ========== */
 function courseData(status){
   return {
     courseTitle: courseTitle.value,
-    status: status, // published | draft
+    status: status,
     createdAt: serverTimestamp(),
     certificateEnabled: enableCert.checked,
     certificateTemplate: certText.value || "",
@@ -143,7 +205,7 @@ function courseData(status){
   };
 }
 
-/* ========= PUBLISH ========= */
+/* ========== PUBLISH ========== */
 window.publishCourse = async function(){
   const ref = await addDoc(collection(db,"courses"), courseData("published"));
   currentCourseId = ref.id;
@@ -151,18 +213,18 @@ window.publishCourse = async function(){
   postActions.style.display = "block";
 };
 
-/* ========= DRAFT ========= */
+/* ========== DRAFT ========== */
 window.saveDraft = async function(){
-  const ref = await addDoc(collection(db,"drafts"), courseData("draft"));
+  await addDoc(collection(db,"drafts"), courseData("draft"));
   alert("💾 Draft Saved");
 };
 
-/* ========= VIEW ========= */
+/* ========== VIEW ========== */
 window.viewCourse = function(){
-  window.open(`student-course.html?id=${currentCourseId}`,"_blank");
+  window.open(`student-course.html?id=${currentCourseId}`, "_blank");
 };
 
-/* ========= DELETE → RECYCLE BIN ========= */
+/* ========== DELETE → RECYCLE BIN ========== */
 window.deleteCourse = async function(){
   if(!confirm("Move course to recycle bin?")) return;
 
@@ -176,6 +238,7 @@ window.deleteCourse = async function(){
     location.reload();
   }
 };
+
 </script>
 
 </body>
