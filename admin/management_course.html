@@ -5,65 +5,24 @@
 <title>Admin Publisher | E-Learning</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Google Font -->
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-
-<!-- Quill Editor -->
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 
 <style>
-body{
-  margin:0;
-  font-family:Poppins;
-  background:#f4f4f4;
-}
-header{
-  background:#111;
-  color:#fff;
-  padding:15px;
-}
-.container{
-  max-width:1100px;
-  margin:auto;
-  padding:20px;
-}
-.panel{
-  background:#fff;
-  border-radius:12px;
-  padding:20px;
-}
-input, textarea{
-  width:100%;
-  padding:10px;
-  margin-bottom:12px;
-  border-radius:6px;
-  border:1px solid #ccc;
-}
-button{
-  padding:12px 20px;
-  background:#4B0E17;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  font-size:15px;
-  cursor:pointer;
-}
-#editor{
-  height:260px;
-  margin-bottom:15px;
-}
-.quiz{
-  background:#fafafa;
-  padding:10px;
-  border-radius:8px;
-  margin-top:8px;
-}
-label{
-  font-weight:600;
-}
-hr{
-  margin:25px 0;
-}
+body{margin:0;font-family:Poppins;background:#f4f4f4}
+header{background:#111;color:#fff;padding:15px}
+.container{max-width:1100px;margin:auto;padding:20px}
+.panel{background:#fff;border-radius:12px;padding:20px}
+input,textarea{width:100%;padding:10px;margin-bottom:12px;border-radius:6px;border:1px solid #ccc}
+button{padding:12px 20px;border:none;border-radius:6px;font-size:15px;cursor:pointer}
+.publish{background:#4B0E17;color:#fff}
+.draft{background:#555;color:#fff}
+.view{background:#0074D9;color:#fff}
+.delete{background:#FF4136;color:#fff}
+#editor{height:260px;margin-bottom:15px}
+.quiz{background:#fafafa;padding:10px;border-radius:8px;margin-top:8px}
+.actions button{margin-right:10px;margin-top:10px}
+hr{margin:25px 0}
 </style>
 </head>
 
@@ -77,23 +36,20 @@ hr{
 <div class="panel">
 
 <label>Course Title</label>
-<input id="courseTitle" placeholder="Food Business Fundamentals">
-
-<hr>
+<input id="courseTitle">
 
 <label>Module Name</label>
-<input id="moduleTitle" placeholder="Introduction to Food Business">
+<input id="moduleTitle">
 
 <label>Module Content</label>
 <div id="editor"></div>
 
-<label>Module Video URL (optional)</label>
-<input id="videoUrl" placeholder="https://youtube.com/...">
+<label>Module Video URL</label>
+<input id="videoUrl">
 
 <hr>
 
-<h3>Quiz / Questions</h3>
-
+<h3>Quiz</h3>
 <input id="question" placeholder="Question">
 <input id="opt1" placeholder="Option A">
 <input id="opt2" placeholder="Option B">
@@ -101,39 +57,44 @@ hr{
 <input id="answer" placeholder="Correct Answer">
 
 <button onclick="addQuiz()">Add Question</button>
-
 <div id="quizList"></div>
 
 <hr>
 
-<h3>Certificate Settings</h3>
-
-<label>
-  <input type="checkbox" id="enableCert"> Enable Certificate for this Course
-</label>
-
-<textarea id="certText" placeholder="This certifies that {{name}} has completed {{course}}"></textarea>
+<h3>Certificate</h3>
+<label><input type="checkbox" id="enableCert"> Enable Certificate</label>
+<textarea id="certText" placeholder="Certificate text"></textarea>
 
 <hr>
 
-<button onclick="publish()">🚀 Publish Course</button>
+<div class="actions">
+  <button class="publish" onclick="publishCourse()">🚀 Publish</button>
+  <button class="draft" onclick="saveDraft()">💾 Save Draft</button>
+</div>
+
+<div id="postActions" style="display:none">
+  <hr>
+  <button class="view" onclick="viewCourse()">👁 View Course</button>
+  <button class="delete" onclick="deleteCourse()">🗑 Move to Recycle Bin</button>
+</div>
 
 </div>
 </div>
 
-<!-- Quill -->
 <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 
-<!-- Firebase + App Logic -->
 <script type="module">
-
-/* ================= FIREBASE ================= */
+/* ========= FIREBASE ========= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { 
   getFirestore, 
   collection, 
   addDoc, 
-  serverTimestamp 
+  serverTimestamp,
+  doc,
+  getDoc,
+  deleteDoc,
+  setDoc
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -148,65 +109,73 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-console.log("✅ Firebase & Firestore initialized");
+/* ========= QUILL ========= */
+const quill = new Quill('#editor', { theme:'snow' });
 
-/* ================= QUILL ================= */
-const quill = new Quill('#editor', { theme: 'snow' });
-
-/* ================= QUIZ ================= */
 let quizzes = [];
+let currentCourseId = null;
 
+/* ========= QUIZ ========= */
 window.addQuiz = function(){
-  if(!question.value) return alert("Question required");
-
   quizzes.push({
     question: question.value,
-    options: [opt1.value, opt2.value, opt3.value],
+    options: [opt1.value,opt2.value,opt3.value],
     correctAnswer: answer.value
   });
-
-  quizList.innerHTML += `
-    <div class="quiz">
-      <strong>${question.value}</strong>
-    </div>
-  `;
-
+  quizList.innerHTML += `<div class="quiz">${question.value}</div>`;
   question.value = opt1.value = opt2.value = opt3.value = answer.value = "";
 };
 
-/* ================= PUBLISH ================= */
-window.publish = async function(){
+/* ========= DATA ========= */
+function courseData(status){
+  return {
+    courseTitle: courseTitle.value,
+    status: status, // published | draft
+    createdAt: serverTimestamp(),
+    certificateEnabled: enableCert.checked,
+    certificateTemplate: certText.value || "",
+    modules: [{
+      moduleTitle: moduleTitle.value,
+      content: quill.root.innerHTML,
+      videoUrl: videoUrl.value || "",
+      quizzes: quizzes
+    }]
+  };
+}
 
-  if(!courseTitle.value || !moduleTitle.value){
-    alert("Course title and module title are required");
-    return;
-  }
-
-  try{
-    await addDoc(collection(db, "courses"), {
-      courseTitle: courseTitle.value,
-      createdAt: serverTimestamp(),
-
-      certificateEnabled: enableCert.checked,
-      certificateTemplate: certText.value || "",
-
-      modules: [{
-        moduleTitle: moduleTitle.value,
-        content: quill.root.innerHTML,
-        videoUrl: videoUrl.value || "",
-        quizzes: quizzes
-      }]
-    });
-
-    alert("✅ Course published successfully");
-    location.reload();
-
-  }catch(error){
-    console.error("❌ Firestore error:", error);
-    alert(error.message);
-  }
+/* ========= PUBLISH ========= */
+window.publishCourse = async function(){
+  const ref = await addDoc(collection(db,"courses"), courseData("published"));
+  currentCourseId = ref.id;
+  alert("✅ Course Published");
+  postActions.style.display = "block";
 };
 
+/* ========= DRAFT ========= */
+window.saveDraft = async function(){
+  const ref = await addDoc(collection(db,"drafts"), courseData("draft"));
+  alert("💾 Draft Saved");
+};
+
+/* ========= VIEW ========= */
+window.viewCourse = function(){
+  window.open(`student-course.html?id=${currentCourseId}`,"_blank");
+};
+
+/* ========= DELETE → RECYCLE BIN ========= */
+window.deleteCourse = async function(){
+  if(!confirm("Move course to recycle bin?")) return;
+
+  const courseRef = doc(db,"courses",currentCourseId);
+  const snap = await getDoc(courseRef);
+
+  if(snap.exists()){
+    await setDoc(doc(db,"recycleBin",currentCourseId), snap.data());
+    await deleteDoc(courseRef);
+    alert("🗑 Course moved to recycle bin");
+    location.reload();
+  }
+};
 </script>
 
 </body>
