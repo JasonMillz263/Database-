@@ -1,61 +1,152 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Student Dashboard</title>
+<meta charset="UTF-8">
+<title>Course</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+body{margin:0;font-family:Poppins;background:#f4f4f4}
+header{background:#111;color:#fff;padding:15px}
+.container{max-width:900px;margin:auto;padding:20px}
+.card{background:#fff;border-radius:12px;padding:20px;margin-bottom:20px}
+iframe{width:100%;height:320px;border-radius:10px}
+button{padding:10px 18px;border:none;border-radius:6px;cursor:pointer}
+.complete{background:#4CAF50;color:#fff}
+.quiz{background:#fafafa;padding:10px;border-radius:8px;margin-top:10px}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h2 id="courseTitle">Loading...</h2>
+</header>
+
+<div class="container" id="courseContainer"></div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+/* ================= FIREBASE ================= */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import {
+  getFirestore, doc, getDoc, updateDoc, setDoc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import {
+  getAuth, signInAnonymously, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain: "students-login-29409.firebaseapp.com",
-  projectId: "students-login-29409"
+  projectId: "students-login-29409",
+  storageBucket: "students-login-29409.appspot.com",
+  messagingSenderId: "634331456872",
+  appId: "1:634331456872:web:6dae360c5e28d8356562dd"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-onAuthStateChanged(auth, async user=>{
-  if(!user) return alert("Login required");
+let userId = null;
 
-  const courses = await getDocs(collection(db,"courses"));
-  courses.forEach(doc=>{
-    document.body.innerHTML += `<h3>${doc.data().title}</h3>`;
-    loadQuizzes(doc.id,user.uid);
-  });
+/* ================= AUTH ================= */
+signInAnonymously(auth);
+
+onAuthStateChanged(auth, user => {
+  if (!user) return;
+  userId = user.uid;
+  loadCourse();
 });
 
-async function loadQuizzes(courseId,userId){
-  const quizzes = await getDocs(collection(db,"courses",courseId,"quizzes"));
-  let score = 0, total = 0;
+/* ================= GET COURSE ID ================= */
+const params = new URLSearchParams(window.location.search);
+const courseId = params.get("id");
 
-  quizzes.forEach(q=>{
-    total++;
-    document.body.innerHTML += `
-      <p>${q.data().question}</p>
-      ${q.data().options.map((o,i)=>
-        `<button onclick="answer(${i},${q.data().correctIndex})">${o}</button>`
-      ).join("")}
-    `;
-    window.answer=(i,c)=>{ if(i==c) score++; }
+/* ================= LOAD COURSE ================= */
+async function loadCourse(){
+  if(!courseId) return alert("No course ID");
+
+  const ref = doc(db,"courses",courseId);
+  const snap = await getDoc(ref);
+
+  if(!snap.exists()) return alert("Course not found");
+
+  const course = snap.data();
+  document.getElementById("courseTitle").innerText = course.courseTitle;
+
+  course.modules.forEach((mod,index)=>{
+    renderModule(mod,index);
   });
+}
 
-  window.finish=async()=>{
-    if(score/total >= 0.7){
-      await setDoc(doc(db,"certificates",userId+"_"+courseId),{
-        userId,courseId,issuedAt:new Date()
-      });
-      alert("Certificate Generated!");
-      print();
-    }
+/* ================= RENDER MODULE ================= */
+function renderModule(module,index){
+  const div = document.createElement("div");
+  div.className = "card";
+
+  div.innerHTML = `
+    <h3>${module.moduleTitle}</h3>
+
+    <div>${module.content}</div>
+
+    ${module.videoUrl ? `
+      <iframe src="${module.videoUrl.replace("watch?v=","embed/")}"
+        allowfullscreen></iframe>
+    ` : ""}
+
+    <button class="complete" onclick="completeModule(${index})">
+      ✔ Mark as Completed
+    </button>
+
+    <div id="quiz-${index}"></div>
+  `;
+
+  document.getElementById("courseContainer").appendChild(div);
+
+  if(module.quizzes){
+    renderQuiz(module.quizzes,index);
   }
 }
+
+/* ================= QUIZ ================= */
+function renderQuiz(quizzes,index){
+  const qDiv = document.getElementById(`quiz-${index}`);
+
+  quizzes.forEach((q,i)=>{
+    const el = document.createElement("div");
+    el.className = "quiz";
+
+    el.innerHTML = `
+      <p><strong>${q.question}</strong></p>
+      ${q.options.map(opt=>`
+        <label>
+          <input type="radio" name="q-${index}-${i}" value="${opt}">
+          ${opt}
+        </label><br>
+      `).join("")}
+    `;
+
+    qDiv.appendChild(el);
+  });
+}
+
+/* ================= SAVE PROGRESS ================= */
+window.completeModule = async function(moduleIndex){
+  if(!userId) return;
+
+  const ref = doc(db,"students",userId);
+
+  await setDoc(ref,{
+    completedModules: { [courseId]: moduleIndex + 1 },
+    lastAccessed: serverTimestamp()
+  },{ merge:true });
+
+  alert("✅ Module completed & progress saved");
+};
 </script>
-</head>
-<body>
-<button onclick="finish()">Finish Course</button>
+
 </body>
 </html>
