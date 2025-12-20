@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
 <title>Management Course | Admin</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
@@ -12,41 +12,39 @@
 body{margin:0;font-family:Poppins;background:#f4f4f4}
 header{background:#111;color:#fff;padding:15px}
 .container{max-width:1200px;margin:auto;padding:20px}
-.panel{background:#fff;border-radius:12px;padding:20px}
-button{padding:10px 16px;border:none;border-radius:6px;cursor:pointer}
+.panel{background:#fff;padding:20px;border-radius:12px}
+button{padding:8px 14px;border:none;border-radius:6px;cursor:pointer}
 .publish{background:#4B0E17;color:#fff}
 .draft{background:#555;color:#fff}
-.delete{background:#FF4136;color:#fff}
-.view{background:#0074D9;color:#fff}
-.module{border:1px solid #ddd;padding:12px;border-radius:8px;margin-top:10px}
-.quiz{background:#fafafa;padding:8px;margin-top:6px;border-radius:6px}
+.delete{background:#e53935;color:#fff}
+.edit{background:#0074D9;color:#fff}
+.module{border:1px solid #ddd;padding:12px;border-radius:8px;margin-top:10px;cursor:grab}
+.quiz{background:#fafafa;padding:6px;border-radius:6px;margin-top:6px}
 input,textarea{width:100%;padding:8px;margin-top:6px}
-#editor{height:200px;margin-bottom:10px}
-.top-actions button{margin-right:8px}
+#editor{height:180px}
 </style>
 </head>
 
 <body>
 
 <header>
-  <h2>Management Course — Admin Panel</h2>
+<h2>Management Course — Admin Panel</h2>
 </header>
 
 <div class="container">
 <div class="panel">
 
 <h3>Course Controls</h3>
-<div class="top-actions">
-  <button class="view" onclick="loadCourse('published')">Published</button>
-  <button class="draft" onclick="loadCourse('draft')">Draft</button>
-</div>
+<button onclick="loadModules()">Published</button>
+<button onclick="loadRecycleBin()">Recycle Bin</button>
 
 <hr>
 
 <h3>Add / Edit Module</h3>
-<input id="moduleTitle" placeholder="Module Title">
-<div id="editor"></div>
+<input id="moduleTitle" placeholder="Module title">
+<input id="imageUrl" placeholder="Module image URL">
 <input id="videoUrl" placeholder="Video URL">
+<div id="editor"></div>
 
 <h4>Quiz</h4>
 <input id="question" placeholder="Question">
@@ -54,121 +52,175 @@ input,textarea{width:100%;padding:8px;margin-top:6px}
 <input id="opt2" placeholder="Option B">
 <input id="opt3" placeholder="Option C">
 <input id="answer" placeholder="Correct Answer">
-<button onclick="addQuiz()">Add Quiz</button>
+<button onclick="addQuiz()">Add / Update Quiz</button>
 
 <hr>
 
-<button class="publish" onclick="saveModule('published')">Save & Publish</button>
-<button class="draft" onclick="saveModule('draft')">Save Draft</button>
+<button class="publish" onclick="saveModule()">Save Module</button>
 
 <hr>
 
-<h3>Existing Modules</h3>
+<h3>Modules (Drag to reorder)</h3>
 <div id="modulesList"></div>
+
+<hr>
+
+<h3>Recycle Bin</h3>
+<div id="recycleList"></div>
 
 </div>
 </div>
 
 <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <script type="module">
-/* ================= FIREBASE ================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
-  getFirestore, doc, setDoc, getDoc,
-  collection, getDocs, deleteDoc, serverTimestamp
+  getFirestore, doc, setDoc, getDocs,
+  collection, deleteDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-import {
-  getAuth, onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
-  authDomain: "students-login-29409.firebaseapp.com",
-  projectId: "students-login-29409",
-};
+const app = initializeApp({
+  apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+  authDomain:"students-login-29409.firebaseapp.com",
+  projectId:"students-login-29409"
+});
 
-const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-/* 🔐 ADMIN AUTH CHECK */
-onAuthStateChanged(auth, async user => {
-  if (!user) return location.href="login.html";
+const COURSE_ID = "management_course";
+let editingModuleId = null;
+let quizzes = [];
+let editingQuizIndex = null;
 
-  const adminSnap = await getDoc(doc(db,"admins",user.uid));
-  if (!adminSnap.exists()) {
-    alert("Access denied");
-    location.href="index.html";
-  }
+onAuthStateChanged(auth,user=>{
+  if(!user) location.href="login.html";
 });
 
-/* ================= QUILL ================= */
 const quill = new Quill('#editor',{theme:'snow'});
 
-/* ================= STATE ================= */
-let quizzes = [];
-let editingModuleId = null;
-const COURSE_ID = "management_course";
-
 /* ================= QUIZ ================= */
-window.addQuiz = () => {
-  quizzes.push({
+window.addQuiz = ()=>{
+  const q = {
     question: question.value,
     options:[opt1.value,opt2.value,opt3.value],
     answer: answer.value
-  });
-  alert("Quiz added");
-  question.value = opt1.value = opt2.value = opt3.value = answer.value = "";
+  };
+  if(editingQuizIndex!==null){
+    quizzes[editingQuizIndex]=q;
+    editingQuizIndex=null;
+  }else quizzes.push(q);
+
+  question.value=opt1.value=opt2.value=opt3.value=answer.value="";
 };
 
 /* ================= SAVE MODULE ================= */
-window.saveModule = async status => {
-  const courseRef = doc(db,"courses",COURSE_ID);
+window.saveModule = async ()=>{
+  const ref = editingModuleId
+    ? doc(db,"courses",COURSE_ID,"modules",editingModuleId)
+    : doc(collection(db,"courses",COURSE_ID,"modules"));
 
-  await setDoc(courseRef,{
-    title:"Management Course",
-    status,
-    updatedAt: serverTimestamp()
-  },{merge:true});
-
-  const moduleRef = doc(collection(courseRef,"modules"));
-  await setDoc(moduleRef,{
-    title: moduleTitle.value,
-    content: quill.root.innerHTML,
-    videoUrl: videoUrl.value,
-    quizzes
+  await setDoc(ref,{
+    title:moduleTitle.value,
+    content:quill.root.innerHTML,
+    videoUrl:videoUrl.value,
+    imageUrl:imageUrl.value,
+    quizzes,
+    order:Date.now(),
+    updatedAt:serverTimestamp()
   });
 
-  alert("Saved");
-  loadCourse(status);
+  resetEditor();
+  loadModules();
 };
 
 /* ================= LOAD ================= */
-window.loadCourse = async status => {
-  modulesList.innerHTML = "";
-  const courseRef = doc(db,"courses",COURSE_ID);
-  const modulesSnap = await getDocs(collection(courseRef,"modules"));
+window.loadModules = async ()=>{
+  modulesList.innerHTML="";
+  const snap = await getDocs(collection(db,"courses",COURSE_ID,"modules"));
+  snap.forEach(docu=>{
+    const m=docu.data();
+    modulesList.innerHTML+=`
+      <div class="module" data-id="${docu.id}">
+        <strong>${m.title}</strong>
+        <button class="edit" onclick="editModule('${docu.id}')">Edit</button>
+        <button class="delete" onclick="trashModule('${docu.id}')">Delete</button>
+      </div>`;
+  });
 
-  modulesSnap.forEach(m=>{
-    const d = m.data();
-    modulesList.innerHTML += `
-      <div class="module">
-        <strong>${d.title}</strong>
-        <div>${d.content}</div>
-        ${d.quizzes.map(q=>`<div class="quiz">${q.question}</div>`).join("")}
-        <button class="delete" onclick="deleteModule('${m.id}')">Delete</button>
-      </div>
-    `;
+  new Sortable(modulesList,{
+    onEnd:updateOrder
   });
 };
 
-/* ================= DELETE ================= */
-window.deleteModule = async id => {
-  await deleteDoc(doc(db,"courses",COURSE_ID,"modules",id));
-  loadCourse();
+/* ================= EDIT ================= */
+window.editModule = async id=>{
+  editingModuleId=id;
+  const snap=await getDocs(collection(db,"courses",COURSE_ID,"modules"));
+  snap.forEach(d=>{
+    if(d.id===id){
+      const m=d.data();
+      moduleTitle.value=m.title;
+      videoUrl.value=m.videoUrl||"";
+      imageUrl.value=m.imageUrl||"";
+      quill.root.innerHTML=m.content;
+      quizzes=m.quizzes||[];
+    }
+  });
 };
+
+/* ================= ORDER ================= */
+async function updateOrder(){
+  [...modulesList.children].forEach(async(el,i)=>{
+    await setDoc(
+      doc(db,"courses",COURSE_ID,"modules",el.dataset.id),
+      {order:i},
+      {merge:true}
+    );
+  });
+}
+
+/* ================= DELETE ================= */
+window.trashModule = async id=>{
+  const ref=doc(db,"courses",COURSE_ID,"modules",id);
+  await setDoc(doc(db,"recycleBin",id),(await getDocs(collection(db,"courses",COURSE_ID,"modules"))).docs.find(d=>d.id===id).data());
+  await deleteDoc(ref);
+  loadModules();
+};
+
+/* ================= RECYCLE ================= */
+window.loadRecycleBin = async ()=>{
+  recycleList.innerHTML="";
+  const snap=await getDocs(collection(db,"recycleBin"));
+  snap.forEach(d=>{
+    recycleList.innerHTML+=`
+      <div class="module">
+        ${d.data().title}
+        <button onclick="restore('${d.id}')">Restore</button>
+      </div>`;
+  });
+};
+
+window.restore = async id=>{
+  await setDoc(doc(db,"courses",COURSE_ID,"modules",id),(await getDocs(collection(db,"recycleBin"))).docs.find(d=>d.id===id).data());
+  await deleteDoc(doc(db,"recycleBin",id));
+  loadModules();
+};
+
+function resetEditor(){
+  moduleTitle.value="";
+  videoUrl.value="";
+  imageUrl.value="";
+  quill.root.innerHTML="";
+  quizzes=[];
+  editingModuleId=null;
+}
+
+loadModules();
 </script>
 
 </body>
