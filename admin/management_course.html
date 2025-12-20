@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Admin Publisher | E-Learning</title>
+<title>Management Course | Admin</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
@@ -11,71 +11,60 @@
 <style>
 body{margin:0;font-family:Poppins;background:#f4f4f4}
 header{background:#111;color:#fff;padding:15px}
-.container{max-width:1100px;margin:auto;padding:20px}
+.container{max-width:1200px;margin:auto;padding:20px}
 .panel{background:#fff;border-radius:12px;padding:20px}
-input,textarea{width:100%;padding:10px;margin-bottom:12px;border-radius:6px;border:1px solid #ccc}
-button{padding:12px 20px;border:none;border-radius:6px;font-size:15px;cursor:pointer}
+button{padding:10px 16px;border:none;border-radius:6px;cursor:pointer}
 .publish{background:#4B0E17;color:#fff}
 .draft{background:#555;color:#fff}
-.view{background:#0074D9;color:#fff}
 .delete{background:#FF4136;color:#fff}
-#editor{height:260px;margin-bottom:15px}
-.quiz{background:#fafafa;padding:10px;border-radius:8px;margin-top:8px}
-.actions button{margin-right:10px;margin-top:10px}
-hr{margin:25px 0}
+.view{background:#0074D9;color:#fff}
+.module{border:1px solid #ddd;padding:12px;border-radius:8px;margin-top:10px}
+.quiz{background:#fafafa;padding:8px;margin-top:6px;border-radius:6px}
+input,textarea{width:100%;padding:8px;margin-top:6px}
+#editor{height:200px;margin-bottom:10px}
+.top-actions button{margin-right:8px}
 </style>
 </head>
 
 <body>
 
 <header>
-  <h2>Admin Publishing Panel</h2>
+  <h2>Management Course — Admin Panel</h2>
 </header>
 
 <div class="container">
 <div class="panel">
 
-<label>Course Title</label>
-<input id="courseTitle">
-
-<label>Module Name</label>
-<input id="moduleTitle">
-
-<label>Module Content</label>
-<div id="editor"></div>
-
-<label>Module Video URL</label>
-<input id="videoUrl">
+<h3>Course Controls</h3>
+<div class="top-actions">
+  <button class="view" onclick="loadCourse('published')">Published</button>
+  <button class="draft" onclick="loadCourse('draft')">Draft</button>
+</div>
 
 <hr>
 
-<h3>Quiz</h3>
+<h3>Add / Edit Module</h3>
+<input id="moduleTitle" placeholder="Module Title">
+<div id="editor"></div>
+<input id="videoUrl" placeholder="Video URL">
+
+<h4>Quiz</h4>
 <input id="question" placeholder="Question">
 <input id="opt1" placeholder="Option A">
 <input id="opt2" placeholder="Option B">
 <input id="opt3" placeholder="Option C">
 <input id="answer" placeholder="Correct Answer">
-<button onclick="addQuiz()">Add Question</button>
-<div id="quizList"></div>
+<button onclick="addQuiz()">Add Quiz</button>
 
 <hr>
 
-<h3>Certificate</h3>
-<label><input type="checkbox" id="enableCert"> Enable Certificate</label>
-<textarea id="certText"></textarea>
+<button class="publish" onclick="saveModule('published')">Save & Publish</button>
+<button class="draft" onclick="saveModule('draft')">Save Draft</button>
 
 <hr>
 
-<div class="actions">
-  <button class="publish" onclick="publishCourse()">🚀 Publish</button>
-  <button class="draft" onclick="saveDraft()">💾 Save Draft</button>
-</div>
-
-<div id="postActions" style="display:none">
-  <hr>
-  <button class="view" onclick="viewCourse()">👁 View Course</button>
-  <button class="delete" onclick="deleteCourse()">🗑 Delete</button>
-</div>
+<h3>Existing Modules</h3>
+<div id="modulesList"></div>
 
 </div>
 </div>
@@ -86,103 +75,99 @@ hr{margin:25px 0}
 /* ================= FIREBASE ================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
-  getFirestore, collection, addDoc, serverTimestamp,
-  doc, getDoc, deleteDoc, setDoc
+  getFirestore, doc, setDoc, getDoc,
+  collection, getDocs, deleteDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 import {
-  getAuth, signInAnonymously, onAuthStateChanged
+  getAuth, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain: "students-login-29409.firebaseapp.com",
   projectId: "students-login-29409",
-  storageBucket: "students-login-29409.appspot.com",
-  messagingSenderId: "634331456872",
-  appId: "1:634331456872:web:6dae360c5e28d8356562dd"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-/* 🔐 AUTH REQUIRED */
-signInAnonymously(auth);
+/* 🔐 ADMIN AUTH CHECK */
+onAuthStateChanged(auth, async user => {
+  if (!user) return location.href="login.html";
 
-onAuthStateChanged(auth, user => {
-  if (!user) return alert("Auth failed");
-  console.log("✅ Logged in UID:", user.uid);
-});
-
-/* ================= QUILL ================= */
-const quill = new Quill('#editor', {
-  theme: 'snow',
-  modules: {
-    toolbar: [
-      [{ header: [1,2,3,false] }],
-      ['bold','italic','underline'],
-      [{ list: 'ordered' }, { list: 'bullet' }],
-      ['link','image'],
-      ['clean']
-    ]
+  const adminSnap = await getDoc(doc(db,"admins",user.uid));
+  if (!adminSnap.exists()) {
+    alert("Access denied");
+    location.href="index.html";
   }
 });
 
-/* ================= QUIZ ================= */
-let quizzes = [];
-let currentCourseId = null;
+/* ================= QUILL ================= */
+const quill = new Quill('#editor',{theme:'snow'});
 
+/* ================= STATE ================= */
+let quizzes = [];
+let editingModuleId = null;
+const COURSE_ID = "management_course";
+
+/* ================= QUIZ ================= */
 window.addQuiz = () => {
   quizzes.push({
     question: question.value,
-    options: [opt1.value,opt2.value,opt3.value],
-    correctAnswer: answer.value
+    options:[opt1.value,opt2.value,opt3.value],
+    answer: answer.value
   });
-  quizList.innerHTML += `<div class="quiz">${question.value}</div>`;
+  alert("Quiz added");
   question.value = opt1.value = opt2.value = opt3.value = answer.value = "";
 };
 
-/* ================= DATA ================= */
-function courseData(status){
-  return {
-    courseTitle: courseTitle.value,
+/* ================= SAVE MODULE ================= */
+window.saveModule = async status => {
+  const courseRef = doc(db,"courses",COURSE_ID);
+
+  await setDoc(courseRef,{
+    title:"Management Course",
     status,
-    createdAt: serverTimestamp(),
-    certificateEnabled: enableCert.checked,
-    certificateTemplate: certText.value,
-    modules: [{
-      moduleTitle: moduleTitle.value,
-      content: quill.root.innerHTML,
-      videoUrl: videoUrl.value,
-      quizzes
-    }]
-  };
-}
+    updatedAt: serverTimestamp()
+  },{merge:true});
 
-/* ================= ACTIONS ================= */
-window.publishCourse = async () => {
-  const ref = await addDoc(collection(db,"courses"), courseData("published"));
-  currentCourseId = ref.id;
-  alert("✅ Published");
-  postActions.style.display = "block";
+  const moduleRef = doc(collection(courseRef,"modules"));
+  await setDoc(moduleRef,{
+    title: moduleTitle.value,
+    content: quill.root.innerHTML,
+    videoUrl: videoUrl.value,
+    quizzes
+  });
+
+  alert("Saved");
+  loadCourse(status);
 };
 
-window.saveDraft = async () => {
-  await addDoc(collection(db,"drafts"), courseData("draft"));
-  alert("💾 Draft saved");
+/* ================= LOAD ================= */
+window.loadCourse = async status => {
+  modulesList.innerHTML = "";
+  const courseRef = doc(db,"courses",COURSE_ID);
+  const modulesSnap = await getDocs(collection(courseRef,"modules"));
+
+  modulesSnap.forEach(m=>{
+    const d = m.data();
+    modulesList.innerHTML += `
+      <div class="module">
+        <strong>${d.title}</strong>
+        <div>${d.content}</div>
+        ${d.quizzes.map(q=>`<div class="quiz">${q.question}</div>`).join("")}
+        <button class="delete" onclick="deleteModule('${m.id}')">Delete</button>
+      </div>
+    `;
+  });
 };
 
-window.viewCourse = () => {
-  window.open(`student-course.html?id=${currentCourseId}`);
-};
-
-window.deleteCourse = async () => {
-  const ref = doc(db,"courses",currentCourseId);
-  const snap = await getDoc(ref);
-  await setDoc(doc(db,"recycleBin",currentCourseId), snap.data());
-  await deleteDoc(ref);
-  alert("🗑 Deleted");
+/* ================= DELETE ================= */
+window.deleteModule = async id => {
+  await deleteDoc(doc(db,"courses",COURSE_ID,"modules",id));
+  loadCourse();
 };
 </script>
 
