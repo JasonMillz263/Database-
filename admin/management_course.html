@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Management Course | Admin</title>
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin | Management Course</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
@@ -19,33 +19,28 @@ button{padding:8px 14px;border:none;border-radius:6px;cursor:pointer;margin-righ
 .delete{background:#e53935;color:#fff}
 .edit{background:#0074D9;color:#fff}
 .module{border:1px solid #ddd;padding:12px;border-radius:8px;margin-top:10px;cursor:grab}
-.quiz{background:#fafafa;padding:6px;border-radius:6px;margin-top:6px}
-input{width:100%;padding:8px;margin-top:6px}
-#editor{height:180px}
-.status{font-size:12px;opacity:.7}
+input,textarea{width:100%;padding:8px;margin-top:6px}
+#editor{height:200px}
+.quiz{background:#fafafa;padding:8px;border-radius:6px;margin-top:6px}
+.small{font-size:13px;opacity:.8}
 </style>
 </head>
 
 <body>
 
 <header>
-<h2>Management Course — Admin Panel</h2>
+  <h2>Admin Panel — Management Course</h2>
 </header>
 
 <div class="container">
 <div class="panel">
 
-<h3>Course Controls</h3>
-<button onclick="loadModules('published')">Published Modules</button>
-<button onclick="loadModules('draft')">Draft Modules</button>
-<button onclick="loadRecycleBin()">Recycle Bin</button>
-
-<hr>
-
 <h3>Add / Edit Module</h3>
+
 <input id="moduleTitle" placeholder="Module title">
-<input id="imageUrl" placeholder="Module image URL">
-<input id="videoUrl" placeholder="Video URL">
+<input id="imageUrl" placeholder="Image URL (optional)">
+<input id="videoUrl" placeholder="Video URL (YouTube embed)">
+
 <div id="editor"></div>
 
 <h4>Quiz</h4>
@@ -54,7 +49,9 @@ input{width:100%;padding:8px;margin-top:6px}
 <input id="opt2" placeholder="Option B">
 <input id="opt3" placeholder="Option C">
 <input id="answer" placeholder="Correct Answer">
-<button onclick="addQuiz()">Add / Update Quiz</button>
+<button onclick="addQuiz()">Add Quiz</button>
+
+<div id="quizPreview"></div>
 
 <hr>
 
@@ -63,7 +60,7 @@ input{width:100%;padding:8px;margin-top:6px}
 
 <hr>
 
-<h3>Modules</h3>
+<h3>Modules (Drag to reorder)</h3>
 <div id="modulesList"></div>
 
 <hr>
@@ -80,11 +77,12 @@ input{width:100%;padding:8px;margin-top:6px}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
-  getFirestore, doc, setDoc, getDocs,
-  collection, deleteDoc, serverTimestamp, getDoc
+  getFirestore, doc, setDoc, getDoc, getDocs,
+  collection, deleteDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
+/* ================= FIREBASE ================= */
 const app = initializeApp({
   apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain:"students-login-29409.firebaseapp.com",
@@ -94,30 +92,50 @@ const app = initializeApp({
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+/* ================= CONSTANTS ================= */
 const COURSE_ID = "management_course";
 let editingModuleId = null;
 let quizzes = [];
-let editingQuizIndex = null;
-let currentView = "published";
 
-onAuthStateChanged(auth,user=>{
-  if(!user) location.href="login.html";
+/* ================= AUTH CHECK ================= */
+onAuthStateChanged(auth, async user=>{
+  if(!user) return location.href="login.html";
+
+  const adminSnap = await getDoc(doc(db,"admins",user.uid));
+  if(!adminSnap.exists()){
+    alert("Access denied: Admins only");
+    auth.signOut();
+    return;
+  }
+
+  await ensureCourseExists();
+  loadModules();
 });
 
+/* ================= ENSURE COURSE ================= */
+async function ensureCourseExists(){
+  const ref = doc(db,"courses",COURSE_ID);
+  if(!(await getDoc(ref)).exists()){
+    await setDoc(ref,{
+      title:"Management Course",
+      status:"published",
+      createdAt:serverTimestamp()
+    });
+  }
+}
+
+/* ================= EDITOR ================= */
 const quill = new Quill('#editor',{theme:'snow'});
 
 /* ================= QUIZ ================= */
 window.addQuiz = ()=>{
-  const q = {
-    question: question.value,
+  quizzes.push({
+    question:question.value,
     options:[opt1.value,opt2.value,opt3.value],
-    answer: answer.value
-  };
-  if(editingQuizIndex!==null){
-    quizzes[editingQuizIndex]=q;
-    editingQuizIndex=null;
-  } else quizzes.push(q);
+    answer:answer.value
+  });
 
+  quizPreview.innerHTML += `<div class="quiz">${question.value}</div>`;
   question.value=opt1.value=opt2.value=opt3.value=answer.value="";
 };
 
@@ -130,8 +148,8 @@ window.saveModule = async status=>{
   await setDoc(ref,{
     title:moduleTitle.value,
     content:quill.root.innerHTML,
-    videoUrl:videoUrl.value,
     imageUrl:imageUrl.value,
+    videoUrl:videoUrl.value,
     quizzes,
     status,
     order:Date.now(),
@@ -139,42 +157,42 @@ window.saveModule = async status=>{
   });
 
   resetEditor();
-  loadModules(status);
+  loadModules();
 };
 
-/* ================= LOAD ================= */
-window.loadModules = async status=>{
-  currentView=status;
+/* ================= LOAD MODULES ================= */
+async function loadModules(){
   modulesList.innerHTML="";
-
   const snap = await getDocs(collection(db,"courses",COURSE_ID,"modules"));
-  snap.forEach(d=>{
-    const m=d.data();
-    if(m.status!==status) return;
 
-    modulesList.innerHTML+=`
-      <div class="module" data-id="${d.id}">
-        <strong>${m.title}</strong>
-        <div class="status">Status: ${m.status}</div>
-        <button class="edit" onclick="editModule('${d.id}')">Edit</button>
-        <button class="delete" onclick="trashModule('${d.id}')">Delete</button>
-      </div>`;
-  });
+  snap.docs
+    .sort((a,b)=>a.data().order-b.data().order)
+    .forEach(d=>{
+      const m=d.data();
+      modulesList.innerHTML+=`
+        <div class="module" data-id="${d.id}">
+          <strong>${m.title}</strong>
+          <div class="small">Status: ${m.status}</div>
+          <button class="edit" onclick="editModule('${d.id}')">Edit</button>
+          <button class="delete" onclick="deleteModule('${d.id}')">Delete</button>
+        </div>`;
+    });
 
   new Sortable(modulesList,{onEnd:updateOrder});
-};
+}
 
-/* ================= EDIT ================= */
+/* ================= EDIT MODULE ================= */
 window.editModule = async id=>{
-  editingModuleId=id;
   const snap = await getDoc(doc(db,"courses",COURSE_ID,"modules",id));
-  const m=snap.data();
+  const m = snap.data();
 
-  moduleTitle.value=m.title;
-  videoUrl.value=m.videoUrl||"";
-  imageUrl.value=m.imageUrl||"";
-  quill.root.innerHTML=m.content;
-  quizzes=m.quizzes||[];
+  editingModuleId = id;
+  moduleTitle.value = m.title;
+  imageUrl.value = m.imageUrl || "";
+  videoUrl.value = m.videoUrl || "";
+  quill.root.innerHTML = m.content;
+  quizzes = m.quizzes || [];
+  quizPreview.innerHTML = quizzes.map(q=>`<div class="quiz">${q.question}</div>`).join("");
 };
 
 /* ================= ORDER ================= */
@@ -189,43 +207,23 @@ async function updateOrder(){
 }
 
 /* ================= DELETE ================= */
-window.trashModule = async id=>{
+window.deleteModule = async id=>{
   const snap = await getDoc(doc(db,"courses",COURSE_ID,"modules",id));
-  await setDoc(doc(db,"recycleBin",id),snap.data());
+  await setDoc(doc(db,"recycleBin",id), snap.data());
   await deleteDoc(doc(db,"courses",COURSE_ID,"modules",id));
-  loadModules(currentView);
+  loadModules();
 };
 
-/* ================= RECYCLE ================= */
-window.loadRecycleBin = async ()=>{
-  recycleList.innerHTML="";
-  const snap = await getDocs(collection(db,"recycleBin"));
-  snap.forEach(d=>{
-    recycleList.innerHTML+=`
-      <div class="module">
-        ${d.data().title}
-        <button onclick="restore('${d.id}')">Restore</button>
-      </div>`;
-  });
-};
-
-window.restore = async id=>{
-  const snap = await getDoc(doc(db,"recycleBin",id));
-  await setDoc(doc(db,"courses",COURSE_ID,"modules",id),snap.data());
-  await deleteDoc(doc(db,"recycleBin",id));
-  loadModules(currentView);
-};
-
+/* ================= RESET ================= */
 function resetEditor(){
+  editingModuleId=null;
   moduleTitle.value="";
-  videoUrl.value="";
   imageUrl.value="";
+  videoUrl.value="";
   quill.root.innerHTML="";
   quizzes=[];
-  editingModuleId=null;
+  quizPreview.innerHTML="";
 }
-
-loadModules("published");
 </script>
 
 </body>
