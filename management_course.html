@@ -13,7 +13,7 @@ header{background:#4B0E17;color:#fff;padding:15px}
 .container{max-width:1000px;margin:auto;padding:20px}
 .card{background:#fff;border-radius:12px;padding:20px;margin-bottom:20px}
 .module{border-left:5px solid #4B0E17}
-.locked{opacity:.5;pointer-events:none}
+.locked{opacity:.45;pointer-events:none}
 button{padding:10px 16px;border:none;border-radius:6px;cursor:pointer}
 .complete{background:#4CAF50;color:#fff}
 .quiz{margin-top:10px}
@@ -22,20 +22,18 @@ button{padding:10px 16px;border:none;border-radius:6px;cursor:pointer}
 img{max-width:100%;border-radius:8px}
 iframe{width:100%;height:300px;border-radius:8px}
 .topbar{font-size:14px;opacity:.9}
-.blurred *{filter:blur(6px)}
-label{display:block;margin-bottom:6px}
 .score{margin-top:8px;font-weight:600}
 </style>
 </head>
 
-<body oncontextmenu="return false">
+<body>
 
 <header>
   <h2>Management Course</h2>
   <div class="topbar" id="studentInfo"></div>
 </header>
 
-<div class="container" id="mainContent">
+<div class="container">
 
 <div class="card">
   <strong>Progress</strong>
@@ -46,8 +44,7 @@ label{display:block;margin-bottom:6px}
 
 <div class="card" id="certificateCard" style="display:none">
   <h3>🎓 Certificate</h3>
-  <p>You have completed the Management Course.</p>
-  <button onclick="downloadCertificate()">Download Certificate</button>
+  <p>Congratulations! You completed the Management Course.</p>
 </div>
 
 </div>
@@ -120,13 +117,13 @@ async function loadModules(){
 
   const modules = snap.docs
     .map(d => ({ id: d.id, ...d.data() }))
-    .filter(m => m.status === "published") // ✅ FIX
+    .filter(m => m.status === "published")
     .sort((a,b) => a.order - b.order);
 
   if(modules.length === 0){
     modulesDiv.innerHTML = `
       <div class="card">
-        <p>No published modules available yet.</p>
+        <p>No published modules yet.</p>
       </div>`;
     return;
   }
@@ -137,7 +134,7 @@ async function loadModules(){
     const score = quizScores[m.id];
 
     modulesDiv.innerHTML += `
-      <div class="card module ${locked?'locked':''}" id="mod_${m.id}">
+      <div class="card module ${locked?'locked':''}">
         <h3>${m.title}</h3>
 
         ${m.imageUrl ? `<img src="${m.imageUrl}">` : ""}
@@ -166,13 +163,9 @@ async function loadModules(){
   });
 
   updateProgress(modules.length);
-
-  if(lastModule){
-    document.getElementById("mod_"+lastModule)?.scrollIntoView({behavior:"smooth"});
-  }
 }
 
-/* ================= QUIZ RENDER ================= */
+/* ================= QUIZ ================= */
 function renderQuiz(m){
   if(!m.quizzes?.length) return "";
 
@@ -185,7 +178,7 @@ function renderQuiz(m){
           <label>
             <input type="radio"
               name="${m.id}_${i}"
-              ${quizAnswers[m.id]?.[i] === o ? "checked" : ""}
+              ${quizAnswers[m.id]?.[i]===o?'checked':''}
               onchange="saveAnswer('${m.id}',${i},'${o}')">
             ${o}
           </label>
@@ -236,13 +229,11 @@ window.submitQuiz = async (moduleId,total)=>{
   await updateDoc(studentRef,{ quizScores });
 
   if(percent !== 100){
-    alert(`Score ${percent}%. Please retry.`);
+    alert(`Score ${percent}%. Retry allowed.`);
     return;
   }
 
-  if(!completedModules.includes(moduleId)){
-    completedModules.push(moduleId);
-  }
+  completedModules.push(moduleId);
 
   await updateDoc(studentRef,{
     completedModules,
@@ -259,52 +250,10 @@ async function updateProgress(total){
 
   await updateDoc(studentRef,{ progress:percent });
 
-  if(percent === 100) generateCertificate();
-}
-
-/* ================= CERTIFICATE ================= */
-async function generateCertificate(){
-  document.getElementById("certificateCard").style.display="block";
-  const user = auth.currentUser;
-
-  const ref = doc(db,"certificates",`${user.uid}_${COURSE_ID}`);
-  if(!(await getDoc(ref)).exists()){
-    await setDoc(ref,{
-      studentId:user.uid,
-      course:"Management Course",
-      issuedAt:serverTimestamp()
-    });
+  if(percent === 100){
+    document.getElementById("certificateCard").style.display="block";
   }
 }
-
-window.downloadCertificate = ()=>{
-  alert("PDF certificate generation can be added next.");
-};
-</script>
-
-<script>
-/* ===== COPY / SCREENSHOT DETERRENTS ===== */
-document.addEventListener("keydown",e=>{
-  if(
-    e.key==="PrintScreen" ||
-    e.key==="F12" ||
-    (e.ctrlKey && ["c","u","s","p","i"].includes(e.key.toLowerCase()))
-  ){
-    e.preventDefault();
-    alert("Action disabled");
-  }
-});
-
-["copy","cut","paste"].forEach(ev=>{
-  document.addEventListener(ev,e=>e.preventDefault());
-});
-
-window.addEventListener("blur",()=>{
-  document.getElementById("mainContent").classList.add("blurred");
-});
-window.addEventListener("focus",()=>{
-  document.getElementById("mainContent").classList.remove("blurred");
-});
 </script>
 
 </body>
