@@ -1,236 +1,255 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Student Course Page</title>
+<meta charset="UTF-8">
+<title>Student Course</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Firebase CDN -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-  <style>
-    body {
-      margin: 0;
-      background: #f4f6fb;
-      font-family: "Inter", sans-serif;
-    }
+<style>
+/* ===== GLOBAL ===== */
+body{
+  margin:0;
+  background:#f4f6fb;
+  font-family:Inter,Segoe UI,sans-serif;
+  user-select:none;
+}
+.container{max-width:1000px;margin:auto;padding:16px}
+button{
+  padding:12px;
+  border:none;
+  border-radius:10px;
+  background:#5b5fff;
+  color:#fff;
+  font-weight:600;
+}
+button:disabled{background:#aaa}
 
-    .container {
-      max-width: 1100px;
-      margin: auto;
-      padding: 30px;
-    }
+/* ===== HEADER ===== */
+.header{
+  background:linear-gradient(135deg,#5b5fff,#7a7eff);
+  color:#fff;
+  padding:20px;
+  border-radius:18px;
+}
+.progress-bar{
+  height:10px;
+  background:rgba(255,255,255,.3);
+  border-radius:10px;
+  margin-top:10px;
+}
+.progress-fill{height:100%;background:#fff}
 
-    .header {
-      background: linear-gradient(135deg, #5b5fff, #7a7eff);
-      color: white;
-      padding: 25px;
-      border-radius: 18px;
-      box-shadow: 0 15px 40px rgba(0,0,0,0.15);
-    }
+/* ===== MODULES ===== */
+.modules{margin-top:20px;display:grid;gap:18px}
+.module{
+  background:#fff;
+  border:3px solid #5b5fff;
+  border-radius:16px;
+  padding:18px;
+}
+.locked{opacity:.5}
+.module h2{margin:0 0 8px}
 
-    .progress-bar {
-      height: 10px;
-      background: rgba(255,255,255,0.3);
-      border-radius: 10px;
-      overflow: hidden;
-      margin-top: 10px;
-    }
+/* ===== QUIZ ===== */
+.quiz-box{
+  margin-top:12px;
+  padding:14px;
+  border:2px dashed #5b5fff;
+  border-radius:12px;
+}
+.timer{font-weight:bold;margin-bottom:10px}
+.pass{color:#1e8e3e}
+.fail{color:#d93025}
 
-    .progress-fill {
-      height: 100%;
-      background: white;
-    }
-
-    .modules {
-      margin-top: 30px;
-      display: grid;
-      gap: 22px;
-    }
-
-    .module {
-      background: white;
-      padding: 24px;
-      border-radius: 16px;
-      box-shadow: 0 12px 28px rgba(0,0,0,0.08);
-    }
-
-    .quiz button {
-      margin-top: 10px;
-      padding: 10px 18px;
-      border: none;
-      background: #5b5fff;
-      color: white;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    .pass { color: #1e8e3e; font-weight: bold; }
-    .fail { color: #d93025; font-weight: bold; }
-  </style>
+/* ===== MOBILE ===== */
+@media(max-width:768px){
+  .container{padding:12px}
+  .module{padding:14px}
+}
+</style>
 </head>
 
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>Management Course</h1>
-      <p><b>Student ID:</b> <span id="studentId"></span></p>
-      <p><b>Email:</b> <span id="studentEmail"></span></p>
+<body oncontextmenu="return false">
+<div class="container">
 
-      <div class="progress-bar">
-        <div class="progress-fill" id="progressFill"></div>
-      </div>
-      <p id="progressText">0% Completed</p>
-    </div>
-
-    <div class="modules" id="modules"></div>
+<div class="header">
+  <h2>Management Course</h2>
+  <p id="studentEmail"></p>
+  <div class="progress-bar">
+    <div class="progress-fill" id="progressFill"></div>
   </div>
+  <p id="progressText">0% Completed</p>
+</div>
+
+<div class="modules" id="modules"></div>
+
+<div id="certificateBox" class="module" style="display:none">
+  <h2>🎓 Certificate</h2>
+  <button onclick="generateCertificate()">Generate Certificate</button>
+</div>
+
+</div>
 
 <script>
-/* ================= FIREBASE CONFIG ================= */
+/* ===== FIREBASE ===== */
 firebase.initializeApp({
-  apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
-  authDomain: "students-login-29409.firebaseapp.com",
-  projectId: "students-login-29409"
+  apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+  authDomain:"students-login-29409.firebaseapp.com",
+  projectId:"students-login-29409"
 });
+const auth=firebase.auth();
+const db=firebase.firestore();
 
-const auth = firebase.auth();
-const db = firebase.firestore();
+const COURSE_ID="management_course";
+const PASS_MARK=60;
+const QUESTION_TIME=20;
 
-const COURSE_ID = "management_course";
-const PASS_MARK = 60;
-
-/* ================= AUTH ================= */
-auth.onAuthStateChanged(async (user) => {
-  if (!user) {
-    alert("Please login first");
-    return;
-  }
-
-  document.getElementById("studentId").innerText = user.uid;
-  document.getElementById("studentEmail").innerText = user.email;
-
+/* ===== AUTH ===== */
+auth.onAuthStateChanged(async user=>{
+  if(!user) return alert("Login required");
+  studentEmail.innerText=user.email;
   await initStudent(user);
   loadModules(user);
 });
 
-/* ================= INIT STUDENT ================= */
-async function initStudent(user) {
-  const ref = db.collection("students").doc(user.uid);
-  const snap = await ref.get();
-
-  if (!snap.exists) {
-    await ref.set({
-      email: user.email,
-      enrolledCourses: {},
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
+/* ===== INIT ===== */
+async function initStudent(user){
+  const ref=db.collection("students").doc(user.uid);
+  if(!(await ref.get()).exists){
+    await ref.set({email:user.email,enrolledCourses:{}});
   }
 }
 
-/* ================= LOAD MODULES ================= */
-async function loadModules(user) {
-  const moduleSnap = await db
-    .collection("courses")
-    .doc(COURSE_ID)
-    .collection("modules")
-    .where("status", "==", "published")
-    .get();
+/* ===== LOAD MODULES ===== */
+async function loadModules(user){
+  const mods=await db.collection("courses").doc(COURSE_ID)
+    .collection("modules").where("status","==","published").get();
 
-  const studentRef = db.collection("students").doc(user.uid);
-  const studentSnap = await studentRef.get();
-  const studentData = studentSnap.data();
+  const studentSnap=await db.collection("students").doc(user.uid).get();
+  const course=studentSnap.data().enrolledCourses?.[COURSE_ID]||{};
+  const completed=course.completedModules||{};
+  const quizState=course.quizState||{};
 
-  const courseData = studentData.enrolledCourses?.[COURSE_ID] || {
-    completedModules: {},
-    quizResults: {}
-  };
+  modules.innerHTML="";
+  let done=0,i=1;
 
-  const modulesDiv = document.getElementById("modules");
-  modulesDiv.innerHTML = "";
+  mods.forEach(doc=>{
+    const m=doc.data(),id=doc.id;
+    const isDone=completed[id];
+    const locked=i>1&&!completed[Array.from(completed)[i-2]];
 
-  let completedCount = 0;
+    if(isDone) done++;
 
-  moduleSnap.forEach(doc => {
-    const m = doc.data();
-    const moduleId = doc.id;
+    const div=document.createElement("div");
+    div.className="module"+(locked?" locked":"");
+    div.innerHTML=`<h2>Module ${i}: ${m.title}</h2>${m.content}`;
 
-    if (courseData.completedModules?.[moduleId]) completedCount++;
+    if(m.quizzes?.length){
+      const box=document.createElement("div");
+      box.className="quiz-box";
 
-    const moduleDiv = document.createElement("div");
-    moduleDiv.className = "module";
-
-    moduleDiv.innerHTML = `
-      <h2>${m.title}</h2>
-      <div>${m.content}</div>
-    `;
-
-    if (m.quizzes && m.quizzes.length) {
-      const quizDiv = document.createElement("div");
-      quizDiv.className = "quiz";
-
-      m.quizzes.forEach((q, i) => {
-        quizDiv.innerHTML += `
-          <p>${q.question}</p>
-          ${q.options.map(o => `
-            <label>
-              <input type="radio" name="${moduleId}-${i}" value="${o}">
-              ${o}
-            </label><br>
-          `).join("")}
-        `;
-      });
-
-      const btn = document.createElement("button");
-      btn.innerText = "Submit Quiz";
-      btn.onclick = () => submitQuiz(user, moduleId, m.quizzes);
-
-      quizDiv.appendChild(btn);
-      moduleDiv.appendChild(quizDiv);
+      if(locked){
+        box.innerHTML="🔒 Complete previous module first";
+      }else if(isDone){
+        box.innerHTML="<span class='pass'>Completed</span>";
+      }else{
+        box.innerHTML=`<button onclick="startQuiz('${id}')">Start Quiz</button>`;
+      }
+      div.appendChild(box);
     }
 
-    modulesDiv.appendChild(moduleDiv);
+    modules.appendChild(div);
+    i++;
   });
 
-  updateProgress(completedCount, moduleSnap.size);
+  updateProgress(done,mods.size);
+  if(done===mods.size) certificateBox.style.display="block";
 }
 
-/* ================= QUIZ SUBMIT ================= */
-async function submitQuiz(user, moduleId, quizzes) {
-  let correct = 0;
+/* ===== QUIZ ENGINE ===== */
+let currentQuiz=[],qIndex=0,score=0,timer,intUser;
 
-  quizzes.forEach((q, i) => {
-    const selected = document.querySelector(`input[name="${moduleId}-${i}"]:checked`);
-    if (selected && selected.value === q.answer) correct++;
-  });
+async function startQuiz(moduleId){
+  intUser=auth.currentUser;
+  const snap=await db.collection("courses").doc(COURSE_ID)
+    .collection("modules").doc(moduleId).get();
+  currentQuiz=snap.data().quizzes;
+  qIndex=0;score=0;
+  showQuestion(moduleId);
+}
 
-  const score = Math.round((correct / quizzes.length) * 100);
-  const passed = score >= PASS_MARK;
+function showQuestion(moduleId){
+  const q=currentQuiz[qIndex];
+  let time=QUESTION_TIME;
 
-  const ref = db.collection("students").doc(user.uid);
+  const box=document.querySelector(".quiz-box");
+  box.innerHTML=`
+    <div class="timer">⏱ ${time}s</div>
+    <p>${q.question}</p>
+    ${q.options.map(o=>`
+      <label><input type="radio" name="ans" value="${o}"> ${o}</label><br>
+    `).join("")}
+    <button id="nextBtn">Submit</button>
+  `;
 
-  await ref.set({
-    enrolledCourses: {
-      [COURSE_ID]: {
-        completedModules: { [moduleId]: passed },
-        quizResults: {
-          [moduleId]: { score, passed }
-        }
+  timer=setInterval(()=>{
+    time--;
+    box.querySelector(".timer").innerText=`⏱ ${time}s`;
+    if(time<=0) next(moduleId);
+  },1000);
+
+  document.getElementById("nextBtn").onclick=()=>next(moduleId);
+}
+
+async function next(moduleId){
+  clearInterval(timer);
+  const sel=document.querySelector("input[name='ans']:checked");
+  if(sel&&sel.value===currentQuiz[qIndex].answer) score++;
+
+  qIndex++;
+  if(qIndex<currentQuiz.length) showQuestion(moduleId);
+  else finishQuiz(moduleId);
+}
+
+async function finishQuiz(moduleId){
+  const percent=Math.round((score/currentQuiz.length)*100);
+  const passed=percent>=PASS_MARK;
+
+  await db.collection("students").doc(intUser.uid).set({
+    enrolledCourses:{
+      [COURSE_ID]:{
+        completedModules:{[moduleId]:passed},
+        quizResults:{[moduleId]:{percent,passed}}
       }
     }
-  }, { merge: true });
+  },{merge:true});
 
-  alert(passed ? `PASSED (${score}%)` : `FAILED (${score}%)`);
-  loadModules(user);
+  alert(passed?`PASSED ${percent}%`:`FAILED ${percent}%`);
+  loadModules(intUser);
 }
 
-/* ================= PROGRESS ================= */
-function updateProgress(done, total) {
-  const percent = total ? Math.round((done / total) * 100) : 0;
-  document.getElementById("progressFill").style.width = percent + "%";
-  document.getElementById("progressText").innerText = percent + "% Completed";
+/* ===== PROGRESS ===== */
+function updateProgress(d,t){
+  const p=t?Math.round(d/t*100):0;
+  progressFill.style.width=p+"%";
+  progressText.innerText=p+"% Completed";
 }
+
+/* ===== CERTIFICATE ===== */
+function generateCertificate(){
+  alert("Certificate generation hook ready ✔");
+}
+
+/* ===== ANTI-CHEAT ===== */
+document.addEventListener("copy",e=>e.preventDefault());
+document.addEventListener("keydown",e=>{
+  if(e.key==="PrintScreen") alert("Screenshots disabled");
+});
 </script>
 </body>
 </html>
