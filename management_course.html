@@ -1,260 +1,236 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Management Course</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <title>Student Course Page</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <!-- Firebase CDN -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-<style>
-body{margin:0;font-family:Poppins;background:#f4f4f4}
-header{background:#4B0E17;color:#fff;padding:15px}
-.container{max-width:1000px;margin:auto;padding:20px}
-.card{background:#fff;border-radius:12px;padding:20px;margin-bottom:20px}
-.module{border-left:5px solid #4B0E17}
-.locked{opacity:.45;pointer-events:none}
-button{padding:10px 16px;border:none;border-radius:6px;cursor:pointer}
-.complete{background:#4CAF50;color:#fff}
-.quiz{margin-top:10px}
-.progress{height:8px;background:#ddd;border-radius:5px;overflow:hidden}
-.progress div{height:100%;background:#4CAF50}
-img{max-width:100%;border-radius:8px}
-iframe{width:100%;height:300px;border-radius:8px}
-.topbar{font-size:14px;opacity:.9}
-.score{margin-top:8px;font-weight:600}
-</style>
+  <style>
+    body {
+      margin: 0;
+      background: #f4f6fb;
+      font-family: "Inter", sans-serif;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: auto;
+      padding: 30px;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #5b5fff, #7a7eff);
+      color: white;
+      padding: 25px;
+      border-radius: 18px;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+    }
+
+    .progress-bar {
+      height: 10px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: white;
+    }
+
+    .modules {
+      margin-top: 30px;
+      display: grid;
+      gap: 22px;
+    }
+
+    .module {
+      background: white;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+    }
+
+    .quiz button {
+      margin-top: 10px;
+      padding: 10px 18px;
+      border: none;
+      background: #5b5fff;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .pass { color: #1e8e3e; font-weight: bold; }
+    .fail { color: #d93025; font-weight: bold; }
+  </style>
 </head>
 
 <body>
+  <div class="container">
+    <div class="header">
+      <h1>Management Course</h1>
+      <p><b>Student ID:</b> <span id="studentId"></span></p>
+      <p><b>Email:</b> <span id="studentEmail"></span></p>
 
-<header>
-  <h2>Management Course</h2>
-  <div class="topbar" id="studentInfo"></div>
-</header>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <p id="progressText">0% Completed</p>
+    </div>
 
-<div class="container">
+    <div class="modules" id="modules"></div>
+  </div>
 
-<div class="card">
-  <strong>Progress</strong>
-  <div class="progress"><div id="progressBar"></div></div>
-</div>
-
-<div id="modules"></div>
-
-<div class="card" id="certificateCard" style="display:none">
-  <h3>🎓 Certificate</h3>
-  <p>Congratulations! You completed the Management Course.</p>
-</div>
-
-</div>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import {
-  getFirestore, doc, getDoc, getDocs,
-  collection, setDoc, updateDoc, serverTimestamp
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-
-/* ================= FIREBASE ================= */
-const app = initializeApp({
-  apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
-  authDomain:"students-login-29409.firebaseapp.com",
-  projectId:"students-login-29409"
+<script>
+/* ================= FIREBASE CONFIG ================= */
+firebase.initializeApp({
+  apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+  authDomain: "students-login-29409.firebaseapp.com",
+  projectId: "students-login-29409"
 });
 
-const db = getFirestore(app);
-const auth = getAuth(app);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-/* ================= CONFIG ================= */
 const COURSE_ID = "management_course";
-const MAX_ATTEMPTS = 3;
-
-/* ================= STATE ================= */
-let studentRef;
-let completedModules = [];
-let quizAnswers = {};
-let quizScores = {};
-let lastModule = null;
+const PASS_MARK = 60;
 
 /* ================= AUTH ================= */
-onAuthStateChanged(auth, async user=>{
-  if(!user) return location.href="login.html";
-
-  document.getElementById("studentInfo").innerHTML =
-    `Email: ${user.email}<br>Student ID: ${user.uid}`;
-
-  studentRef = doc(db,"students",user.uid);
-  const snap = await getDoc(studentRef);
-
-  if(!snap.exists()){
-    await setDoc(studentRef,{
-      completedModules:[],
-      quiz:{},
-      quizScores:{},
-      progress:0,
-      lastModule:null,
-      lastAccessed:serverTimestamp()
-    });
+auth.onAuthStateChanged(async (user) => {
+  if (!user) {
+    alert("Please login first");
+    return;
   }
 
-  const data = (await getDoc(studentRef)).data();
-  completedModules = data.completedModules || [];
-  quizAnswers = data.quiz || {};
-  quizScores = data.quizScores || {};
-  lastModule = data.lastModule;
+  document.getElementById("studentId").innerText = user.uid;
+  document.getElementById("studentEmail").innerText = user.email;
 
-  loadModules();
+  await initStudent(user);
+  loadModules(user);
 });
 
+/* ================= INIT STUDENT ================= */
+async function initStudent(user) {
+  const ref = db.collection("students").doc(user.uid);
+  const snap = await ref.get();
+
+  if (!snap.exists) {
+    await ref.set({
+      email: user.email,
+      enrolledCourses: {},
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }
+}
+
 /* ================= LOAD MODULES ================= */
-async function loadModules(){
+async function loadModules(user) {
+  const moduleSnap = await db
+    .collection("courses")
+    .doc(COURSE_ID)
+    .collection("modules")
+    .where("status", "==", "published")
+    .get();
+
+  const studentRef = db.collection("students").doc(user.uid);
+  const studentSnap = await studentRef.get();
+  const studentData = studentSnap.data();
+
+  const courseData = studentData.enrolledCourses?.[COURSE_ID] || {
+    completedModules: {},
+    quizResults: {}
+  };
+
   const modulesDiv = document.getElementById("modules");
   modulesDiv.innerHTML = "";
 
-  const snap = await getDocs(collection(db,"courses",COURSE_ID,"modules"));
+  let completedCount = 0;
 
-  const modules = snap.docs
-    .map(d => ({ id: d.id, ...d.data() }))
-    .filter(m => m.status === "published")
-    .sort((a,b) => a.order - b.order);
+  moduleSnap.forEach(doc => {
+    const m = doc.data();
+    const moduleId = doc.id;
 
-  if(modules.length === 0){
-    modulesDiv.innerHTML = `
-      <div class="card">
-        <p>No published modules yet.</p>
-      </div>`;
-    return;
-  }
+    if (courseData.completedModules?.[moduleId]) completedCount++;
 
-  modules.forEach((m,i)=>{
-    const done = completedModules.includes(m.id);
-    const locked = i > 0 && !completedModules.includes(modules[i-1].id);
-    const score = quizScores[m.id];
+    const moduleDiv = document.createElement("div");
+    moduleDiv.className = "module";
 
-    modulesDiv.innerHTML += `
-      <div class="card module ${locked?'locked':''}">
-        <h3>${m.title}</h3>
-
-        ${m.imageUrl ? `<img src="${m.imageUrl}">` : ""}
-
-        ${m.videoUrl ? `<iframe src="${m.videoUrl}" allowfullscreen></iframe>` : ""}
-
-        <div>${m.content}</div>
-
-        ${renderQuiz(m)}
-
-        ${score ? `
-          <div class="score">
-            Score: ${score.score}% |
-            Attempts: ${score.attempts}/${MAX_ATTEMPTS}
-          </div>` : ""
-        }
-
-        ${done
-          ? "<p>✅ Completed</p>"
-          : `<button class="complete" onclick="submitQuiz('${m.id}',${modules.length})">
-               Submit & Complete
-             </button>`
-        }
-      </div>
+    moduleDiv.innerHTML = `
+      <h2>${m.title}</h2>
+      <div>${m.content}</div>
     `;
+
+    if (m.quizzes && m.quizzes.length) {
+      const quizDiv = document.createElement("div");
+      quizDiv.className = "quiz";
+
+      m.quizzes.forEach((q, i) => {
+        quizDiv.innerHTML += `
+          <p>${q.question}</p>
+          ${q.options.map(o => `
+            <label>
+              <input type="radio" name="${moduleId}-${i}" value="${o}">
+              ${o}
+            </label><br>
+          `).join("")}
+        `;
+      });
+
+      const btn = document.createElement("button");
+      btn.innerText = "Submit Quiz";
+      btn.onclick = () => submitQuiz(user, moduleId, m.quizzes);
+
+      quizDiv.appendChild(btn);
+      moduleDiv.appendChild(quizDiv);
+    }
+
+    modulesDiv.appendChild(moduleDiv);
   });
 
-  updateProgress(modules.length);
+  updateProgress(completedCount, moduleSnap.size);
 }
 
-/* ================= QUIZ ================= */
-function renderQuiz(m){
-  if(!m.quizzes?.length) return "";
-
-  return `
-    <div class="quiz">
-      <h4>Quiz</h4>
-      ${m.quizzes.map((q,i)=>`
-        <p><strong>${q.question}</strong></p>
-        ${q.options.map(o=>`
-          <label>
-            <input type="radio"
-              name="${m.id}_${i}"
-              ${quizAnswers[m.id]?.[i]===o?'checked':''}
-              onchange="saveAnswer('${m.id}',${i},'${o}')">
-            ${o}
-          </label>
-        `).join("")}
-      `).join("")}
-    </div>
-  `;
-}
-
-/* ================= SAVE ANSWER ================= */
-window.saveAnswer = async (moduleId,i,val)=>{
-  quizAnswers[moduleId] = quizAnswers[moduleId] || {};
-  quizAnswers[moduleId][i] = val;
-
-  await updateDoc(studentRef,{
-    quiz:quizAnswers,
-    lastModule:moduleId,
-    lastAccessed:serverTimestamp()
-  });
-};
-
-/* ================= SUBMIT QUIZ ================= */
-window.submitQuiz = async (moduleId,total)=>{
-  const modSnap = await getDoc(doc(db,"courses",COURSE_ID,"modules",moduleId));
-  const mod = modSnap.data();
-
-  const answers = quizAnswers[moduleId] || {};
+/* ================= QUIZ SUBMIT ================= */
+async function submitQuiz(user, moduleId, quizzes) {
   let correct = 0;
 
-  mod.quizzes.forEach((q,i)=>{
-    if(answers[i] === q.answer) correct++;
+  quizzes.forEach((q, i) => {
+    const selected = document.querySelector(`input[name="${moduleId}-${i}"]:checked`);
+    if (selected && selected.value === q.answer) correct++;
   });
 
-  const percent = Math.round((correct / mod.quizzes.length) * 100);
-  const prev = quizScores[moduleId] || {attempts:0};
+  const score = Math.round((correct / quizzes.length) * 100);
+  const passed = score >= PASS_MARK;
 
-  if(prev.attempts >= MAX_ATTEMPTS){
-    alert("Maximum attempts reached.");
-    return;
-  }
+  const ref = db.collection("students").doc(user.uid);
 
-  quizScores[moduleId] = {
-    score: percent,
-    attempts: prev.attempts + 1,
-    passed: percent === 100
-  };
+  await ref.set({
+    enrolledCourses: {
+      [COURSE_ID]: {
+        completedModules: { [moduleId]: passed },
+        quizResults: {
+          [moduleId]: { score, passed }
+        }
+      }
+    }
+  }, { merge: true });
 
-  await updateDoc(studentRef,{ quizScores });
-
-  if(percent !== 100){
-    alert(`Score ${percent}%. Retry allowed.`);
-    return;
-  }
-
-  completedModules.push(moduleId);
-
-  await updateDoc(studentRef,{
-    completedModules,
-    lastModule:moduleId
-  });
-
-  loadModules();
-};
+  alert(passed ? `PASSED (${score}%)` : `FAILED (${score}%)`);
+  loadModules(user);
+}
 
 /* ================= PROGRESS ================= */
-async function updateProgress(total){
-  const percent = Math.round((completedModules.length / total) * 100);
-  document.getElementById("progressBar").style.width = percent + "%";
-
-  await updateDoc(studentRef,{ progress:percent });
-
-  if(percent === 100){
-    document.getElementById("certificateCard").style.display="block";
-  }
+function updateProgress(done, total) {
+  const percent = total ? Math.round((done / total) * 100) : 0;
+  document.getElementById("progressFill").style.width = percent + "%";
+  document.getElementById("progressText").innerText = percent + "% Completed";
 }
 </script>
-
 </body>
 </html>
