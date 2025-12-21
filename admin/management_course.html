@@ -20,6 +20,16 @@ button{border:none;border-radius:6px;font-weight:bold}
 .view{background:#0ea5e9;color:#fff}
 .quiz{background:#eef2ff;padding:8px;border-radius:6px;margin:5px 0}
 .hidden{display:none}
+#quizzesContainer button{margin-top:5px}
+
+/* MOBILE RESPONSIVE */
+@media (max-width: 768px) {
+  body {padding:10px;}
+  header h2 {font-size:18px;}
+  .card {padding:15px;}
+  input, button {font-size:16px;padding:12px;}
+  .quiz {font-size:14px;}
+}
 </style>
 </head>
 
@@ -53,26 +63,26 @@ button{border:none;border-radius:6px;font-weight:bold}
 </div>
 
 <div class="card">
-<h3>Published Modules</h3>
+<h3>Manage Modules</h3>
+<button onclick="showBox('published')">Published Modules</button>
+<button onclick="showBox('drafts')">Draft Modules</button>
+<button onclick="showBox('deleted')">Recycle Bin</button>
 <div id="published"></div>
-</div>
-
-<div class="card">
-<h3>Draft Modules</h3>
-<div id="drafts"></div>
+<div id="drafts" class="hidden"></div>
+<div id="deleted" class="hidden"></div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
   getFirestore, collection, doc, addDoc, getDocs,
-  updateDoc, deleteDoc, getDoc, serverTimestamp, query, where
+  updateDoc, deleteDoc, getDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import {
   getAuth, signInWithEmailAndPassword, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-/* 🔥 FIREBASE INIT */
+/* FIREBASE INIT */
 const app = initializeApp({
   apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain: "students-login-29409.firebaseapp.com",
@@ -82,10 +92,9 @@ const app = initializeApp({
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-/* 🔐 SIGN IN ADMIN (TEMP – REPLACE WITH LOGIN FORM) */
+/* TEMP ADMIN LOGIN (REPLACE WITH FORM) */
 signInWithEmailAndPassword(auth, "ADMIN_EMAIL", "ADMIN_PASSWORD");
 
-/* 🛡️ ADMIN CHECK */
 let adminUID = null;
 
 onAuthStateChanged(auth, async user => {
@@ -93,31 +102,38 @@ onAuthStateChanged(auth, async user => {
     authStatus.innerText = "❌ Not logged in";
     return;
   }
-
   const adminDoc = await getDoc(doc(db, "admins", user.uid));
-
   if (!adminDoc.exists()) {
-    authStatus.innerText = "❌ Not an admin (admins/{uid} missing)";
+    authStatus.innerText = "❌ Not an admin";
     return;
   }
-
   adminUID = user.uid;
   authStatus.innerText = "✅ Admin authenticated";
   editor.classList.remove("hidden");
   loadModules();
 });
 
-/* ✏️ QUILL */
-const quill = new Quill("#quill", { theme: "snow" });
+/* QUILL WITH IMAGE SUPPORT */
+const quill = new Quill("#quill", {
+  theme: "snow",
+  modules: {
+    toolbar: [
+      ["bold","italic","underline"],
+      [{ list: "ordered" }, { list: "bullet" }],
+      ["link","image"],
+      ["clean"]
+    ]
+  }
+});
 
 let quizzes = [];
 let editingId = null;
 
-/* 🧠 QUIZ */
+/* QUIZ FUNCTIONS */
 window.addQuiz = () => {
   quizzes.push({
     question: q.value,
-    options: [o1.value, o2.value, o3.value],
+    options: [o1.value,o2.value,o3.value],
     answer: a.value
   });
   q.value=o1.value=o2.value=o3.value=a.value="";
@@ -125,18 +141,33 @@ window.addQuiz = () => {
 };
 
 function renderQuizzes(){
-  quizList.innerHTML="";
+  quizList.innerHTML = "";
   quizzes.forEach((x,i)=>{
-    quizList.innerHTML+=`<div class="quiz">${i+1}. ${x.question}</div>`;
+    quizList.innerHTML += `
+      <div class="quiz">
+        ${i+1}. ${x.question}
+        <button onclick="editQuiz(${i})">✏️</button>
+      </div>`;
   });
 }
 
-/* 💾 SAVE MODULE (RULE-COMPATIBLE) */
+window.editQuiz = i => {
+  const qz = quizzes[i];
+  q.value = qz.question;
+  o1.value = qz.options[0];
+  o2.value = qz.options[1];
+  o3.value = qz.options[2];
+  a.value = qz.answer;
+
+  quizzes.splice(i,1);
+  renderQuizzes();
+};
+
+/* SAVE MODULE */
 window.saveModule = async status => {
   if (!adminUID) return alert("Admin not authenticated");
 
   const ref = collection(db,"courses","management_course","modules");
-
   const data = {
     title: title.value,
     imageUrl: imageUrl.value,
@@ -157,14 +188,10 @@ window.saveModule = async status => {
   loadModules();
 };
 
-/* 📦 LOAD MODULES */
+/* LOAD MODULES */
 async function loadModules(){
-  published.innerHTML=drafts.innerHTML="";
-
-  const snap = await getDocs(
-    collection(db,"courses","management_course","modules")
-  );
-
+  published.innerHTML=drafts.innerHTML=deleted.innerHTML="";
+  const snap = await getDocs(collection(db,"courses","management_course","modules"));
   snap.forEach(d=>{
     const m=d.data();
     const html=`
@@ -173,37 +200,46 @@ async function loadModules(){
         <button onclick="edit('${d.id}')">Edit</button>
         <button class="delete" onclick="del('${d.id}')">Delete</button>
       </div>`;
-    (m.status==="published"?published:drafts).innerHTML+=html;
+    if(m.status==="published") published.innerHTML+=html;
+    else if(m.status==="draft") drafts.innerHTML+=html;
+    else if(m.status==="deleted") deleted.innerHTML+=html;
   });
 }
 
-/* ✏️ EDIT */
+/* EDIT MODULE */
 window.edit = async id => {
   const snap = await getDoc(doc(db,"courses","management_course","modules",id));
   const m = snap.data();
-  title.value=m.title;
-  imageUrl.value=m.imageUrl;
-  videoUrl.value=m.videoUrl;
-  quill.root.innerHTML=m.content;
-  quizzes=m.quizzes||[];
-  editingId=id;
+  title.value = m.title;
+  imageUrl.value = m.imageUrl;
+  videoUrl.value = m.videoUrl;
+  quill.root.innerHTML = m.content;
+  quizzes = m.quizzes || [];
+  editingId = id;
   renderQuizzes();
 };
 
-/* 🗑️ DELETE */
+/* DELETE -> Soft delete */
 window.del = async id => {
-  await deleteDoc(doc(db,"courses","management_course","modules",id));
+  await updateDoc(doc(db,"courses","management_course","modules",id), { status: "deleted" });
   loadModules();
 };
 
-/* ♻️ RESET */
+/* RESET FORM */
 function reset(){
   title.value=imageUrl.value=videoUrl.value="";
   quill.root.innerHTML="";
   quizzes=[]; editingId=null;
   renderQuizzes();
 }
-</script>
 
+/* TOGGLE BOXES */
+window.showBox = type => {
+  published.parentElement.style.display = type==="published" ? "block" : "none";
+  drafts.parentElement.style.display = type==="drafts" ? "block" : "none";
+  deleted.parentElement.style.display = type==="deleted" ? "block" : "none";
+};
+
+</script>
 </body>
 </html>
