@@ -2,118 +2,271 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>All Courses</title>
+<title>Management Course</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 
 <style>
 body{margin:0;font-family:Poppins;background:#f4f4f4}
-header{background:#111;color:#fff;padding:15px}
+header{background:#4B0E17;color:#fff;padding:15px}
 .container{max-width:1000px;margin:auto;padding:20px}
 .card{background:#fff;border-radius:12px;padding:20px;margin-bottom:20px}
-iframe{width:100%;height:320px;border-radius:10px;margin-top:10px}
-button{padding:10px 18px;border:none;border-radius:6px;cursor:pointer;margin-top:10px}
+.module{border-left:5px solid #4B0E17}
+.locked{opacity:.5;pointer-events:none}
+button{padding:10px 16px;border:none;border-radius:6px;cursor:pointer}
 .complete{background:#4CAF50;color:#fff}
-.quiz{background:#fafafa;padding:10px;border-radius:8px;margin-top:10px}
+.quiz{margin-top:10px}
+.progress{height:8px;background:#ddd;border-radius:5px;overflow:hidden}
+.progress div{height:100%;background:#4CAF50}
+img{max-width:100%;border-radius:8px}
+iframe{width:100%;height:300px;border-radius:8px}
+.topbar{font-size:14px;opacity:.9}
+.blurred *{filter:blur(6px)}
+label{display:block;margin-bottom:6px}
+.score{margin-top:8px;font-weight:600}
 </style>
 </head>
 
-<body>
+<body oncontextmenu="return false">
 
 <header>
-  <h2>Available Courses</h2>
+  <h2>Management Course</h2>
+  <div class="topbar" id="studentInfo"></div>
 </header>
 
-<div class="container" id="courseContainer"></div>
+<div class="container" id="mainContent">
+
+<div class="card">
+  <strong>Progress</strong>
+  <div class="progress"><div id="progressBar"></div></div>
+</div>
+
+<div id="modules"></div>
+
+<div class="card" id="certificateCard" style="display:none">
+  <h3>🎓 Certificate</h3>
+  <p>You have completed the course.</p>
+  <button onclick="downloadCertificate()">Download Certificate</button>
+</div>
+
+</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
-  getFirestore, collection, getDocs, doc, setDoc, serverTimestamp
+  getFirestore, doc, getDoc, getDocs,
+  collection, setDoc, updateDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import {
-  getAuth, signInAnonymously, onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
-  authDomain: "students-login-29409.firebaseapp.com",
-  projectId: "students-login-29409",
-  storageBucket: "students-login-29409.appspot.com",
-  messagingSenderId: "634331456872",
-  appId: "1:634331456872:web:6dae360c5e28d8356562dd"
-};
+const app = initializeApp({
+  apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+  authDomain:"students-login-29409.firebaseapp.com",
+  projectId:"students-login-29409"
+});
 
-const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-let userId = null;
+const COURSE_ID = "management_course";
+const MAX_ATTEMPTS = 3;
 
-signInAnonymously(auth);
+let studentRef;
+let completedModules=[];
+let quizAnswers={};
+let quizScores={};
+let lastModule=null;
 
-onAuthStateChanged(auth, user => {
-  if(!user) return alert("Auth failed");
-  userId = user.uid;
-  loadPublishedCourses();
+onAuthStateChanged(auth, async user=>{
+  if(!user) return location.href="login.html";
+
+  document.getElementById("studentInfo").innerHTML =
+    `Email: ${user.email}<br>Student ID: ${user.uid}`;
+
+  studentRef=doc(db,"students",user.uid);
+  const snap=await getDoc(studentRef);
+
+  if(!snap.exists()){
+    await setDoc(studentRef,{
+      completedModules:[],
+      quiz:{},
+      quizScores:{},
+      progress:0,
+      lastModule:null
+    });
+  }
+
+  const d=(await getDoc(studentRef)).data();
+  completedModules=d.completedModules||[];
+  quizAnswers=d.quiz||{};
+  quizScores=d.quizScores||{};
+  lastModule=d.lastModule;
+
+  loadModules();
 });
 
-async function loadPublishedCourses(){
-  const snap = await getDocs(collection(db,"courses"));
+/* ================= LOAD ================= */
+async function loadModules(){
+  const modulesDiv=document.getElementById("modules");
+  modulesDiv.innerHTML="";
 
-  snap.forEach(docSnap=>{
-    const course = docSnap.data();
-    if(course.status !== "published") return;
+  const snap=await getDocs(collection(db,"courses",COURSE_ID,"modules"));
+  const modules=snap.docs.map(d=>({id:d.id,...d.data()}))
+    .sort((a,b)=>a.order-b.order);
 
-    const courseDiv = document.createElement("div");
-    courseDiv.className = "card";
+  modules.forEach((m,i)=>{
+    const done=completedModules.includes(m.id);
+    const locked=i>0&&!completedModules.includes(modules[i-1].id);
+    const score=quizScores[m.id];
 
-    courseDiv.innerHTML = `<h2>${course.courseTitle}</h2>`;
+    modulesDiv.innerHTML+=`
+      <div class="card module ${locked?'locked':''}" id="mod_${m.id}">
+        <h3>${m.title}</h3>
+        ${m.imageUrl?`<img src="${m.imageUrl}">`:''}
+        ${m.videoUrl?`<iframe src="${m.videoUrl}"></iframe>`:''}
+        <div>${m.content}</div>
 
-    course.modules.forEach((mod,index)=>{
-      const modDiv = document.createElement("div");
+        ${renderQuiz(m)}
 
-      modDiv.innerHTML = `
-        <h3>${mod.moduleTitle}</h3>
-        <div>${mod.content}</div>
-        ${mod.videoUrl ? `<iframe src="${mod.videoUrl.replace("watch?v=","embed/")}" allowfullscreen></iframe>` : ""}
-        <button class="complete" onclick="completeModule('${docSnap.id}',${index})">✔ Mark Complete</button>
-        <div id="quiz-${docSnap.id}-${index}"></div>
-      `;
+        ${score?`<div class="score">
+          Score: ${score.score}% |
+          Attempts: ${score.attempts}/${MAX_ATTEMPTS}
+        </div>`:""}
 
-      courseDiv.appendChild(modDiv);
-
-      if(mod.quizzes){
-        const quizDiv = document.getElementById(`quiz-${docSnap.id}-${index}`);
-        mod.quizzes.forEach((q,i)=>{
-          quizDiv.innerHTML += `
-            <p><strong>${q.question}</strong></p>
-            ${q.options.map(opt=>`
-              <label>
-                <input type="radio" name="q-${docSnap.id}-${index}-${i}" value="${opt}"> ${opt}
-              </label><br>
-            `).join("")}
-          `;
-        });
-      }
-    });
-
-    document.getElementById("courseContainer").appendChild(courseDiv);
+        ${done
+          ? "<p>✅ Completed</p>"
+          : `<button class="complete" onclick="submitQuiz('${m.id}',${modules.length})">
+               Submit & Complete
+             </button>`
+        }
+      </div>
+    `;
   });
+
+  updateProgress(modules.length);
+  if(lastModule) document.getElementById("mod_"+lastModule)?.scrollIntoView();
 }
 
-// Save student progress
-window.completeModule = async function(courseId,moduleIndex){
-  if(!userId) return alert("No user ID");
-  
-  await setDoc(doc(db,"students",userId),{
-    completedModules: { [courseId]: moduleIndex + 1 },
-    lastAccessed: serverTimestamp()
-  }, { merge:true });
+/* ================= QUIZ ================= */
+function renderQuiz(m){
+  if(!m.quizzes?.length) return "";
+  return `
+    <div class="quiz">
+      <h4>Quiz</h4>
+      ${m.quizzes.map((q,i)=>`
+        <p><strong>${q.question}</strong></p>
+        ${q.options.map(o=>`
+          <label>
+            <input type="radio"
+              name="${m.id}_${i}"
+              ${quizAnswers[m.id]?.[i]===o?'checked':''}
+              onchange="saveAnswer('${m.id}',${i},'${o}')">
+            ${o}
+          </label>
+        `).join("")}
+      `).join("")}
+    </div>
+  `;
+}
 
-  alert("✅ Module completed & progress saved");
+window.saveAnswer=async(moduleId,i,val)=>{
+  quizAnswers[moduleId]=quizAnswers[moduleId]||{};
+  quizAnswers[moduleId][i]=val;
+
+  await updateDoc(studentRef,{
+    quiz:quizAnswers,
+    lastModule:moduleId,
+    lastAccessed:serverTimestamp()
+  });
 };
+
+/* ================= SUBMIT ================= */
+window.submitQuiz=async(moduleId,total)=>{
+  const mod=(await getDoc(doc(db,"courses",COURSE_ID,"modules",moduleId))).data();
+  const answers=quizAnswers[moduleId]||{};
+  let correct=0;
+
+  mod.quizzes.forEach((q,i)=>{
+    if(answers[i]===q.answer) correct++;
+  });
+
+  const percent=Math.round((correct/mod.quizzes.length)*100);
+  const prev=quizScores[moduleId]||{attempts:0};
+  if(prev.attempts>=MAX_ATTEMPTS) return alert("Max attempts reached");
+
+  quizScores[moduleId]={
+    score:percent,
+    attempts:prev.attempts+1,
+    passed:percent===100
+  };
+
+  await updateDoc(studentRef,{quizScores});
+
+  if(percent!==100){
+    return alert(`Score ${percent}%. You can retry.`);
+  }
+
+  completedModules.push(moduleId);
+  await updateDoc(studentRef,{
+    completedModules,
+    lastModule:moduleId
+  });
+
+  updateProgress(total);
+  loadModules();
+};
+
+/* ================= PROGRESS ================= */
+async function updateProgress(total){
+  const percent=Math.round((completedModules.length/total)*100);
+  document.getElementById("progressBar").style.width=percent+"%";
+  await updateDoc(studentRef,{progress:percent});
+  if(percent===100) generateCertificate();
+}
+
+/* ================= CERT ================= */
+async function generateCertificate(){
+  document.getElementById("certificateCard").style.display="block";
+  const user=auth.currentUser;
+  const ref=doc(db,"certificates",`${user.uid}_${COURSE_ID}`);
+  if(!(await getDoc(ref)).exists()){
+    await setDoc(ref,{
+      studentId:user.uid,
+      course:"Management Course",
+      issuedAt:serverTimestamp()
+    });
+  }
+}
+
+window.downloadCertificate=()=>{
+  alert("PDF certificate can be added next");
+};
+</script>
+
+<script>
+/* ===== COPY & SCREENSHOT PROTECTION ===== */
+document.addEventListener('keydown',e=>{
+  if(
+    e.key==="PrintScreen"||
+    (e.ctrlKey&&["c","u","s","p","i"].includes(e.key.toLowerCase()))||
+    e.key==="F12"
+  ){
+    e.preventDefault();
+    alert("Action disabled");
+  }
+});
+
+document.addEventListener("copy",e=>e.preventDefault());
+document.addEventListener("cut",e=>e.preventDefault());
+document.addEventListener("paste",e=>e.preventDefault());
+
+window.addEventListener("blur",()=>{
+  document.getElementById("mainContent").classList.add("blurred");
+});
+window.addEventListener("focus",()=>{
+  document.getElementById("mainContent").classList.remove("blurred");
+});
 </script>
 
 </body>
