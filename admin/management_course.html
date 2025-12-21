@@ -10,7 +10,8 @@
 
 <style>
 :root{
---primary:#4f46e5;--success:#16a34a;--warning:#f59e0b;--danger:#dc2626;--bg:#f1f5f9;
+--primary:#4f46e5;--success:#16a34a;--warning:#f59e0b;
+--danger:#dc2626;--info:#0ea5e9;--bg:#f1f5f9;
 }
 body{font-family:Segoe UI;background:var(--bg);margin:0;padding:20px;}
 header{background:var(--primary);color:#fff;padding:20px;border-radius:12px;margin-bottom:15px;}
@@ -24,8 +25,9 @@ button{border:none;border-radius:6px;font-weight:bold;}
 .publish{background:var(--success);color:#fff;}
 .draft{background:var(--warning);}
 .delete{background:var(--danger);color:#fff;}
-.view{background:#0ea5e9;color:#fff;}
-.quiz-item{background:#eef2ff;padding:8px;border-radius:6px;margin-bottom:5px;}
+.view{background:var(--info);color:#fff;}
+.quiz-item{background:#eef2ff;padding:8px;border-radius:6px;margin-bottom:6px;}
+.student img, .student iframe{width:100%;border-radius:8px;margin:10px 0;}
 </style>
 </head>
 
@@ -61,7 +63,7 @@ button{border:none;border-radius:6px;font-weight:bold;}
 <input id="opt3" placeholder="Option 3">
 <input id="answer" placeholder="Correct Answer">
 
-<button onclick="addQuiz()">Add Quiz</button>
+<button onclick="addQuiz()">Add / Update Quiz</button>
 
 <div id="quizList"></div>
 
@@ -71,18 +73,23 @@ button{border:none;border-radius:6px;font-weight:bold;}
 </div>
 </section>
 
-<section id="published"><div class="card"><h2>Published</h2><div id="publishedList"></div></div></section>
-<section id="drafts"><div class="card"><h2>Drafts</h2><div id="draftList"></div></div></section>
+<section id="published"><div class="card"><h2>Published Modules</h2><div id="publishedList"></div></div></section>
+<section id="drafts"><div class="card"><h2>Draft Modules</h2><div id="draftList"></div></div></section>
 <section id="recycle"><div class="card"><h2>Recycle Bin</h2><div id="recycleList"></div></div></section>
 
 <section id="student">
-<div class="card"><h2>Student View</h2><div id="studentModules"></div></div>
+<div class="card"><h2>Student View</h2><div id="studentModules" class="student"></div></div>
 </section>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, doc, addDoc, getDocs, updateDoc, deleteDoc, setDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import {
+  getFirestore, collection, doc, addDoc, getDoc, getDocs,
+  updateDoc, deleteDoc, setDoc,
+  query, where, orderBy, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
+/* 🔥 FIREBASE */
 const app = initializeApp({
   apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain:"students-login-29409.firebaseapp.com",
@@ -90,26 +97,25 @@ const app = initializeApp({
 });
 const db = getFirestore(app);
 
+/* ✏️ EDITOR */
 const quill = new Quill('#quillEditor',{theme:'snow'});
 
 let quizzes=[], editingId=null, editQuizIndex=null;
 
-/* ---------- UI ---------- */
-window.activate = id =>{
+/* 🧭 NAV */
+window.activate = id=>{
 document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
 document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
 document.getElementById(id).classList.add("active");
 document.querySelector(`.tabs button[onclick="activate('${id}')"]`).classList.add("active");
 };
 
-/* ---------- QUIZ ---------- */
-window.addQuiz = ()=>{
-if(editQuizIndex!==null){
-quizzes[editQuizIndex]={question:question.value,options:[opt1.value,opt2.value,opt3.value],answer:answer.value};
-editQuizIndex=null;
-}else{
-quizzes.push({question:question.value,options:[opt1.value,opt2.value,opt3.value],answer:answer.value});
-}
+/* 🧠 QUIZZES */
+window.addQuiz=()=>{
+if(!question.value.trim()) return alert("Question required");
+const q={question:question.value,options:[opt1.value,opt2.value,opt3.value],answer:answer.value};
+if(editQuizIndex!==null){quizzes[editQuizIndex]=q;editQuizIndex=null;}
+else quizzes.push(q);
 question.value=opt1.value=opt2.value=opt3.value=answer.value="";
 renderQuizzes();
 };
@@ -119,7 +125,7 @@ quizList.innerHTML="";
 quizzes.forEach((q,i)=>{
 quizList.innerHTML+=`
 <div class="quiz-item">
-<strong>${i+1}. ${q.question}</strong>
+<strong>${i+1}. ${q.question}</strong><br>
 <button onclick="editQuiz(${i})">Edit</button>
 <button onclick="removeQuiz(${i})">Remove</button>
 </div>`;
@@ -128,40 +134,64 @@ quizList.innerHTML+=`
 
 window.editQuiz=i=>{
 const q=quizzes[i];
-question.value=q.question; opt1.value=q.options[0]; opt2.value=q.options[1]; opt3.value=q.options[2]; answer.value=q.answer;
+question.value=q.question;
+opt1.value=q.options[0];
+opt2.value=q.options[1];
+opt3.value=q.options[2];
+answer.value=q.answer;
 editQuizIndex=i;
 };
 
 window.removeQuiz=i=>{quizzes.splice(i,1);renderQuizzes();};
 
-/* ---------- SAVE ---------- */
-window.saveModule = async status =>{
+/* 💾 SAVE (FIXED & GUARANTEED) */
+window.saveModule=async status=>{
+if(!title.value.trim()) return alert("Module title required");
+
+const modulesRef=collection(db,"courses","management_course","modules");
+let order=0;
+
+if(editingId){
+const snap=await getDoc(doc(modulesRef,editingId));
+order=snap.data().order ?? 0;
+}else{
+order=(await getDocs(modulesRef)).size;
+}
+
 const data={
-title:title.value,imageUrl:imageUrl.value,videoUrl:videoUrl.value,
-content:quill.root.innerHTML,quizzes,status,updatedAt:new Date()
-};
-const ref=collection(db,"courses","management_course","modules");
-if(editingId){await updateDoc(doc(ref,editingId),data);}
-else{data.order=(await getDocs(ref)).size;await addDoc(ref,data);}
-reset(); refreshAll();
+title:title.value.trim(),
+imageUrl:imageUrl.value.trim(),
+videoUrl:videoUrl.value.trim(),
+content:quill.root.innerHTML,
+quizzes,
+status,
+order,
+updatedAt:serverTimestamp()
 };
 
-/* ---------- LOADERS ---------- */
+if(editingId) await updateDoc(doc(modulesRef,editingId),data);
+else await addDoc(modulesRef,data);
+
+resetEditor();
+refreshAll();
+};
+
+/* 📦 LOADERS */
 async function refreshAll(){
 loadList("published","publishedList");
 loadList("draft","draftList");
 loadStudent();
 }
 
-async function loadList(status,target){
-const q=query(collection(db,"courses","management_course","modules"),where("status","==",status));
+async function loadList(status,targetId){
+const target=document.getElementById(targetId);
+target.innerHTML="";
+const q=query(collection(db,"courses","management_course","modules"),where("status","==",status),orderBy("order"));
 const snap=await getDocs(q);
-document.getElementById(target).innerHTML="";
 snap.forEach(d=>{
-const m=d.data();
-document.getElementById(target).innerHTML+=`
+target.innerHTML+=`
 <div class="card">
-<strong>${m.title}</strong><br>
+<strong>${d.data().title}</strong><br>
 <button onclick="editModule('${d.id}')">Edit</button>
 ${status==="published"?`<button class="view" onclick="viewStudent('${d.id}')">View</button>`:""}
 <button class="delete" onclick="trash('${d.id}')">Delete</button>
@@ -169,51 +199,58 @@ ${status==="published"?`<button class="view" onclick="viewStudent('${d.id}')">Vi
 });
 }
 
+/* 👁️ STUDENT VIEW */
 window.viewStudent=id=>{activate("student");loadStudent(id);};
 
 async function loadStudent(scrollId=null){
+studentModules.innerHTML="";
 const q=query(collection(db,"courses","management_course","modules"),where("status","==","published"),orderBy("order"));
 const snap=await getDocs(q);
-studentModules.innerHTML="";
 snap.forEach(d=>{
 const m=d.data();
 studentModules.innerHTML+=`
 <div class="card" id="s-${d.id}">
 <h3>${m.title}</h3>
-${m.imageUrl?`<img src="${m.imageUrl}" style="width:100%">`:""}
-${m.videoUrl?`<iframe src="${m.videoUrl}" style="width:100%;height:300px"></iframe>`:""}
+${m.imageUrl?`<img src="${m.imageUrl}">`:""}
+${m.videoUrl?`<iframe src="${m.videoUrl}" height="300"></iframe>`:""}
 ${m.content}
 </div>`;
 });
 if(scrollId) document.getElementById("s-"+scrollId)?.scrollIntoView({behavior:"smooth"});
 }
 
+/* ✏️ EDIT */
 window.editModule=async id=>{
-const snap=await getDocs(collection(db,"courses","management_course","modules"));
-snap.forEach(d=>{
-if(d.id===id){
-const m=d.data();
-title.value=m.title; imageUrl.value=m.imageUrl; videoUrl.value=m.videoUrl;
-quill.root.innerHTML=m.content; quizzes=m.quizzes||[]; editingId=id; renderQuizzes();
+const snap=await getDoc(doc(db,"courses","management_course","modules",id));
+const m=snap.data();
+title.value=m.title;
+imageUrl.value=m.imageUrl;
+videoUrl.value=m.videoUrl;
+quill.root.innerHTML=m.content;
+quizzes=m.quizzes||[];
+editingId=id;
+renderQuizzes();
 activate("editor");
-}});
 };
 
+/* 🗑️ DELETE → RECYCLE */
 window.trash=async id=>{
-const snap=await getDocs(collection(db,"courses","management_course","modules"));
-snap.forEach(async d=>{
-if(d.id===id){
-await setDoc(doc(db,"recycleBin",id),d.data());
-await deleteDoc(doc(db,"courses","management_course","modules",id));
+const ref=doc(db,"courses","management_course","modules",id);
+const snap=await getDoc(ref);
+await setDoc(doc(db,"recycleBin",id),snap.data());
+await deleteDoc(ref);
 refreshAll();
-}});
 };
 
-function reset(){
+/* ♻️ RESET */
+function resetEditor(){
 title.value=imageUrl.value=videoUrl.value="";
-quill.root.innerHTML=""; quizzes=[]; editingId=null; renderQuizzes();
+quill.root.innerHTML="";
+quizzes=[]; editingId=null; editQuizIndex=null;
+renderQuizzes();
 }
 
+/* 🚀 INIT */
 refreshAll();
 </script>
 
