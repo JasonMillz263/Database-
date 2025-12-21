@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Student Course</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -11,31 +11,38 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
-/* ===== GLOBAL ===== */
-body{
+/* ===== RESET & MOBILE BASE ===== */
+*{box-sizing:border-box}
+html,body{
   margin:0;
+  padding:0;
+  width:100%;
+  overflow-x:hidden;
+}
+body{
   background:#f4f6fb;
   font-family:Inter,Segoe UI,sans-serif;
   user-select:none;
 }
-.container{max-width:1000px;margin:auto;padding:16px}
-button{
+
+/* ===== LAYOUT ===== */
+.container{
+  width:100%;
+  max-width:100%;
   padding:12px;
-  border:none;
-  border-radius:10px;
-  background:#5b5fff;
-  color:#fff;
-  font-weight:600;
 }
-button:disabled{background:#aaa}
 
 /* ===== HEADER ===== */
 .header{
   background:linear-gradient(135deg,#5b5fff,#7a7eff);
   color:#fff;
-  padding:20px;
-  border-radius:18px;
+  padding:16px;
+  border-radius:16px;
 }
+.header h2{margin:0 0 6px;font-size:20px}
+.header p{margin:4px 0;font-size:13px}
+
+/* ===== PROGRESS ===== */
 .progress-bar{
   height:10px;
   background:rgba(255,255,255,.3);
@@ -45,31 +52,74 @@ button:disabled{background:#aaa}
 .progress-fill{height:100%;background:#fff}
 
 /* ===== MODULES ===== */
-.modules{margin-top:20px;display:grid;gap:18px}
+.modules{
+  margin-top:16px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
 .module{
   background:#fff;
   border:3px solid #5b5fff;
   border-radius:16px;
-  padding:18px;
+  padding:14px;
+}
+.module h2{
+  font-size:16px;
+  margin:0 0 8px;
 }
 .locked{opacity:.5}
-.module h2{margin:0 0 8px}
 
 /* ===== QUIZ ===== */
 .quiz-box{
   margin-top:12px;
-  padding:14px;
+  padding:12px;
   border:2px dashed #5b5fff;
   border-radius:12px;
 }
-.timer{font-weight:bold;margin-bottom:10px}
-.pass{color:#1e8e3e}
-.fail{color:#d93025}
+.timer{
+  font-weight:bold;
+  margin-bottom:8px;
+}
+.quiz-box label{
+  display:block;
+  padding:10px;
+  margin:6px 0;
+  background:#eef2ff;
+  border-radius:10px;
+}
+.quiz-box input{
+  margin-right:6px;
+}
 
-/* ===== MOBILE ===== */
-@media(max-width:768px){
-  .container{padding:12px}
-  .module{padding:14px}
+/* ===== BUTTONS ===== */
+button{
+  width:100%;
+  padding:14px;
+  margin-top:10px;
+  border:none;
+  border-radius:12px;
+  background:#5b5fff;
+  color:#fff;
+  font-weight:600;
+  font-size:15px;
+}
+button:disabled{background:#aaa}
+
+/* ===== STATES ===== */
+.pass{color:#1e8e3e;font-weight:bold}
+.fail{color:#d93025;font-weight:bold}
+
+/* ===== CERTIFICATE ===== */
+#certificateBox{
+  margin-top:16px;
+  border:3px solid #16a34a;
+}
+
+/* ===== TABLET+ ===== */
+@media(min-width:768px){
+  .container{max-width:900px;margin:auto}
+  .module h2{font-size:18px}
 }
 </style>
 </head>
@@ -133,17 +183,18 @@ async function loadModules(user){
   const studentSnap=await db.collection("students").doc(user.uid).get();
   const course=studentSnap.data().enrolledCourses?.[COURSE_ID]||{};
   const completed=course.completedModules||{};
-  const quizState=course.quizState||{};
 
   modules.innerHTML="";
   let done=0,i=1;
+  let prevPassed=true;
 
   mods.forEach(doc=>{
     const m=doc.data(),id=doc.id;
     const isDone=completed[id];
-    const locked=i>1&&!completed[Array.from(completed)[i-2]];
+    const locked=!prevPassed;
 
     if(isDone) done++;
+    if(!isDone) prevPassed=false;
 
     const div=document.createElement("div");
     div.className="module"+(locked?" locked":"");
@@ -192,7 +243,7 @@ function showQuestion(moduleId){
     <div class="timer">⏱ ${time}s</div>
     <p>${q.question}</p>
     ${q.options.map(o=>`
-      <label><input type="radio" name="ans" value="${o}"> ${o}</label><br>
+      <label><input type="radio" name="ans" value="${o}"> ${o}</label>
     `).join("")}
     <button id="nextBtn">Submit</button>
   `;
@@ -210,10 +261,8 @@ async function next(moduleId){
   clearInterval(timer);
   const sel=document.querySelector("input[name='ans']:checked");
   if(sel&&sel.value===currentQuiz[qIndex].answer) score++;
-
   qIndex++;
-  if(qIndex<currentQuiz.length) showQuestion(moduleId);
-  else finishQuiz(moduleId);
+  qIndex<currentQuiz.length?showQuestion(moduleId):finishQuiz(moduleId);
 }
 
 async function finishQuiz(moduleId){
@@ -242,7 +291,7 @@ function updateProgress(d,t){
 
 /* ===== CERTIFICATE ===== */
 function generateCertificate(){
-  alert("Certificate generation hook ready ✔");
+  alert("Certificate unlocked ✔");
 }
 
 /* ===== ANTI-CHEAT ===== */
