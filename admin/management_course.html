@@ -3,96 +3,129 @@
 <head>
 <meta charset="UTF-8">
 <title>Admin – Management Course</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+
 <style>
-body{font-family:Segoe UI;background:#f1f5f9;padding:20px}
-header{background:#4f46e5;color:#fff;padding:20px;border-radius:12px}
-.card{background:#fff;padding:20px;border-radius:12px;margin-top:15px}
-input,button{width:100%;padding:10px;margin:6px 0}
-button{border:none;border-radius:6px;font-weight:bold;cursor:pointer}
+/* ===== BASE ===== */
+body{
+  font-family:Segoe UI;
+  background:#f1f5f9;
+  padding:12px;
+  margin:0;
+}
+header{
+  background:#4f46e5;
+  color:#fff;
+  padding:16px;
+  border-radius:12px;
+}
+.card{
+  background:#fff;
+  padding:16px;
+  border-radius:12px;
+  margin-top:12px;
+}
+input,button{
+  width:100%;
+  padding:10px;
+  margin:6px 0;
+}
+button{
+  border:none;
+  border-radius:6px;
+  font-weight:bold;
+  cursor:pointer;
+}
 .publish{background:#16a34a;color:#fff}
 .draft{background:#f59e0b}
 .delete{background:#dc2626;color:#fff}
 .view{background:#0ea5e9;color:#fff}
 .quiz{background:#eef2ff;padding:8px;border-radius:6px;margin:5px 0}
 .hidden{display:none}
-.module-toggle{margin:10px 0}
-.module-toggle button{margin-right:5px}
+
+/* ===== TABS ===== */
+.tabs{
+  display:flex;
+  gap:8px;
+  margin-top:12px;
+}
+.tabs button{
+  flex:1;
+  background:#e5e7eb;
+}
+.tabs button.active{
+  background:#4f46e5;
+  color:#fff;
+}
+
+/* ===== MOBILE ===== */
 @media(max-width:768px){
-  .module-toggle button{width:100%;margin-bottom:8px}
-  input,button{font-size:14px}
+  header h2{font-size:18px}
+  .tabs{flex-direction:column}
+  .card{padding:12px}
 }
 </style>
 </head>
+
 <body>
 
 <header>
-<h2><i class="fa fa-user-shield"></i> Admin – Management Course</h2>
-<div id="authStatus">Checking authentication...</div>
+  <h2><i class="fa fa-user-shield"></i> Admin – Management Course</h2>
+  <div id="authStatus">Checking authentication...</div>
 </header>
 
-<!-- MODULE TOGGLE BUTTONS -->
-<div class="module-toggle">
-  <button onclick="showModules('published')">📘 Published</button>
-  <button onclick="showModules('draft')">📝 Drafts</button>
-  <button onclick="showModules('bin')">🗑 Recycle Bin</button>
-</div>
-
-<!-- MODULE EDITOR -->
+<!-- ===== MODULE EDITOR ===== -->
 <div class="card hidden" id="editor">
-<h3>Module Editor</h3>
-<input id="title" placeholder="Module title">
-<input id="imageUrl" placeholder="Image URL">
-<input id="videoUrl" placeholder="Video URL">
-<div id="quill" style="height:180px"></div>
+  <h3>Module Editor</h3>
 
-<h4>Quizzes</h4>
-<input id="q" placeholder="Question">
-<input id="o1" placeholder="Option 1">
-<input id="o2" placeholder="Option 2">
-<input id="o3" placeholder="Option 3">
-<input id="a" placeholder="Correct answer">
-<button onclick="addQuiz()">Add Quiz</button>
-<div id="quizList"></div>
+  <input id="title" placeholder="Module title">
+  <input id="imageUrl" placeholder="Image URL">
+  <input id="videoUrl" placeholder="Video URL">
 
-<button class="draft" onclick="saveModule('draft')">Save Draft</button>
-<button class="publish" onclick="saveModule('published')">Publish</button>
+  <div id="quill" style="height:200px"></div>
+
+  <h4>Quizzes</h4>
+
+  <input id="q" placeholder="Question">
+  <input id="o1" placeholder="Option 1">
+  <input id="o2" placeholder="Option 2">
+  <input id="o3" placeholder="Option 3">
+  <input id="a" placeholder="Correct answer">
+
+  <button onclick="addQuiz()">Add / Update Quiz</button>
+  <div id="quizList"></div>
+
+  <button class="draft" onclick="saveModule('draft')">Save Draft</button>
+  <button class="publish" onclick="saveModule('published')">Publish</button>
 </div>
 
-<!-- MODULE LISTS -->
-<div class="card">
-<h3>Published Modules</h3>
-<div id="published"></div>
-</div>
-<div class="card">
-<h3>Draft Modules</h3>
-<div id="drafts"></div>
-</div>
-<div class="card">
-<h3>Recycle Bin</h3>
-<div id="bin"></div>
+<!-- ===== TABS ===== -->
+<div class="tabs">
+  <button class="active" onclick="showTab('publishedTab')">Published</button>
+  <button onclick="showTab('draftTab')">Drafts</button>
+  <button onclick="showTab('binTab')">Recycle Bin</button>
 </div>
 
-<!-- QUIZ TIMER & PER QUESTION QUIZ -->
-<div class="card hidden" id="quizContainer">
-<h3 id="question">Question</h3>
-<div id="quizTimer">Time Left: <span id="timeLeft">00:00</span></div>
-<div id="options"></div>
-</div>
-
-<!-- CERTIFICATE GENERATOR -->
-<canvas id="certCanvas" width="1200" height="850" style="display:none"></canvas>
-<button id="certBtn" style="display:none">🎓 Download Certificate</button>
+<div class="card" id="publishedTab"></div>
+<div class="card hidden" id="draftTab"></div>
+<div class="card hidden" id="binTab"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, doc, addDoc, getDocs, updateDoc, deleteDoc, getDoc, serverTimestamp, query, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import { getStorage } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
+import {
+  getFirestore, collection, doc, addDoc, getDocs,
+  updateDoc, deleteDoc, getDoc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import {
+  getAuth, signInWithEmailAndPassword, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-/* 🔥 FIREBASE INIT */
+/* ===== FIREBASE ===== */
 const app = initializeApp({
   apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain: "students-login-29409.firebaseapp.com",
@@ -100,216 +133,161 @@ const app = initializeApp({
 });
 const db = getFirestore(app);
 const auth = getAuth(app);
-const storage = getStorage(app);
 
-/* 🔐 ADMIN SIGN IN (TEMP) */
-signInWithEmailAndPassword(auth, "ADMIN_EMAIL", "ADMIN_PASSWORD");
+signInWithEmailAndPassword(auth,"ADMIN_EMAIL","ADMIN_PASSWORD");
 
-/* 🛡️ ADMIN CHECK */
-let adminUID = null;
-onAuthStateChanged(auth, async user => {
-  if (!user) { authStatus.innerText="❌ Not logged in"; return; }
-  const adminDoc = await getDoc(doc(db,"admins",user.uid));
-  if(!adminDoc.exists()){ authStatus.innerText="❌ Not an admin"; return; }
+/* ===== AUTH CHECK ===== */
+let adminUID=null;
+onAuthStateChanged(auth, async user=>{
+  if(!user) return authStatus.innerText="❌ Not logged in";
+
+  const adminDoc=await getDoc(doc(db,"admins",user.uid));
+  if(!adminDoc.exists())
+    return authStatus.innerText="❌ Not admin";
+
   adminUID=user.uid;
   authStatus.innerText="✅ Admin authenticated";
   editor.classList.remove("hidden");
   loadModules();
 });
 
-/* ✏️ QUILL + IMAGE UPLOAD */
-const quill = new Quill("#quill",{theme:"snow"});
-const toolbar = quill.getModule('toolbar');
-toolbar.addHandler('image', function() {
-  const input = document.createElement('input');
-  input.setAttribute('type','file');
-  input.setAttribute('accept','image/*');
-  input.click();
-  input.onchange = async () => {
-    const file = input.files[0];
-    const ref = storage.ref('module_images/' + Date.now());
-    await ref.put(file);
-    const url = await ref.getDownloadURL();
-    const range = quill.getSelection();
-    quill.insertEmbed(range.index,'image',url);
-  };
+/* ===== QUILL (IMAGE ENABLED) ===== */
+const quill=new Quill("#quill",{
+  theme:"snow",
+  modules:{
+    toolbar:[
+      ["bold","italic","underline"],
+      ["image","link"],
+      [{list:"ordered"},{list:"bullet"}]
+    ]
+  }
 });
 
-/* 🧠 QUIZZES */
-let quizzes = [];
-let editingId = null;
+/* ===== QUIZZES ===== */
+let quizzes=[];
+let editingQuiz=null;
+let editingId=null;
 
-window.addQuiz = () => {
-  quizzes.push({question:q.value, options:[o1.value,o2.value,o3.value], answer:a.value});
+window.addQuiz=()=>{
+  const quiz={
+    question:q.value,
+    options:[o1.value,o2.value,o3.value],
+    answer:a.value
+  };
+  if(editingQuiz!==null){
+    quizzes[editingQuiz]=quiz;
+    editingQuiz=null;
+  }else quizzes.push(quiz);
+
   q.value=o1.value=o2.value=o3.value=a.value="";
   renderQuizzes();
 };
 
 function renderQuizzes(){
   quizList.innerHTML="";
-  quizzes.forEach((x,i)=>{ quizList.innerHTML+=`<div class="quiz">${i+1}. ${x.question} 
-  <button onclick="editQuiz(${i})">Edit</button></div>`; });
+  quizzes.forEach((x,i)=>{
+    quizList.innerHTML+=`
+      <div class="quiz">
+        ${i+1}. ${x.question}
+        <button onclick="editQuiz(${i})">Edit</button>
+        <button onclick="deleteQuiz(${i})">Delete</button>
+      </div>`;
+  });
 }
 
-window.editQuiz = i => {
-  const qObj = quizzes[i];
-  q.value = qObj.question; o1.value=qObj.options[0]; o2.value=qObj.options[1]; o3.value=qObj.options[2]; a.value=qObj.answer;
+window.editQuiz=i=>{
+  const x=quizzes[i];
+  q.value=x.question;
+  o1.value=x.options[0];
+  o2.value=x.options[1];
+  o3.value=x.options[2];
+  a.value=x.answer;
+  editingQuiz=i;
+};
+window.deleteQuiz=i=>{
   quizzes.splice(i,1);
   renderQuizzes();
 };
 
-/* 💾 SAVE MODULE */
-window.saveModule = async status => {
-  if(!adminUID) return alert("Admin not authenticated");
-  const ref = collection(db,"courses","management_course","modules");
-  const data = {
-    title: title.value,
-    imageUrl: imageUrl.value,
-    videoUrl: videoUrl.value,
-    content: quill.root.innerHTML,
+/* ===== SAVE MODULE ===== */
+window.saveModule=async status=>{
+  const ref=collection(db,"courses","management_course","modules");
+  const data={
+    title:title.value,
+    imageUrl:imageUrl.value,
+    videoUrl:videoUrl.value,
+    content:quill.root.innerHTML,
     quizzes,
     status,
-    updatedAt: serverTimestamp()
+    updatedAt:serverTimestamp()
   };
-  if(editingId){ await updateDoc(doc(ref,editingId),data); }
-  else{ await addDoc(ref,data); }
+  editingId
+    ? await updateDoc(doc(ref,editingId),data)
+    : await addDoc(ref,data);
+
   reset();
   loadModules();
 };
 
-/* 📦 LOAD MODULES */
+/* ===== LOAD MODULES ===== */
 async function loadModules(){
-  published.innerHTML=drafts.innerHTML=bin.innerHTML="";
-  const snap = await getDocs(collection(db,"courses","management_course","modules"));
+  publishedTab.innerHTML=draftTab.innerHTML=binTab.innerHTML="";
+  const snap=await getDocs(collection(db,"courses","management_course","modules"));
   snap.forEach(d=>{
     const m=d.data();
-    const html=`<div class="quiz"><b>${m.title}</b>
-      <button onclick="edit('${d.id}')">Edit</button>
-      <button class="delete" onclick="del('${d.id}')">Delete</button>
-    </div>`;
-    if(m.status==="published") published.innerHTML+=html;
-    else if(m.status==="draft") drafts.innerHTML+=html;
-    else bin.innerHTML+=html;
+    const box=`
+      <div class="quiz">
+        <b>${m.title}</b>
+        <button onclick="edit('${d.id}')">Edit</button>
+        <button class="delete" onclick="softDelete('${d.id}')">Delete</button>
+      </div>`;
+    if(m.status==="published") publishedTab.innerHTML+=box;
+    else if(m.status==="draft") draftTab.innerHTML+=box;
+    else binTab.innerHTML+=box;
   });
 }
 
-/* ✏️ EDIT MODULE */
-window.edit = async id=>{
-  const snap = await getDoc(doc(db,"courses","management_course","modules",id));
-  const m = snap.data();
-  title.value=m.title; imageUrl.value=m.imageUrl; videoUrl.value=m.videoUrl; quill.root.innerHTML=m.content;
-  quizzes=m.quizzes||[]; editingId=id; renderQuizzes();
-};
-
-/* 🗑️ DELETE TO BIN */
-window.del = async id=>{
-  await updateDoc(doc(db,"courses","management_course","modules",id),{status:"deleted",updatedAt:serverTimestamp()});
+/* ===== SOFT DELETE ===== */
+window.softDelete=async id=>{
+  await updateDoc(doc(db,"courses","management_course","modules",id),{
+    status:"deleted"
+  });
   loadModules();
 };
 
-/* ♻️ RESET */
-function reset(){ title.value=imageUrl.value=videoUrl.value=""; quill.root.innerHTML=""; quizzes=[]; editingId=null; renderQuizzes(); }
+/* ===== EDIT MODULE ===== */
+window.edit=async id=>{
+  const s=await getDoc(doc(db,"courses","management_course","modules",id));
+  const m=s.data();
+  title.value=m.title;
+  imageUrl.value=m.imageUrl;
+  videoUrl.value=m.videoUrl;
+  quill.root.innerHTML=m.content;
+  quizzes=m.quizzes||[];
+  editingId=id;
+  renderQuizzes();
+};
 
-/* ===================== STUDENT QUIZ SYSTEM ===================== */
-let currentQuizIndex=0;
-let score=0;
-let perQuestionTime=30;
-let remainingTime=perQuestionTime;
-let timerInterval;
-let attemptId;
-const studentId="student123"; // replace with real student id
+/* ===== RESET ===== */
+function reset(){
+  title.value=imageUrl.value=videoUrl.value="";
+  quill.root.innerHTML="";
+  quizzes=[];
+  editingId=null;
+  renderQuizzes();
+}
 
-async function startQuizAttempt(studentId,moduleId){
-  const ref = await addDoc(collection(db,"quiz_attempts"),{
-    studentId,moduleId,startedAt:serverTimestamp(),duration:perQuestionTime*quizzes.length,completed:false
+/* ===== TABS ===== */
+window.showTab=id=>{
+  ["publishedTab","draftTab","binTab"].forEach(t=>{
+    document.getElementById(t).classList.add("hidden");
   });
-  attemptId = ref.id;
-  document.getElementById("quizContainer").classList.remove("hidden");
-  loadQuestion();
-}
-
-function loadQuestion(){
-  const quiz = quizzes[currentQuizIndex];
-  document.getElementById("question").innerText = quiz.question;
-  const optionsDiv = document.getElementById("options");
-  optionsDiv.innerHTML = "";
-  quiz.options.forEach((opt,i)=>{
-    const btn = document.createElement("button");
-    btn.innerText = opt;
-    btn.onclick = ()=>submitAnswer(i);
-    optionsDiv.appendChild(btn);
-  });
-  remainingTime=perQuestionTime;
-  updateTimerUI();
-  clearInterval(timerInterval);
-  timerInterval=setInterval(()=>{
-    remainingTime--;
-    updateTimerUI();
-    if(remainingTime<=0){ clearInterval(timerInterval); submitAnswer(null); }
-  },1000);
-}
-
-function updateTimerUI(){
-  const min=Math.floor(remainingTime/60);
-  const sec=remainingTime%60;
-  document.getElementById("timeLeft").innerText = `${min}:${sec.toString().padStart(2,"0")}`;
-}
-
-function submitAnswer(selectedIndex){
-  const quiz = quizzes[currentQuizIndex];
-  if(selectedIndex!==null && selectedIndex==quiz.answer) score++;
-  currentQuizIndex++;
-  if(currentQuizIndex<quizzes.length) loadQuestion();
-  else finishQuiz();
-}
-
-async function finishQuiz(){
-  const passMark = Math.ceil(quizzes.length*0.6);
-  const passed = score>=passMark;
-  await updateDoc(doc(db,"quiz_attempts",attemptId),{completed:true,score:score});
-  await addDoc(collection(db,"quiz_results"),{studentId,score,passed});
-  if(passed){
-    alert(`You Passed! Score: ${score}/${quizzes.length}`);
-    checkAndGenerateCertificate(studentId);
-  }else{
-    alert(`You Failed! Score: ${score}/${quizzes.length}`);
-  }
-}
-
-/* ===================== CERTIFICATE ===================== */
-async function checkAndGenerateCertificate(studentId){
-  const modulesSnap = await getDocs(query(collection(db,"courses","management_course","modules"),where("status","==","published")));
-  const completedSnap = await getDocs(query(collection(db,"progress"),where("studentId","==",studentId),where("completed","==",true)));
-  if(completedSnap.size!==modulesSnap.size) return;
-  const quizSnap = await getDocs(query(collection(db,"quiz_results"),where("studentId","==",studentId),where("passed","==",true)));
-  if(quizSnap.size!==modulesSnap.size) return;
-  generateCertificate(studentId);
-}
-
-async function generateCertificate(studentId){
-  const student = await getDoc(doc(db,"students",studentId));
-  const name = student.data().name || "Student Name";
-  const canvas = document.getElementById("certCanvas");
-  const ctx = canvas.getContext("2d");
-  const bg = new Image();
-  bg.src = "certificate_template.png"; // replace with your template
-  bg.onload = async ()=>{
-    ctx.drawImage(bg,0,0,canvas.width,canvas.height);
-    ctx.font="48px serif"; ctx.fillStyle="#000"; ctx.textAlign="center";
-    ctx.fillText(name, canvas.width/2,420);
-    ctx.font="24px serif"; ctx.fillText("Food Business Academy", canvas.width/2,500);
-    const blob = await new Promise(res=>canvas.toBlob(res));
-    const ref = storage.ref(`certificates/${studentId}.png`);
-    await ref.put(blob);
-    const url = await ref.getDownloadURL();
-    await addDoc(collection(db,"certificates"),{studentId,issuedAt:serverTimestamp(),certificateUrl:url});
-    document.getElementById("certBtn").style.display="block";
-    document.getElementById("certBtn").onclick = ()=>window.open(url,"_blank");
-    alert("🎉 Certificate Generated Successfully!");
-  };
-}
-
-// Example: startQuizAttempt(studentId,"module123"); // start quiz for testing
+  document.getElementById(id).classList.remove("hidden");
+  document.querySelectorAll(".tabs button")
+    .forEach(b=>b.classList.remove("active"));
+  event.target.classList.add("active");
+};
 </script>
+
 </body>
 </html>
