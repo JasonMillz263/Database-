@@ -13,15 +13,16 @@ body{margin:0;font-family:Poppins;background:#f4f4f4}
 header{background:#111;color:#fff;padding:15px}
 .container{max-width:1200px;margin:auto;padding:20px}
 .panel{background:#fff;padding:20px;border-radius:12px}
-button{padding:8px 14px;border:none;border-radius:6px;cursor:pointer}
+button{padding:8px 14px;border:none;border-radius:6px;cursor:pointer;margin-right:6px}
 .publish{background:#4B0E17;color:#fff}
 .draft{background:#555;color:#fff}
 .delete{background:#e53935;color:#fff}
 .edit{background:#0074D9;color:#fff}
 .module{border:1px solid #ddd;padding:12px;border-radius:8px;margin-top:10px;cursor:grab}
 .quiz{background:#fafafa;padding:6px;border-radius:6px;margin-top:6px}
-input,textarea{width:100%;padding:8px;margin-top:6px}
+input{width:100%;padding:8px;margin-top:6px}
 #editor{height:180px}
+.status{font-size:12px;opacity:.7}
 </style>
 </head>
 
@@ -35,7 +36,8 @@ input,textarea{width:100%;padding:8px;margin-top:6px}
 <div class="panel">
 
 <h3>Course Controls</h3>
-<button onclick="loadModules()">Published</button>
+<button onclick="loadModules('published')">Published Modules</button>
+<button onclick="loadModules('draft')">Draft Modules</button>
 <button onclick="loadRecycleBin()">Recycle Bin</button>
 
 <hr>
@@ -56,11 +58,12 @@ input,textarea{width:100%;padding:8px;margin-top:6px}
 
 <hr>
 
-<button class="publish" onclick="saveModule()">Save Module</button>
+<button class="publish" onclick="saveModule('published')">Publish Module</button>
+<button class="draft" onclick="saveModule('draft')">Save as Draft</button>
 
 <hr>
 
-<h3>Modules (Drag to reorder)</h3>
+<h3>Modules</h3>
 <div id="modulesList"></div>
 
 <hr>
@@ -78,9 +81,8 @@ input,textarea{width:100%;padding:8px;margin-top:6px}
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
   getFirestore, doc, setDoc, getDocs,
-  collection, deleteDoc, serverTimestamp
+  collection, deleteDoc, serverTimestamp, getDoc
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
 const app = initializeApp({
@@ -96,6 +98,7 @@ const COURSE_ID = "management_course";
 let editingModuleId = null;
 let quizzes = [];
 let editingQuizIndex = null;
+let currentView = "published";
 
 onAuthStateChanged(auth,user=>{
   if(!user) location.href="login.html";
@@ -113,13 +116,13 @@ window.addQuiz = ()=>{
   if(editingQuizIndex!==null){
     quizzes[editingQuizIndex]=q;
     editingQuizIndex=null;
-  }else quizzes.push(q);
+  } else quizzes.push(q);
 
   question.value=opt1.value=opt2.value=opt3.value=answer.value="";
 };
 
 /* ================= SAVE MODULE ================= */
-window.saveModule = async ()=>{
+window.saveModule = async status=>{
   const ref = editingModuleId
     ? doc(db,"courses",COURSE_ID,"modules",editingModuleId)
     : doc(collection(db,"courses",COURSE_ID,"modules"));
@@ -130,47 +133,48 @@ window.saveModule = async ()=>{
     videoUrl:videoUrl.value,
     imageUrl:imageUrl.value,
     quizzes,
+    status,
     order:Date.now(),
     updatedAt:serverTimestamp()
   });
 
   resetEditor();
-  loadModules();
+  loadModules(status);
 };
 
 /* ================= LOAD ================= */
-window.loadModules = async ()=>{
+window.loadModules = async status=>{
+  currentView=status;
   modulesList.innerHTML="";
+
   const snap = await getDocs(collection(db,"courses",COURSE_ID,"modules"));
-  snap.forEach(docu=>{
-    const m=docu.data();
+  snap.forEach(d=>{
+    const m=d.data();
+    if(m.status!==status) return;
+
     modulesList.innerHTML+=`
-      <div class="module" data-id="${docu.id}">
+      <div class="module" data-id="${d.id}">
         <strong>${m.title}</strong>
-        <button class="edit" onclick="editModule('${docu.id}')">Edit</button>
-        <button class="delete" onclick="trashModule('${docu.id}')">Delete</button>
+        <div class="status">Status: ${m.status}</div>
+        <button class="edit" onclick="editModule('${d.id}')">Edit</button>
+        <button class="delete" onclick="trashModule('${d.id}')">Delete</button>
       </div>`;
   });
 
-  new Sortable(modulesList,{
-    onEnd:updateOrder
-  });
+  new Sortable(modulesList,{onEnd:updateOrder});
 };
 
 /* ================= EDIT ================= */
 window.editModule = async id=>{
   editingModuleId=id;
-  const snap=await getDocs(collection(db,"courses",COURSE_ID,"modules"));
-  snap.forEach(d=>{
-    if(d.id===id){
-      const m=d.data();
-      moduleTitle.value=m.title;
-      videoUrl.value=m.videoUrl||"";
-      imageUrl.value=m.imageUrl||"";
-      quill.root.innerHTML=m.content;
-      quizzes=m.quizzes||[];
-    }
-  });
+  const snap = await getDoc(doc(db,"courses",COURSE_ID,"modules",id));
+  const m=snap.data();
+
+  moduleTitle.value=m.title;
+  videoUrl.value=m.videoUrl||"";
+  imageUrl.value=m.imageUrl||"";
+  quill.root.innerHTML=m.content;
+  quizzes=m.quizzes||[];
 };
 
 /* ================= ORDER ================= */
@@ -186,16 +190,16 @@ async function updateOrder(){
 
 /* ================= DELETE ================= */
 window.trashModule = async id=>{
-  const ref=doc(db,"courses",COURSE_ID,"modules",id);
-  await setDoc(doc(db,"recycleBin",id),(await getDocs(collection(db,"courses",COURSE_ID,"modules"))).docs.find(d=>d.id===id).data());
-  await deleteDoc(ref);
-  loadModules();
+  const snap = await getDoc(doc(db,"courses",COURSE_ID,"modules",id));
+  await setDoc(doc(db,"recycleBin",id),snap.data());
+  await deleteDoc(doc(db,"courses",COURSE_ID,"modules",id));
+  loadModules(currentView);
 };
 
 /* ================= RECYCLE ================= */
 window.loadRecycleBin = async ()=>{
   recycleList.innerHTML="";
-  const snap=await getDocs(collection(db,"recycleBin"));
+  const snap = await getDocs(collection(db,"recycleBin"));
   snap.forEach(d=>{
     recycleList.innerHTML+=`
       <div class="module">
@@ -206,9 +210,10 @@ window.loadRecycleBin = async ()=>{
 };
 
 window.restore = async id=>{
-  await setDoc(doc(db,"courses",COURSE_ID,"modules",id),(await getDocs(collection(db,"recycleBin"))).docs.find(d=>d.id===id).data());
+  const snap = await getDoc(doc(db,"recycleBin",id));
+  await setDoc(doc(db,"courses",COURSE_ID,"modules",id),snap.data());
   await deleteDoc(doc(db,"recycleBin",id));
-  loadModules();
+  loadModules(currentView);
 };
 
 function resetEditor(){
@@ -220,7 +225,7 @@ function resetEditor(){
   editingModuleId=null;
 }
 
-loadModules();
+loadModules("published");
 </script>
 
 </body>
