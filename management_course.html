@@ -15,29 +15,29 @@
 html,body{margin:0;padding:0;width:100%;overflow-x:hidden}
 body{background:#f4f6fb;font-family:Inter,Segoe UI,sans-serif}
 
-/* Image size fix */
-img{max-width:100%;height:auto;object-fit:contain;display:block;margin:12px auto}
+img{max-width:100%;height:auto;display:block;margin:12px auto}
 
-/* Layout */
-.container{width:100%;padding:12px}
+.container{padding:12px}
 .header{background:linear-gradient(135deg,#5b5fff,#7a7eff);color:#fff;padding:16px;border-radius:16px}
+
 .progress-bar{height:10px;background:rgba(255,255,255,.3);border-radius:10px}
-.progress-fill{height:100%;background:#fff}
+.progress-fill{height:100%;background:#fff;width:0}
 
 .modules{margin-top:16px;display:flex;flex-direction:column;gap:14px}
 .module{background:#fff;border:3px solid #5b5fff;border-radius:16px;padding:14px}
 .locked{opacity:.5}
 
-.quiz-box{margin-top:12px;padding:12px;border:2px dashed #5b5fff;border-radius:12px}
-.quiz-box label{display:block;padding:10px;margin:6px 0;background:#eef2ff;border-radius:10px}
+.lesson-content{margin-top:10px}
 
-button{width:100%;padding:14px;margin-top:10px;border:none;border-radius:12px;background:#5b5fff;color:#fff;font-weight:600}
+.quiz-box{margin-top:12px;padding:12px;border:2px dashed #5b5fff;border-radius:12px}
+
+button{width:100%;padding:14px;margin-top:8px;border:none;border-radius:12px;background:#5b5fff;color:#fff;font-weight:600}
 button:disabled{background:#aaa}
 
+.listen-btn{background:#ffb700;color:#000}
 .pass{color:#16a34a;font-weight:bold}
 .fail{color:#dc2626;font-weight:bold}
-.score-tag{background:#16a34a;color:#fff;padding:4px 10px;border-radius:12px;font-size:13px;margin-left:6px}
-.listen-btn{background:#ffb700;color:#000;font-weight:600;margin-top:8px}
+.score-tag{background:#16a34a;color:#fff;padding:4px 10px;border-radius:12px;font-size:13px}
 </style>
 </head>
 
@@ -53,11 +53,6 @@ button:disabled{background:#aaa}
 
 <div class="modules" id="modules"></div>
 
-<div id="certificateBox" class="module" style="display:none">
-  <h2>🎓 Certificate</h2>
-  <button onclick="generateCertificate()">Generate Certificate</button>
-</div>
-
 </div>
 
 <script>
@@ -66,12 +61,13 @@ firebase.initializeApp({
   authDomain:"students-login-29409.firebaseapp.com",
   projectId:"students-login-29409"
 });
-const auth=firebase.auth();
-const db=firebase.firestore();
 
-const COURSE_ID="management_course";
-const PASS_MARK=60;
-const QUESTION_TIME=20;
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const COURSE_ID = "management_course";
+const PASS_MARK = 60;
+const QUESTION_TIME = 20;
 
 let activeModuleId = null;
 let currentQuiz = [];
@@ -79,211 +75,239 @@ let currentQuestionIndex = 0;
 let currentScore = 0;
 let quizBox = null;
 let quizTimer = null;
+let quizFinished = false;
 
-// Text-to-Speech
 let ttsUtter = null;
-let ttsPaused = false;
 
-/* ===== AUTH ===== */
+/* AUTH */
 auth.onAuthStateChanged(async user=>{
   if(!user) return alert("Login required");
-  studentEmail.innerText=user.email;
-  await initStudent(user);
-  loadModules(user);
-});
+  studentEmail.innerText = user.email;
 
-async function initStudent(user){
-  const ref=db.collection("students").doc(user.uid);
+  const ref = db.collection("students").doc(user.uid);
   if(!(await ref.get()).exists){
     await ref.set({email:user.email,enrolledCourses:{}});
   }
-}
 
-/* ===== LOAD MODULES ===== */
+  loadModules(user);
+});
+
+/* LOAD MODULES */
 async function loadModules(user){
-  const mods=await db.collection("courses").doc(COURSE_ID)
-    .collection("modules").where("status","==","published").get();
+  const modsSnap = await db.collection("courses")
+    .doc(COURSE_ID)
+    .collection("modules")
+    .where("status","==","published")
+    .get();
 
-  const student=(await db.collection("students").doc(user.uid).get()).data();
-  const course=student.enrolledCourses?.[COURSE_ID]||{};
-  const completed=course.completedModules||{};
+  const studentSnap = await db.collection("students").doc(user.uid).get();
+  const data = studentSnap.data() || {};
+  const course = data.enrolledCourses?.[COURSE_ID] || {};
+  const completed = course.completedModules || {};
 
-  modules.innerHTML="";
-  let done = 0;
-  let prevPassed = true;
-  let i = 1;
+  modules.innerHTML = "";
 
-  mods.forEach(doc=>{
-    const m = doc.data(), id = doc.id;
+  let completedCount = 0;
+  let previousPassed = true;
+  let index = 1;
+
+  modsSnap.forEach(doc=>{
+    const m = doc.data();
+    const id = doc.id;
     const passed = completed[id] === true;
-    const locked = !prevPassed;
+    const locked = index > 1 && !previousPassed;
 
-    if(passed) done++;
-    prevPassed = passed || i === 1;
+    if(passed) completedCount++;
+    previousPassed = passed;
 
     const div = document.createElement("div");
     div.className = "module" + (locked ? " locked" : "");
-    div.innerHTML = `<h2>Module ${i}: ${m.title} ${passed?'<span class="score-tag">✓</span>':''}</h2>${m.content}`;
+    div.innerHTML = `
+      <h2>Module ${index}: ${m.title} ${passed?'<span class="score-tag">✓</span>':''}</h2>
+      <div class="lesson-content">${m.content}</div>
+    `;
 
     const box = document.createElement("div");
     box.className = "quiz-box";
 
     if(locked){
       box.innerHTML = "🔒 Complete previous module first";
-    }else if(passed){
+    } else if(passed){
       box.innerHTML = "<span class='pass'>Completed</span>";
-    }else{
+    } else {
       box.innerHTML = `
         <button onclick="startQuiz('${id}', this)">Start Quiz</button>
         <button class="listen-btn" onclick="readAloud(this)">🔊 Listen</button>
-        <button class="listen-btn" onclick="pauseTTS()">⏸ Pause/Resume</button>
+        <button class="listen-btn" onclick="pauseTTS()">⏸ Pause / Resume</button>
+        <button onclick="saveProgress()">💾 Save Progress</button>
       `;
     }
 
     div.appendChild(box);
     modules.appendChild(div);
-    i++;
+    index++;
   });
 
-  updateProgress(done,mods.size);
-  if(done===mods.size) certificateBox.style.display="block";
+  updateProgress(completedCount, modsSnap.size);
 }
 
-/* ===== QUIZ ENGINE ===== */
+/* QUIZ */
 async function startQuiz(moduleId, btn){
   btn.disabled = true;
+  quizFinished = false;
   activeModuleId = moduleId;
-  const snap = await db.collection("courses").doc(COURSE_ID)
-    .collection("modules").doc(moduleId).get();
+
+  const snap = await db.collection("courses")
+    .doc(COURSE_ID)
+    .collection("modules")
+    .doc(moduleId)
+    .get();
+
   currentQuiz = snap.data().quizzes;
   currentQuestionIndex = 0;
   currentScore = 0;
-
   quizBox = btn.closest(".quiz-box");
+
   renderQuestion();
 }
 
 function renderQuestion(){
   clearInterval(quizTimer);
+
+  if(currentQuestionIndex >= currentQuiz.length){
+    finishQuiz();
+    return;
+  }
+
   const q = currentQuiz[currentQuestionIndex];
   let time = QUESTION_TIME;
 
   quizBox.innerHTML = `
     <div class="timer">⏱ ${time}s</div>
-    <p>${q.question}</p>
-    ${q.options.map(o=>`<label><input type="radio" name="ans" value="${o}"> ${o}</label>`).join("")}
+    <p><strong>${q.question}</strong></p>
+    ${q.options.map(o=>`
+      <label><input type="radio" name="ans" value="${o}"> ${o}</label>
+    `).join("")}
     <button id="submitBtn">Submit</button>
   `;
 
   quizTimer = setInterval(()=>{
     time--;
     quizBox.querySelector(".timer").innerText = `⏱ ${time}s`;
-    if(time <= 0) submitAnswer();
+    if(time <= 0){
+      clearInterval(quizTimer);
+      submitAnswer();
+    }
   },1000);
 
   quizBox.querySelector("#submitBtn").onclick = submitAnswer;
 }
 
 function submitAnswer(){
+  if(quizFinished) return;
+
   clearInterval(quizTimer);
+
   const sel = quizBox.querySelector("input[name='ans']:checked");
-  if(sel && sel.value === currentQuiz[currentQuestionIndex].answer) currentScore++;
+  if(sel && sel.value === currentQuiz[currentQuestionIndex].answer){
+    currentScore++;
+  }
+
   currentQuestionIndex++;
+
   if(currentQuestionIndex < currentQuiz.length){
     renderQuestion();
   } else {
+    quizFinished = true;
     finishQuiz();
   }
 }
 
-/* ===== FINISH QUIZ + RETRY ===== */
+/* FINISH QUIZ */
 async function finishQuiz(){
   const percent = Math.round((currentScore / currentQuiz.length) * 100);
   const passed = percent >= PASS_MARK;
 
-  const studentRef = db.collection("students").doc(auth.currentUser.uid);
-  await studentRef.set({
+  const ref = db.collection("students").doc(auth.currentUser.uid);
+  const snap = await ref.get();
+  const data = snap.data() || {};
+  const course = data.enrolledCourses?.[COURSE_ID] || {};
+
+  const completedModules = course.completedModules || {};
+  const quizResults = course.quizResults || {};
+
+  completedModules[activeModuleId] = passed;
+  quizResults[activeModuleId] = {
+    percent,
+    passed,
+    date: firebase.firestore.FieldValue.serverTimestamp()
+  };
+
+  await ref.set({
     enrolledCourses:{
       [COURSE_ID]:{
-        completedModules:{
-          [activeModuleId]: passed ? true : false
-        },
-        quizResults:{
-          [activeModuleId]:{
-            percent,
-            passed,
-            lastAttempt: firebase.firestore.FieldValue.serverTimestamp()
-          }
-        }
+        completedModules,
+        quizResults
       }
     }
-  },{ merge:true });
+  },{merge:true});
 
-  if(passed){
-    quizBox.innerHTML = `<p class="pass">✅ PASSED — ${percent}%</p>`;
-    alert(`PASSED — ${percent}%`);
-  } else {
-    quizBox.innerHTML = `
-      <p class="fail">❌ FAILED — ${percent}%</p>
-      <p><strong>📖 Please review the lesson before retrying.</strong></p>
-      <button onclick="retryQuiz()">Retry Quiz</button>
-    `;
-    alert(`FAILED — ${percent}%`);
-  }
+  quizBox.innerHTML = passed
+    ? `<p class="pass">✅ PASSED — ${percent}%</p>`
+    : `<p class="fail">❌ FAILED — ${percent}%</p>
+       <button onclick="retryQuiz()">Retry Quiz</button>`;
 
   loadModules(auth.currentUser);
 }
 
 function retryQuiz(){
+  quizFinished = false;
   currentQuestionIndex = 0;
   currentScore = 0;
   renderQuestion();
 }
 
-/* ===== TEXT-TO-SPEECH ===== */
-function readAloud(button){
-  const moduleDiv = button.closest(".module");
-  const text = moduleDiv.innerText
-                .replaceAll("Start Quiz","")
-                .replaceAll("Retry Quiz","")
-                .replaceAll("Listen","")
-                .replaceAll("PASSED","")
-                .replaceAll("FAILED","");
+/* TTS */
+function readAloud(btn){
+  const content = btn.closest(".module").querySelector(".lesson-content");
+  if(!content) return;
+
   if(ttsUtter) speechSynthesis.cancel();
-  ttsUtter = new SpeechSynthesisUtterance(text);
-  ttsUtter.rate = 1;
-  ttsUtter.pitch = 1;
+
+  const voices = speechSynthesis.getVoices();
+  const voice = voices.find(v=>v.lang.startsWith("en")) || voices[0];
+
+  ttsUtter = new SpeechSynthesisUtterance(content.innerText);
+  ttsUtter.voice = voice;
+  ttsUtter.rate = 0.95;
+  ttsUtter.pitch = 1.05;
+
   speechSynthesis.speak(ttsUtter);
-  ttsPaused = false;
 }
 
 function pauseTTS(){
-  if(speechSynthesis.speaking && !speechSynthesis.paused){
-    speechSynthesis.pause();
-    ttsPaused = true;
-  } else if(speechSynthesis.paused){
-    speechSynthesis.resume();
-    ttsPaused = false;
-  }
+  if(speechSynthesis.speaking && !speechSynthesis.paused) speechSynthesis.pause();
+  else if(speechSynthesis.paused) speechSynthesis.resume();
 }
 
-/* ===== PROGRESS ===== */
-function updateProgress(d,t){
-  const p = t ? Math.round(d/t*100) : 0;
+/* SAVE PROGRESS */
+async function saveProgress(){
+  await db.collection("students").doc(auth.currentUser.uid).set({
+    enrolledCourses:{
+      [COURSE_ID]:{
+        lastSaved: firebase.firestore.FieldValue.serverTimestamp()
+      }
+    }
+  },{merge:true});
+  alert("Progress saved ✔️");
+}
+
+/* PROGRESS */
+function updateProgress(done,total){
+  const p = total ? Math.round(done/total*100) : 0;
   progressFill.style.width = p+"%";
   progressText.innerText = p+"% Completed";
 }
-
-/* ===== CERTIFICATE ===== */
-function generateCertificate(){
-  alert("Certificate unlocked 🎉");
-}
-
-/* ===== ANTI-CHEAT ===== */
-document.addEventListener("copy",e=>e.preventDefault());
-document.addEventListener("keydown",e=>{
-  if(e.key==="PrintScreen") alert("Screenshots disabled");
-});
 </script>
 </body>
 </html>
