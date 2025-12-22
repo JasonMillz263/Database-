@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin – New Product Development & Management</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+
+<style>
+body{
+  font-family:Segoe UI;
+  background:#f1f5f9;
+  padding:12px;
+  margin:0;
+}
+header{
+  background:#0f766e;
+  color:#fff;
+  padding:16px;
+  border-radius:12px;
+}
+.card{
+  background:#fff;
+  padding:16px;
+  border-radius:12px;
+  margin-top:12px;
+}
+input,button{
+  width:100%;
+  padding:10px;
+  margin:6px 0;
+}
+button{
+  border:none;
+  border-radius:6px;
+  font-weight:bold;
+  cursor:pointer;
+}
+.publish{background:#16a34a;color:#fff}
+.draft{background:#f59e0b}
+.delete{background:#dc2626;color:#fff}
+.quiz{background:#eef2ff;padding:8px;border-radius:6px;margin:5px 0}
+.hidden{display:none}
+
+.tabs{
+  display:flex;
+  gap:8px;
+  margin-top:12px;
+}
+.tabs button{
+  flex:1;
+  background:#e5e7eb;
+}
+.tabs button.active{
+  background:#0f766e;
+  color:#fff;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h2><i class="fa fa-user-shield"></i> Admin – New Product Development & Management</h2>
+  <div id="authStatus">Checking authentication...</div>
+</header>
+
+<div class="card hidden" id="editor">
+  <h3>Module Editor</h3>
+
+  <input id="title" placeholder="Module title">
+  <input id="imageUrl" placeholder="Image URL">
+  <input id="videoUrl" placeholder="Video URL">
+
+  <div id="quill" style="height:200px"></div>
+
+  <h4>Quizzes</h4>
+
+  <input id="q" placeholder="Question">
+  <input id="o1" placeholder="Option 1">
+  <input id="o2" placeholder="Option 2">
+  <input id="o3" placeholder="Option 3">
+  <input id="a" placeholder="Correct answer">
+
+  <button onclick="addQuiz()">Add / Update Quiz</button>
+  <div id="quizList"></div>
+
+  <button class="draft" onclick="saveModule('draft')">Save Draft</button>
+  <button class="publish" onclick="saveModule('published')">Publish</button>
+</div>
+
+<div class="tabs">
+  <button class="active" onclick="showTab('publishedTab')">Published</button>
+  <button onclick="showTab('draftTab')">Drafts</button>
+  <button onclick="showTab('binTab')">Recycle Bin</button>
+</div>
+
+<div class="card" id="publishedTab"></div>
+<div class="card hidden" id="draftTab"></div>
+<div class="card hidden" id="binTab"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import {
+  getFirestore, collection, doc, addDoc, getDocs,
+  updateDoc, getDoc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import {
+  getAuth, signInWithEmailAndPassword, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+  authDomain: "students-login-29409.firebaseapp.com",
+  projectId: "students-login-29409"
+});
+
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+signInWithEmailAndPassword(auth,"ADMIN_EMAIL","ADMIN_PASSWORD");
+
+onAuthStateChanged(auth, async user=>{
+  if(!user) return authStatus.innerText="❌ Not logged in";
+
+  const adminDoc = await getDoc(doc(db,"admins",user.uid));
+  if(!adminDoc.exists())
+    return authStatus.innerText="❌ Not admin";
+
+  authStatus.innerText="✅ Admin authenticated";
+  editor.classList.remove("hidden");
+  loadModules();
+});
+
+const quill = new Quill("#quill",{
+  theme:"snow",
+  modules:{
+    toolbar:[
+      ["bold","italic","underline"],
+      ["image","link"],
+      [{list:"ordered"},{list:"bullet"}]
+    ]
+  }
+});
+
+let quizzes=[], editingQuiz=null, editingId=null;
+
+window.addQuiz=()=>{
+  const quiz={
+    question:q.value,
+    options:[o1.value,o2.value,o3.value],
+    answer:a.value
+  };
+  editingQuiz!==null ? quizzes[editingQuiz]=quiz : quizzes.push(quiz);
+  q.value=o1.value=o2.value=o3.value=a.value="";
+  editingQuiz=null;
+  renderQuizzes();
+};
+
+function renderQuizzes(){
+  quizList.innerHTML="";
+  quizzes.forEach((x,i)=>{
+    quizList.innerHTML+=`
+      <div class="quiz">
+        ${i+1}. ${x.question}
+        <button onclick="editQuiz(${i})">Edit</button>
+        <button onclick="deleteQuiz(${i})">Delete</button>
+      </div>`;
+  });
+}
+
+window.editQuiz=i=>{
+  const x=quizzes[i];
+  q.value=x.question;
+  o1.value=x.options[0];
+  o2.value=x.options[1];
+  o3.value=x.options[2];
+  a.value=x.answer;
+  editingQuiz=i;
+};
+
+window.deleteQuiz=i=>{
+  quizzes.splice(i,1);
+  renderQuizzes();
+};
+
+window.saveModule=async status=>{
+  const ref = collection(
+    db,
+    "courses",
+    "new_product_development_management",
+    "modules"
+  );
+
+  const data={
+    title:title.value,
+    imageUrl:imageUrl.value,
+    videoUrl:videoUrl.value,
+    content:quill.root.innerHTML,
+    quizzes,
+    status,
+    updatedAt:serverTimestamp()
+  };
+
+  editingId
+    ? await updateDoc(doc(ref,editingId),data)
+    : await addDoc(ref,data);
+
+  reset();
+  loadModules();
+};
+
+async function loadModules(){
+  publishedTab.innerHTML=draftTab.innerHTML=binTab.innerHTML="";
+  const snap = await getDocs(
+    collection(db,"courses","new_product_development_management","modules")
+  );
+  snap.forEach(d=>{
+    const m=d.data();
+    const box=`
+      <div class="quiz">
+        <b>${m.title}</b>
+        <button onclick="edit('${d.id}')">Edit</button>
+        <button class="delete" onclick="softDelete('${d.id}')">Delete</button>
+      </div>`;
+    if(m.status==="published") publishedTab.innerHTML+=box;
+    else if(m.status==="draft") draftTab.innerHTML+=box;
+    else binTab.innerHTML+=box;
+  });
+}
+
+window.softDelete=async id=>{
+  await updateDoc(
+    doc(db,"courses","new_product_development_management","modules",id),
+    {status:"deleted"}
+  );
+  loadModules();
+};
+
+window.edit=async id=>{
+  const s=await getDoc(
+    doc(db,"courses","new_product_development_management","modules",id)
+  );
+  const m=s.data();
+  title.value=m.title;
+  imageUrl.value=m.imageUrl;
+  videoUrl.value=m.videoUrl;
+  quill.root.innerHTML=m.content;
+  quizzes=m.quizzes||[];
+  editingId=id;
+  renderQuizzes();
+};
+
+function reset(){
+  title.value=imageUrl.value=videoUrl.value="";
+  quill.root.innerHTML="";
+  quizzes=[];
+  editingId=null;
+  renderQuizzes();
+}
+
+window.showTab=id=>{
+  ["publishedTab","draftTab","binTab"].forEach(t=>{
+    document.getElementById(t).classList.add("hidden");
+  });
+  document.getElementById(id).classList.remove("hidden");
+  document.querySelectorAll(".tabs button")
+    .forEach(b=>b.classList.remove("active"));
+  event.target.classList.add("active");
+};
+</script>
+
+</body>
+</html>
