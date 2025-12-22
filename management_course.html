@@ -10,35 +10,35 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
+/* Reset and Base Styles */
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;width:100%;overflow-x:hidden}
 body{background:#f4f6fb;font-family:Inter,Segoe UI,sans-serif}
-
 img{max-width:100%;height:auto;display:block;margin:12px auto}
-
 .container{padding:12px}
-.header{background:linear-gradient(135deg,#5b5fff,#7a7eff);color:#fff;padding:16px;border-radius:16px}
 
+/* Header and Progress */
+.header{background:linear-gradient(135deg,#5b5fff,#7a7eff);color:#fff;padding:16px;border-radius:16px}
 .progress-bar{height:10px;background:rgba(255,255,255,.3);border-radius:10px}
 .progress-fill{height:100%;background:#fff;width:0}
 
+/* Modules and Lessons */
 .modules{margin-top:16px;display:flex;flex-direction:column;gap:14px}
 .module{background:#fff;border:3px solid #5b5fff;border-radius:16px;padding:14px}
 .locked{opacity:.5}
-
 .lesson-content{margin-top:10px}
-
 .quiz-box{margin-top:12px;padding:12px;border:2px dashed #5b5fff;border-radius:12px}
 
-button{width:100%;padding:14px;margin-top:8px;border:none;border-radius:12px;background:#5b5fff;color:#fff;font-weight:600}
+/* Buttons and Status */
+button{width:100%;padding:14px;margin-top:8px;border:none;border-radius:12px;background:#5b5fff;color:#fff;font-weight:600; cursor:pointer;}
 button:disabled{background:#aaa}
-
 .listen-btn{background:#ffb700;color:#000}
 .pass{color:#16a34a;font-weight:bold}
 .fail{color:#dc2626;font-weight:bold}
 .score-tag{background:#16a34a;color:#fff;padding:4px 10px;border-radius:12px;font-size:13px}
 
-.options-group label{display:block;margin-bottom:6px;cursor:pointer;}
+/* Quiz Options */
+.options-group label{display:block;margin-bottom:6px;cursor:pointer;padding:8px;border:1px solid #ddd;border-radius:8px;}
 .options-group input[type="radio"]{margin-right:8px;}
 </style>
 </head>
@@ -69,18 +69,16 @@ const db = firebase.firestore();
 
 const COURSE_ID = "management_course";
 const PASS_MARK = 60;
-const QUESTION_TIME = 20;
+const QUESTION_TIME = 20; // Timer removed in redesign, but kept as constant for future use
 
 let activeModuleId = null;
 let currentQuiz = [];
 let currentQuestionIndex = 0;
 let currentScore = 0;
 let quizBox = null;
-let quizTimer = null;
-
 let ttsUtter = null;
 
-/* AUTH */
+/* AUTH (UNCHANGED) */
 auth.onAuthStateChanged(async user=>{
   if(!user) return alert("Login required");
   studentEmail.innerText = user.email;
@@ -93,7 +91,7 @@ auth.onAuthStateChanged(async user=>{
   loadModules(user);
 });
 
-/* LOAD MODULES */
+/* LOAD MODULES (UNCHANGED) */
 async function loadModules(user){
   const modsSnap = await db.collection("courses")
     .doc(COURSE_ID)
@@ -152,7 +150,8 @@ async function loadModules(user){
   updateProgress(completedCount, modsSnap.size);
 }
 
-/* QUIZ */
+/* --- REDESIGNED QUIZ SYSTEM START --- */
+
 async function startQuiz(moduleId, btn){
   if (btn) btn.disabled = true;
 
@@ -171,6 +170,7 @@ async function startQuiz(moduleId, btn){
   if (btn) {
     quizBox = btn.closest(".quiz-box");
   } else {
+    // Used by retryQuiz
     quizBox = document.querySelector(`.module:not(.locked) .quiz-box`);
   }
   
@@ -178,78 +178,74 @@ async function startQuiz(moduleId, btn){
     console.error("Quiz box element not found.");
     return;
   }
-
-  renderQuestion();
+  
+  if (currentQuiz && currentQuiz.length > 0) {
+    renderQuestion();
+  } else {
+    quizBox.innerHTML = "<p>No quizzes found for this module.</p>";
+  }
 }
 
 function renderQuestion(){
-  clearInterval(quizTimer);
-
   if(currentQuestionIndex >= currentQuiz.length){
+    // Should be handled by submitAnswer, but as a safety check:
     finishQuiz();
     return;
   }
 
   const q = currentQuiz[currentQuestionIndex];
-  let time = QUESTION_TIME;
+  
+  const isLastQuestion = (currentQuestionIndex === currentQuiz.length - 1);
+  const buttonText = isLastQuestion ? "See My Results" : "Next Question";
 
   quizBox.innerHTML = `
-    <div class="timer">⏱ ${time}s</div>
-    <p><strong>${currentQuestionIndex + 1}. ${q.question}</strong></p>
+    <p>Question ${currentQuestionIndex + 1} of ${currentQuiz.length}</p>
+    <p><strong>${q.question}</strong></p>
     <div class="options-group">
       ${q.options.map((o, i) =>`
-        <label><input type="radio" name="ans" value="${o}" id="opt-${i}"> ${o}</label><br>
+        <label><input type="radio" name="ans" value="${o}" required> ${o}</label>
       `).join("")}
     </div>
-    <button id="submitBtn">Submit Answer</button>
+    <button id="nextBtn">${buttonText}</button>
   `;
 
-  quizTimer = setInterval(()=>{
-    time--;
-    const timerEl = quizBox.querySelector(".timer");
-    if (timerEl) timerEl.innerText = `⏱ ${time}s`;
+  quizBox.querySelector("#nextBtn").onclick = processSubmission;
+}
 
-    if(time <= 0){
-      clearInterval(quizTimer);
-      // Ensure the button is disabled to prevent double submit on timeout
-      const submitBtn = quizBox.querySelector("#submitBtn");
-      if (submitBtn) submitBtn.disabled = true;
-      submitAnswer(); 
+function processSubmission(){
+    const sel = quizBox.querySelector("input[name='ans']:checked");
+    if (!sel) {
+        alert("Please select an answer before proceeding.");
+        return;
     }
-  },1000);
+    
+    // 1. Mark the answer for the current question
+    const studentAnswer = sel.value.trim();
+    const correctAnswer = currentQuiz[currentQuestionIndex].answer.trim() || "";
 
-  quizBox.querySelector("#submitBtn").onclick = submitAnswer;
+    if (studentAnswer === correctAnswer) {
+        currentScore++;
+    }
+
+    // 2. Advance to the next question/stage
+    currentQuestionIndex++;
+
+    if (currentQuestionIndex < currentQuiz.length) {
+        // More questions remain
+        renderQuestion();
+    } else {
+        // Quiz is finished
+        // Display a final "See Results" message and button to clearly separate the action
+        quizBox.innerHTML = `
+            <h3>Quiz Completed!</h3>
+            <p>You have answered all ${currentQuiz.length} questions.</p>
+            <button onclick="finishQuiz()">See My Final Score</button>
+        `;
+    }
 }
 
-function submitAnswer(){
-  // Stop the timer immediately
-  clearInterval(quizTimer); 
-
-  const sel = quizBox.querySelector("input[name='ans']:checked");
-  
-  // Use .trim() to ensure robust matching against the stored answer
-  let studentAnswer = sel ? sel.value.trim() : "";
-  let correctAnswer = currentQuiz[currentQuestionIndex].answer.trim() || "";
-
-  if(studentAnswer === correctAnswer){
-    currentScore++;
-  }
-
-  currentQuestionIndex++;
-
-  if(currentQuestionIndex < currentQuiz.length){
-    // If there are more questions, render the next one
-    renderQuestion();
-  } else {
-    // If all questions are answered, finalize the quiz
-    finishQuiz();
-  }
-}
-
-/* FINISH QUIZ */
+/* FINISH QUIZ (MODIFIED TO RELY ON processSubmission COMPLETION) */
 async function finishQuiz(){
-  clearInterval(quizTimer); 
-
   const percent = Math.round((currentScore / currentQuiz.length) * 100);
   const passed = percent >= PASS_MARK;
   const user = auth.currentUser;
@@ -285,12 +281,12 @@ async function finishQuiz(){
 
   // 2. Display Result in the quiz box
   quizBox.innerHTML = `
-    <p>Quiz Results:</p>
-    <p>Score: <strong>${currentScore} / ${currentQuiz.length}</strong></p>
+    <h3>Results for Module Quiz</h3>
+    <p>Total Score: <strong>${currentScore} / ${currentQuiz.length}</strong></p>
     <p>Percentage: <strong>${percent}%</strong></p>
     ${passed
       ? `<p class="pass">✅ PASSED — Congratulations!</p>`
-      : `<p class="fail">❌ FAILED — Keep trying!</p>
+      : `<p class="fail">❌ FAILED — Keep trying! (Required: ${PASS_MARK}%)</p>
          <button onclick="retryQuiz('${activeModuleId}')">Retry Quiz</button>`
     }
   `;
@@ -306,7 +302,10 @@ function retryQuiz(moduleId){
   startQuiz(moduleId, null); 
 }
 
-/* TTS */
+/* --- REDESIGNED QUIZ SYSTEM END --- */
+
+
+/* TTS (UNCHANGED) */
 function readAloud(btn){
   const content = btn.closest(".module").querySelector(".lesson-content");
   if(!content) return;
@@ -329,7 +328,7 @@ function pauseTTS(){
   else if(speechSynthesis.paused) speechSynthesis.resume();
 }
 
-/* SAVE PROGRESS */
+/* SAVE PROGRESS (UNCHANGED) */
 async function saveProgress(){
   await db.collection("students").doc(auth.currentUser.uid).set({
     enrolledCourses:{
@@ -341,7 +340,7 @@ async function saveProgress(){
   alert("Progress saved ✔️");
 }
 
-/* PROGRESS */
+/* PROGRESS (UNCHANGED) */
 function updateProgress(done,total){
   const p = total ? Math.round(done/total*100) : 0;
   progressFill.style.width = p+"%";
