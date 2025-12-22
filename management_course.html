@@ -80,6 +80,12 @@ button:disabled{background:#aaa}
   font-size:13px;
   margin-left:6px;
 }
+.listen-btn{
+  background:#ffb700;
+  color:#000;
+  font-weight:600;
+  margin-top:8px;
+}
 </style>
 </head>
 
@@ -119,6 +125,7 @@ let quizTimer=null;
 let activeModuleId=null;
 let currentQuiz=[],qIndex=0,score=0;
 
+/* ===== AUTH ===== */
 auth.onAuthStateChanged(async user=>{
   if(!user) return alert("Login required");
   studentEmail.innerText=user.email;
@@ -133,6 +140,7 @@ async function initStudent(user){
   }
 }
 
+/* ===== LOAD MODULES ===== */
 async function loadModules(user){
   const mods=await db.collection("courses").doc(COURSE_ID)
     .collection("modules").where("status","==","published").get();
@@ -142,26 +150,34 @@ async function loadModules(user){
   const completed=course.completedModules||{};
 
   modules.innerHTML="";
-  let done=0,unlock=true,i=1;
+  let done = 0;
+  let prevPassed = true; // first module unlocked
+  let i = 1;
 
   mods.forEach(doc=>{
-    const m=doc.data(),id=doc.id;
-    const passed=completed[id];
-    if(passed) done++; else unlock=false;
+    const m = doc.data(), id = doc.id;
+    const passed = completed[id] === true;
+    const locked = !prevPassed;
 
-    const div=document.createElement("div");
-    div.className="module"+(!unlock&&!passed?" locked":"");
-    div.innerHTML=`<h2>Module ${i}: ${m.title} ${passed?'<span class="score-tag">✓</span>':''}</h2>${m.content}`;
+    if(passed) done++;
+    prevPassed = passed || i === 1;
 
-    const box=document.createElement("div");
-    box.className="quiz-box";
+    const div = document.createElement("div");
+    div.className = "module" + (locked ? " locked" : "");
+    div.innerHTML = `<h2>Module ${i}: ${m.title} ${passed?'<span class="score-tag">✓</span>':''}</h2>${m.content}`;
 
-    if(!unlock&&!passed){
-      box.innerHTML="🔒 Complete previous module first";
+    const box = document.createElement("div");
+    box.className = "quiz-box";
+
+    if(locked){
+      box.innerHTML = "🔒 Complete previous module first";
     }else if(passed){
-      box.innerHTML="<span class='pass'>Completed</span>";
+      box.innerHTML = "<span class='pass'>Completed</span>";
     }else{
-      box.innerHTML=`<button onclick="startQuiz('${id}',this)">Start Quiz</button>`;
+      box.innerHTML = `
+        <button onclick="startQuiz('${id}',this)">Start Quiz</button>
+        <button class="listen-btn" onclick="readAloud(this)">🔊 Listen</button>
+      `;
     }
 
     div.appendChild(box);
@@ -175,23 +191,24 @@ async function loadModules(user){
 
 /* ===== QUIZ ===== */
 async function startQuiz(moduleId,btn){
-  btn.disabled=true;
-  activeModuleId=moduleId;
+  btn.disabled = true;
+  activeModuleId = moduleId;
 
-  const snap=await db.collection("courses").doc(COURSE_ID)
+  const snap = await db.collection("courses").doc(COURSE_ID)
     .collection("modules").doc(moduleId).get();
 
-  currentQuiz=snap.data().quizzes;
-  qIndex=0;score=0;
+  currentQuiz = snap.data().quizzes;
+  qIndex = 0;
+  score = 0;
 
   renderQuestion();
 }
 
 function renderQuestion(){
   clearInterval(quizTimer);
-  const box=document.querySelector(`button[disabled]`).closest(".quiz-box");
-  const q=currentQuiz[qIndex];
-  let time=QUESTION_TIME;
+  const box = document.querySelector(`button[disabled]`).closest(".quiz-box");
+  const q = currentQuiz[qIndex];
+  let time = QUESTION_TIME;
 
   box.innerHTML=`
     <div class="timer">⏱ ${time}s</div>
@@ -208,43 +225,97 @@ function renderQuestion(){
     if(time<=0) submitAnswer();
   },1000);
 
-  document.getElementById("submitBtn").onclick=submitAnswer;
+  document.getElementById("submitBtn").onclick = submitAnswer;
 }
 
 function submitAnswer(){
   clearInterval(quizTimer);
-  const sel=document.querySelector("input[name='ans']:checked");
-  if(sel && sel.value===currentQuiz[qIndex].answer) score++;
+  const sel = document.querySelector("input[name='ans']:checked");
+  if(sel && sel.value === currentQuiz[qIndex].answer) score++;
   qIndex++;
-  qIndex<currentQuiz.length?renderQuestion():finishQuiz();
+  qIndex < currentQuiz.length ? renderQuestion() : finishQuiz();
 }
 
+/* ===== FINISH QUIZ + RETRY LOGIC ===== */
 async function finishQuiz(){
-  const percent=Math.round((score/currentQuiz.length)*100);
-  const passed=percent>=PASS_MARK;
+  const percent = Math.round((score / currentQuiz.length) * 100);
+  const passed = percent >= PASS_MARK;
 
-  await db.collection("students").doc(auth.currentUser.uid).set({
+  const studentRef = db.collection("students").doc(auth.currentUser.uid);
+
+  await studentRef.set({
     enrolledCourses:{
       [COURSE_ID]:{
-        completedModules:{[activeModuleId]:passed},
-        quizResults:{[activeModuleId]:{percent,passed}}
+        completedModules:{
+          [activeModuleId]: passed ? true : false
+        },
+        quizResults:{
+          [activeModuleId]:{
+            percent,
+            passed,
+            lastAttempt: firebase.firestore.FieldValue.serverTimestamp()
+          }
+        }
       }
     }
-  },{merge:true});
+  },{ merge:true });
 
-  alert(`Quiz Completed: ${percent}%`);
+  const box = document.querySelector(".quiz-box");
+
+  if(passed){
+    box.innerHTML = `<p class="pass">✅ PASSED — ${percent}%</p>`;
+    alert(`PASSED — ${percent}%`);
+  }else{
+    box.innerHTML = `
+      <p class="fail">❌ FAILED — ${percent}%</p>
+      <p><strong>📖 Please review the lesson before retrying.</strong></p>
+      <button onclick="retryQuiz()">Retry Quiz</button>
+    `;
+    alert(`FAILED — ${percent}%`);
+  }
+
   loadModules(auth.currentUser);
 }
 
-function updateProgress(d,t){
-  const p=t?Math.round(d/t*100):0;
-  progressFill.style.width=p+"%";
-  progressText.innerText=p+"% Completed";
+function retryQuiz(){
+  qIndex = 0;
+  score = 0;
+  clearInterval(quizTimer);
+  renderQuestion();
 }
 
+/* ===== TEXT-TO-SPEECH ===== */
+function readAloud(button){
+  const moduleDiv = button.closest(".module");
+  const text = moduleDiv.innerText
+                .replace("Listen","")
+                .replace("Start Quiz","")
+                .replace("Retry Quiz","")
+                .replace("PASSED","")
+                .replace("FAILED","");
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.rate = 1;
+  utter.pitch = 1;
+  window.speechSynthesis.speak(utter);
+}
+
+/* ===== PROGRESS ===== */
+function updateProgress(d,t){
+  const p = t ? Math.round(d/t*100) : 0;
+  progressFill.style.width = p+"%";
+  progressText.innerText = p+"% Completed";
+}
+
+/* ===== CERTIFICATE ===== */
 function generateCertificate(){
   alert("Certificate unlocked 🎉");
 }
+
+/* ===== ANTI-CHEAT ===== */
+document.addEventListener("copy",e=>e.preventDefault());
+document.addEventListener("keydown",e=>{
+  if(e.key==="PrintScreen") alert("Screenshots disabled");
+});
 </script>
 </body>
 </html>
