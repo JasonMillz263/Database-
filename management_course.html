@@ -15,77 +15,29 @@
 html,body{margin:0;padding:0;width:100%;overflow-x:hidden}
 body{background:#f4f6fb;font-family:Inter,Segoe UI,sans-serif}
 
-/* 🔥 IMAGE SIZE FIX */
-img{
-  max-width:100%;
-  height:auto;
-  object-fit:contain;
-  display:block;
-  margin:12px auto;
-}
+/* Image size fix */
+img{max-width:100%;height:auto;object-fit:contain;display:block;margin:12px auto}
 
 /* Layout */
 .container{width:100%;padding:12px}
-.header{
-  background:linear-gradient(135deg,#5b5fff,#7a7eff);
-  color:#fff;
-  padding:16px;
-  border-radius:16px;
-}
+.header{background:linear-gradient(135deg,#5b5fff,#7a7eff);color:#fff;padding:16px;border-radius:16px}
 .progress-bar{height:10px;background:rgba(255,255,255,.3);border-radius:10px}
 .progress-fill{height:100%;background:#fff}
 
 .modules{margin-top:16px;display:flex;flex-direction:column;gap:14px}
-.module{
-  background:#fff;
-  border:3px solid #5b5fff;
-  border-radius:16px;
-  padding:14px;
-}
+.module{background:#fff;border:3px solid #5b5fff;border-radius:16px;padding:14px}
 .locked{opacity:.5}
 
-.quiz-box{
-  margin-top:12px;
-  padding:12px;
-  border:2px dashed #5b5fff;
-  border-radius:12px;
-}
-.quiz-box label{
-  display:block;
-  padding:10px;
-  margin:6px 0;
-  background:#eef2ff;
-  border-radius:10px;
-}
+.quiz-box{margin-top:12px;padding:12px;border:2px dashed #5b5fff;border-radius:12px}
+.quiz-box label{display:block;padding:10px;margin:6px 0;background:#eef2ff;border-radius:10px}
 
-button{
-  width:100%;
-  padding:14px;
-  margin-top:10px;
-  border:none;
-  border-radius:12px;
-  background:#5b5fff;
-  color:#fff;
-  font-weight:600;
-}
+button{width:100%;padding:14px;margin-top:10px;border:none;border-radius:12px;background:#5b5fff;color:#fff;font-weight:600}
 button:disabled{background:#aaa}
 
 .pass{color:#16a34a;font-weight:bold}
 .fail{color:#dc2626;font-weight:bold}
-.score-tag{
-  background:#16a34a;
-  color:#fff;
-  padding:4px 10px;
-  border-radius:12px;
-  font-size:13px;
-  margin-left:6px;
-}
-.listen-btn{
-  background:#ffb700;
-  color:#000;
-  font-weight:600;
-  margin-top:8px;
-}
+.score-tag{background:#16a34a;color:#fff;padding:4px 10px;border-radius:12px;font-size:13px;margin-left:6px}
+.listen-btn{background:#ffb700;color:#000;font-weight:600;margin-top:8px}
 </style>
 </head>
 
@@ -121,9 +73,16 @@ const COURSE_ID="management_course";
 const PASS_MARK=60;
 const QUESTION_TIME=20;
 
-let quizTimer=null;
-let activeModuleId=null;
-let currentQuiz=[],qIndex=0,score=0;
+let activeModuleId = null;
+let currentQuiz = [];
+let currentQuestionIndex = 0;
+let currentScore = 0;
+let quizBox = null;
+let quizTimer = null;
+
+// Text-to-Speech
+let ttsUtter = null;
+let ttsPaused = false;
 
 /* ===== AUTH ===== */
 auth.onAuthStateChanged(async user=>{
@@ -151,7 +110,7 @@ async function loadModules(user){
 
   modules.innerHTML="";
   let done = 0;
-  let prevPassed = true; // first module unlocked
+  let prevPassed = true;
   let i = 1;
 
   mods.forEach(doc=>{
@@ -175,8 +134,9 @@ async function loadModules(user){
       box.innerHTML = "<span class='pass'>Completed</span>";
     }else{
       box.innerHTML = `
-        <button onclick="startQuiz('${id}',this)">Start Quiz</button>
+        <button onclick="startQuiz('${id}', this)">Start Quiz</button>
         <button class="listen-btn" onclick="readAloud(this)">🔊 Listen</button>
+        <button class="listen-btn" onclick="pauseTTS()">⏸ Pause/Resume</button>
       `;
     }
 
@@ -189,60 +149,59 @@ async function loadModules(user){
   if(done===mods.size) certificateBox.style.display="block";
 }
 
-/* ===== QUIZ ===== */
-async function startQuiz(moduleId,btn){
+/* ===== QUIZ ENGINE ===== */
+async function startQuiz(moduleId, btn){
   btn.disabled = true;
   activeModuleId = moduleId;
-
   const snap = await db.collection("courses").doc(COURSE_ID)
     .collection("modules").doc(moduleId).get();
-
   currentQuiz = snap.data().quizzes;
-  qIndex = 0;
-  score = 0;
+  currentQuestionIndex = 0;
+  currentScore = 0;
 
+  quizBox = btn.closest(".quiz-box");
   renderQuestion();
 }
 
 function renderQuestion(){
   clearInterval(quizTimer);
-  const box = document.querySelector(`button[disabled]`).closest(".quiz-box");
-  const q = currentQuiz[qIndex];
+  const q = currentQuiz[currentQuestionIndex];
   let time = QUESTION_TIME;
 
-  box.innerHTML=`
+  quizBox.innerHTML = `
     <div class="timer">⏱ ${time}s</div>
     <p>${q.question}</p>
-    ${q.options.map(o=>`
-      <label><input type="radio" name="ans" value="${o}"> ${o}</label>
-    `).join("")}
+    ${q.options.map(o=>`<label><input type="radio" name="ans" value="${o}"> ${o}</label>`).join("")}
     <button id="submitBtn">Submit</button>
   `;
 
-  quizTimer=setInterval(()=>{
+  quizTimer = setInterval(()=>{
     time--;
-    box.querySelector(".timer").innerText=`⏱ ${time}s`;
-    if(time<=0) submitAnswer();
+    quizBox.querySelector(".timer").innerText = `⏱ ${time}s`;
+    if(time <= 0) submitAnswer();
   },1000);
 
-  document.getElementById("submitBtn").onclick = submitAnswer;
+  quizBox.querySelector("#submitBtn").onclick = submitAnswer;
 }
 
 function submitAnswer(){
   clearInterval(quizTimer);
-  const sel = document.querySelector("input[name='ans']:checked");
-  if(sel && sel.value === currentQuiz[qIndex].answer) score++;
-  qIndex++;
-  qIndex < currentQuiz.length ? renderQuestion() : finishQuiz();
+  const sel = quizBox.querySelector("input[name='ans']:checked");
+  if(sel && sel.value === currentQuiz[currentQuestionIndex].answer) currentScore++;
+  currentQuestionIndex++;
+  if(currentQuestionIndex < currentQuiz.length){
+    renderQuestion();
+  } else {
+    finishQuiz();
+  }
 }
 
-/* ===== FINISH QUIZ + RETRY LOGIC ===== */
+/* ===== FINISH QUIZ + RETRY ===== */
 async function finishQuiz(){
-  const percent = Math.round((score / currentQuiz.length) * 100);
+  const percent = Math.round((currentScore / currentQuiz.length) * 100);
   const passed = percent >= PASS_MARK;
 
   const studentRef = db.collection("students").doc(auth.currentUser.uid);
-
   await studentRef.set({
     enrolledCourses:{
       [COURSE_ID]:{
@@ -260,13 +219,11 @@ async function finishQuiz(){
     }
   },{ merge:true });
 
-  const box = document.querySelector(".quiz-box");
-
   if(passed){
-    box.innerHTML = `<p class="pass">✅ PASSED — ${percent}%</p>`;
+    quizBox.innerHTML = `<p class="pass">✅ PASSED — ${percent}%</p>`;
     alert(`PASSED — ${percent}%`);
-  }else{
-    box.innerHTML = `
+  } else {
+    quizBox.innerHTML = `
       <p class="fail">❌ FAILED — ${percent}%</p>
       <p><strong>📖 Please review the lesson before retrying.</strong></p>
       <button onclick="retryQuiz()">Retry Quiz</button>
@@ -278,9 +235,8 @@ async function finishQuiz(){
 }
 
 function retryQuiz(){
-  qIndex = 0;
-  score = 0;
-  clearInterval(quizTimer);
+  currentQuestionIndex = 0;
+  currentScore = 0;
   renderQuestion();
 }
 
@@ -288,15 +244,27 @@ function retryQuiz(){
 function readAloud(button){
   const moduleDiv = button.closest(".module");
   const text = moduleDiv.innerText
-                .replace("Listen","")
-                .replace("Start Quiz","")
-                .replace("Retry Quiz","")
-                .replace("PASSED","")
-                .replace("FAILED","");
-  const utter = new SpeechSynthesisUtterance(text);
-  utter.rate = 1;
-  utter.pitch = 1;
-  window.speechSynthesis.speak(utter);
+                .replaceAll("Start Quiz","")
+                .replaceAll("Retry Quiz","")
+                .replaceAll("Listen","")
+                .replaceAll("PASSED","")
+                .replaceAll("FAILED","");
+  if(ttsUtter) speechSynthesis.cancel();
+  ttsUtter = new SpeechSynthesisUtterance(text);
+  ttsUtter.rate = 1;
+  ttsUtter.pitch = 1;
+  speechSynthesis.speak(ttsUtter);
+  ttsPaused = false;
+}
+
+function pauseTTS(){
+  if(speechSynthesis.speaking && !speechSynthesis.paused){
+    speechSynthesis.pause();
+    ttsPaused = true;
+  } else if(speechSynthesis.paused){
+    speechSynthesis.resume();
+    ttsPaused = false;
+  }
 }
 
 /* ===== PROGRESS ===== */
