@@ -211,6 +211,9 @@ function renderQuestion(){
 
     if(time <= 0){
       clearInterval(quizTimer);
+      // Ensure the button is disabled to prevent double submit on timeout
+      const submitBtn = quizBox.querySelector("#submitBtn");
+      if (submitBtn) submitBtn.disabled = true;
       submitAnswer(); 
     }
   },1000);
@@ -218,17 +221,16 @@ function renderQuestion(){
   quizBox.querySelector("#submitBtn").onclick = submitAnswer;
 }
 
-// *** MODIFIED FUNCTION FOR ROBUST AUTO-MARKING ***
 function submitAnswer(){
+  // Stop the timer immediately
   clearInterval(quizTimer); 
 
   const sel = quizBox.querySelector("input[name='ans']:checked");
   
-  // Use .trim() to remove any invisible leading/trailing whitespace
+  // Use .trim() to ensure robust matching against the stored answer
   let studentAnswer = sel ? sel.value.trim() : "";
   let correctAnswer = currentQuiz[currentQuestionIndex].answer.trim() || "";
 
-  // Check for exact match after trimming whitespace
   if(studentAnswer === correctAnswer){
     currentScore++;
   }
@@ -236,12 +238,13 @@ function submitAnswer(){
   currentQuestionIndex++;
 
   if(currentQuestionIndex < currentQuiz.length){
+    // If there are more questions, render the next one
     renderQuestion();
   } else {
+    // If all questions are answered, finalize the quiz
     finishQuiz();
   }
 }
-// ************************************************
 
 /* FINISH QUIZ */
 async function finishQuiz(){
