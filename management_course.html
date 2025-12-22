@@ -187,6 +187,7 @@ async function startQuiz(moduleId, btn){
 
 function renderQuestion(){
   if(currentQuestionIndex >= currentQuiz.length){
+    // This is a safety check; flow is managed by processSubmission
     finishQuiz();
     return;
   }
@@ -258,7 +259,7 @@ function processSubmission(){
 }
 // ************************************************************************************
 
-/* FINISH QUIZ (UNCHANGED) */
+/* FINISH QUIZ (MODIFIED: REMOVES AUTO-RELOAD) */
 async function finishQuiz(){
   const percent = Math.round((currentScore / currentQuiz.length) * 100);
   const passed = percent >= PASS_MARK;
@@ -283,6 +284,7 @@ async function finishQuiz(){
       score: `${currentScore}/${currentQuiz.length}`
     };
 
+    // Saves result to Firestore (requires correct security rules)
     await ref.set({
       enrolledCourses:{
         [COURSE_ID]:{
@@ -293,20 +295,24 @@ async function finishQuiz(){
     },{merge:true});
   }
 
-  // 2. Display Result in the quiz box
+  // 2. Display Result in the quiz box (PERSISTENT SCREEN)
   quizBox.innerHTML = `
     <h3>Results for Module Quiz</h3>
     <p>Total Score: <strong>${currentScore} / ${currentQuiz.length}</strong></p>
     <p>Percentage: <strong>${percent}%</strong></p>
     ${passed
-      ? `<p class="pass">✅ PASSED — Congratulations!</p>`
+      ? `<p class="pass">✅ PASSED — Congratulations! You can now continue.</p>`
       : `<p class="fail">❌ FAILED — Keep trying! (Required: ${PASS_MARK}%)</p>
          <button onclick="retryQuiz('${activeModuleId}')">Retry Quiz</button>`
     }
+    <button id="continueBtn" style="margin-top: 20px;">Continue to Modules</button>
   `;
 
-  // 3. Reload all modules
-  loadModules(user); 
+  // 3. Set the Continue button to trigger the module reload only when clicked
+  document.getElementById('continueBtn').onclick = () => {
+      // Reload modules which will update the locked/passed status on the main page
+      loadModules(user); 
+  };
 }
 
 function retryQuiz(moduleId){
