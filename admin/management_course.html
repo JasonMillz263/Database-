@@ -79,7 +79,6 @@ button{
   <div id="authStatus">Checking authentication...</div>
 </header>
 
-<!-- ===== MODULE EDITOR ===== -->
 <div class="card hidden" id="editor">
   <h3>Module Editor</h3>
 
@@ -95,7 +94,8 @@ button{
   <input id="o1" placeholder="Option 1">
   <input id="o2" placeholder="Option 2">
   <input id="o3" placeholder="Option 3">
-  <input id="a" placeholder="Correct answer">
+  <input id="o4" placeholder="Option 4">
+  <input id="a" placeholder="Correct answer (Must match one option exactly)">
 
   <button onclick="addQuiz()">Add / Update Quiz</button>
   <div id="quizList"></div>
@@ -104,7 +104,6 @@ button{
   <button class="publish" onclick="saveModule('published')">Publish</button>
 </div>
 
-<!-- ===== TABS ===== -->
 <div class="tabs">
   <button class="active" onclick="showTab('publishedTab')">Published</button>
   <button onclick="showTab('draftTab')">Drafts</button>
@@ -171,7 +170,7 @@ let editingId=null;
 window.addQuiz=()=>{
   const quiz={
     question:q.value,
-    options:[o1.value,o2.value,o3.value],
+    options:[o1.value,o2.value,o3.value,o4.value], 
     answer:a.value
   };
   if(editingQuiz!==null){
@@ -179,7 +178,7 @@ window.addQuiz=()=>{
     editingQuiz=null;
   }else quizzes.push(quiz);
 
-  q.value=o1.value=o2.value=o3.value=a.value="";
+  q.value=o1.value=o2.value=o3.value=o4.value=a.value="";
   renderQuizzes();
 };
 
@@ -190,7 +189,7 @@ function renderQuizzes(){
       <div class="quiz">
         ${i+1}. ${x.question}
         <button onclick="editQuiz(${i})">Edit</button>
-        <button onclick="deleteQuiz(${i})">Delete</button>
+        <button class="delete" onclick="deleteQuiz(${i})">Delete</button>
       </div>`;
   });
 }
@@ -201,6 +200,7 @@ window.editQuiz=i=>{
   o1.value=x.options[0];
   o2.value=x.options[1];
   o3.value=x.options[2];
+  o4.value=x.options[3] || ""; 
   a.value=x.answer;
   editingQuiz=i;
 };
@@ -209,21 +209,24 @@ window.deleteQuiz=i=>{
   renderQuizzes();
 };
 
-/* ===== SAVE MODULE ===== */
+/* ===== SAVE MODULE (MODIFIED) ===== */
 window.saveModule=async status=>{
   const ref=collection(db,"courses","management_course","modules");
+  
+  // CRITICAL CHANGE: Ensure 'quizzes' is explicitly included, even if empty.
   const data={
     title:title.value,
     imageUrl:imageUrl.value,
     videoUrl:videoUrl.value,
     content:quill.root.innerHTML,
-    quizzes,
+    quizzes: quizzes || [], // Ensures the field exists as an array
     status,
     updatedAt:serverTimestamp()
   };
+  
   editingId
     ? await updateDoc(doc(ref,editingId),data)
-    : await addDoc(ref,data);
+    : await addDoc(ref,data); // auto creates a new document with all fields
 
   reset();
   loadModules();
@@ -243,7 +246,7 @@ async function loadModules(){
       </div>`;
     if(m.status==="published") publishedTab.innerHTML+=box;
     else if(m.status==="draft") draftTab.innerHTML+=box;
-    else binTab.innerHTML+=box;
+    else if(m.status==="deleted") binTab.innerHTML+=box;
   });
 }
 
@@ -279,13 +282,23 @@ function reset(){
 
 /* ===== TABS ===== */
 window.showTab=id=>{
-  ["publishedTab","draftTab","binTab"].forEach(t=>{
+  // Get all tab content elements
+  const tabContents = ["publishedTab", "draftTab", "binTab"];
+  tabContents.forEach(t => {
     document.getElementById(t).classList.add("hidden");
   });
+
+  // Show the selected tab content
   document.getElementById(id).classList.remove("hidden");
+
+  // Update active button state
   document.querySelectorAll(".tabs button")
     .forEach(b=>b.classList.remove("active"));
-  event.target.classList.add("active");
+  
+  const clickedButton = event.currentTarget || document.querySelector(`.tabs button[onclick="showTab('${id}')"]`);
+  if (clickedButton) {
+      clickedButton.classList.add("active");
+  }
 };
 </script>
 
