@@ -136,7 +136,6 @@ async function loadModules(user){
     } else if(passed){
       box.innerHTML = "<span class='pass'>Completed</span>";
     } else {
-      // NOTE: Passing the 'id' (moduleId) to startQuiz is crucial
       box.innerHTML = `
         <button onclick="startQuiz('${id}', this)">Start Quiz</button>
         <button class="listen-btn" onclick="readAloud(this)">🔊 Listen</button>
@@ -155,15 +154,12 @@ async function loadModules(user){
 
 /* QUIZ */
 async function startQuiz(moduleId, btn){
-  // Disable the START button (if it exists) to prevent multiple clicks
   if (btn) btn.disabled = true;
 
-  // Set up quiz context
   activeModuleId = moduleId;
   currentQuestionIndex = 0;
   currentScore = 0;
   
-  // Get quiz data
   const snap = await db.collection("courses")
     .doc(COURSE_ID)
     .collection("modules")
@@ -172,15 +168,12 @@ async function startQuiz(moduleId, btn){
 
   currentQuiz = snap.data().quizzes;
   
-  // Find the quiz box for subsequent rendering
   if (btn) {
     quizBox = btn.closest(".quiz-box");
   } else {
-    // If called from retryQuiz, we need to find the specific box again
     quizBox = document.querySelector(`.module:not(.locked) .quiz-box`);
   }
   
-  // Ensure we have a quizBox before continuing
   if (!quizBox) {
     console.error("Quiz box element not found.");
     return;
@@ -218,7 +211,6 @@ function renderQuestion(){
 
     if(time <= 0){
       clearInterval(quizTimer);
-      // Automatically submit the answer
       submitAnswer(); 
     }
   },1000);
@@ -226,33 +218,33 @@ function renderQuestion(){
   quizBox.querySelector("#submitBtn").onclick = submitAnswer;
 }
 
+// *** MODIFIED FUNCTION FOR ROBUST AUTO-MARKING ***
 function submitAnswer(){
-  // Clear timer when an answer is submitted manually or via timeout
   clearInterval(quizTimer); 
 
-  // Check the answer *before* incrementing the index
   const sel = quizBox.querySelector("input[name='ans']:checked");
   
-  // If an option was selected AND it matches the correct answer
-  if(sel && sel.value === currentQuiz[currentQuestionIndex].answer){
+  // Use .trim() to remove any invisible leading/trailing whitespace
+  let studentAnswer = sel ? sel.value.trim() : "";
+  let correctAnswer = currentQuiz[currentQuestionIndex].answer.trim() || "";
+
+  // Check for exact match after trimming whitespace
+  if(studentAnswer === correctAnswer){
     currentScore++;
   }
 
-  // Move to the next question index
   currentQuestionIndex++;
 
   if(currentQuestionIndex < currentQuiz.length){
-    // Still more questions, render the next one
     renderQuestion();
   } else {
-    // All questions answered, finish the quiz
     finishQuiz();
   }
 }
+// ************************************************
 
 /* FINISH QUIZ */
 async function finishQuiz(){
-  // Ensure the timer is stopped
   clearInterval(quizTimer); 
 
   const percent = Math.round((currentScore / currentQuiz.length) * 100);
@@ -269,14 +261,13 @@ async function finishQuiz(){
     const completedModules = course.completedModules || {};
     const quizResults = course.quizResults || {};
 
-    // Only mark as complete in 'completedModules' if they passed
     completedModules[activeModuleId] = passed; 
     
     quizResults[activeModuleId] = {
       percent,
       passed,
       date: firebase.firestore.FieldValue.serverTimestamp(),
-      score: `${currentScore}/${currentQuiz.length}` // Added score info
+      score: `${currentScore}/${currentQuiz.length}`
     };
 
     await ref.set({
@@ -301,17 +292,14 @@ async function finishQuiz(){
     }
   `;
 
-  // 3. Reload all modules to update progress bar and lock status for the next module
+  // 3. Reload all modules
   loadModules(user); 
 }
 
 function retryQuiz(moduleId){
-  // 1. Reset state
   activeModuleId = moduleId;
   currentQuestionIndex = 0;
   currentScore = 0;
-  
-  // 2. Re-start the quiz process. We pass 'null' for the button.
   startQuiz(moduleId, null); 
 }
 
