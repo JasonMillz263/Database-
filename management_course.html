@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Student Course</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -11,75 +11,44 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
-/* ===== RESET & MOBILE BASE ===== */
 *{box-sizing:border-box}
-html,body{
-  margin:0;
-  padding:0;
-  width:100%;
-  overflow-x:hidden;
-}
-body{
-  background:#f4f6fb;
-  font-family:Inter,Segoe UI,sans-serif;
-  user-select:none;
-}
+html,body{margin:0;padding:0;width:100%;overflow-x:hidden}
+body{background:#f4f6fb;font-family:Inter,Segoe UI,sans-serif}
 
-/* ===== LAYOUT ===== */
-.container{
-  width:100%;
+/* 🔥 IMAGE SIZE FIX */
+img{
   max-width:100%;
-  padding:12px;
+  height:auto;
+  object-fit:contain;
+  display:block;
+  margin:12px auto;
 }
 
-/* ===== HEADER ===== */
+/* Layout */
+.container{width:100%;padding:12px}
 .header{
   background:linear-gradient(135deg,#5b5fff,#7a7eff);
   color:#fff;
   padding:16px;
   border-radius:16px;
 }
-.header h2{margin:0 0 6px;font-size:20px}
-.header p{margin:4px 0;font-size:13px}
-
-/* ===== PROGRESS ===== */
-.progress-bar{
-  height:10px;
-  background:rgba(255,255,255,.3);
-  border-radius:10px;
-  margin-top:10px;
-}
+.progress-bar{height:10px;background:rgba(255,255,255,.3);border-radius:10px}
 .progress-fill{height:100%;background:#fff}
 
-/* ===== MODULES ===== */
-.modules{
-  margin-top:16px;
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-}
+.modules{margin-top:16px;display:flex;flex-direction:column;gap:14px}
 .module{
   background:#fff;
   border:3px solid #5b5fff;
   border-radius:16px;
   padding:14px;
 }
-.module h2{
-  font-size:16px;
-  margin:0 0 8px;
-}
 .locked{opacity:.5}
 
-/* ===== QUIZ ===== */
 .quiz-box{
   margin-top:12px;
   padding:12px;
   border:2px dashed #5b5fff;
   border-radius:12px;
-}
-.timer{
-  font-weight:bold;
-  margin-bottom:8px;
 }
 .quiz-box label{
   display:block;
@@ -88,11 +57,7 @@ body{
   background:#eef2ff;
   border-radius:10px;
 }
-.quiz-box input{
-  margin-right:6px;
-}
 
-/* ===== BUTTONS ===== */
 button{
   width:100%;
   padding:14px;
@@ -102,37 +67,29 @@ button{
   background:#5b5fff;
   color:#fff;
   font-weight:600;
-  font-size:15px;
 }
 button:disabled{background:#aaa}
 
-/* ===== STATES ===== */
-.pass{color:#1e8e3e;font-weight:bold}
-.fail{color:#d93025;font-weight:bold}
-
-/* ===== CERTIFICATE ===== */
-#certificateBox{
-  margin-top:16px;
-  border:3px solid #16a34a;
-}
-
-/* ===== TABLET+ ===== */
-@media(min-width:768px){
-  .container{max-width:900px;margin:auto}
-  .module h2{font-size:18px}
+.pass{color:#16a34a;font-weight:bold}
+.fail{color:#dc2626;font-weight:bold}
+.score-tag{
+  background:#16a34a;
+  color:#fff;
+  padding:4px 10px;
+  border-radius:12px;
+  font-size:13px;
+  margin-left:6px;
 }
 </style>
 </head>
 
-<body oncontextmenu="return false">
+<body>
 <div class="container">
 
 <div class="header">
   <h2>Management Course</h2>
   <p id="studentEmail"></p>
-  <div class="progress-bar">
-    <div class="progress-fill" id="progressFill"></div>
-  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
   <p id="progressText">0% Completed</p>
 </div>
 
@@ -146,7 +103,6 @@ button:disabled{background:#aaa}
 </div>
 
 <script>
-/* ===== FIREBASE ===== */
 firebase.initializeApp({
   apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain:"students-login-29409.firebaseapp.com",
@@ -159,7 +115,10 @@ const COURSE_ID="management_course";
 const PASS_MARK=60;
 const QUESTION_TIME=20;
 
-/* ===== AUTH ===== */
+let quizTimer=null;
+let activeModuleId=null;
+let currentQuiz=[],qIndex=0,score=0;
+
 auth.onAuthStateChanged(async user=>{
   if(!user) return alert("Login required");
   studentEmail.innerText=user.email;
@@ -167,7 +126,6 @@ auth.onAuthStateChanged(async user=>{
   loadModules(user);
 });
 
-/* ===== INIT ===== */
 async function initStudent(user){
   const ref=db.collection("students").doc(user.uid);
   if(!(await ref.get()).exists){
@@ -175,45 +133,38 @@ async function initStudent(user){
   }
 }
 
-/* ===== LOAD MODULES ===== */
 async function loadModules(user){
   const mods=await db.collection("courses").doc(COURSE_ID)
     .collection("modules").where("status","==","published").get();
 
-  const studentSnap=await db.collection("students").doc(user.uid).get();
-  const course=studentSnap.data().enrolledCourses?.[COURSE_ID]||{};
+  const student=(await db.collection("students").doc(user.uid).get()).data();
+  const course=student.enrolledCourses?.[COURSE_ID]||{};
   const completed=course.completedModules||{};
 
   modules.innerHTML="";
-  let done=0,i=1;
-  let prevPassed=true;
+  let done=0,unlock=true,i=1;
 
   mods.forEach(doc=>{
     const m=doc.data(),id=doc.id;
-    const isDone=completed[id];
-    const locked=!prevPassed;
-
-    if(isDone) done++;
-    if(!isDone) prevPassed=false;
+    const passed=completed[id];
+    if(passed) done++; else unlock=false;
 
     const div=document.createElement("div");
-    div.className="module"+(locked?" locked":"");
-    div.innerHTML=`<h2>Module ${i}: ${m.title}</h2>${m.content}`;
+    div.className="module"+(!unlock&&!passed?" locked":"");
+    div.innerHTML=`<h2>Module ${i}: ${m.title} ${passed?'<span class="score-tag">✓</span>':''}</h2>${m.content}`;
 
-    if(m.quizzes?.length){
-      const box=document.createElement("div");
-      box.className="quiz-box";
+    const box=document.createElement("div");
+    box.className="quiz-box";
 
-      if(locked){
-        box.innerHTML="🔒 Complete previous module first";
-      }else if(isDone){
-        box.innerHTML="<span class='pass'>Completed</span>";
-      }else{
-        box.innerHTML=`<button onclick="startQuiz('${id}')">Start Quiz</button>`;
-      }
-      div.appendChild(box);
+    if(!unlock&&!passed){
+      box.innerHTML="🔒 Complete previous module first";
+    }else if(passed){
+      box.innerHTML="<span class='pass'>Completed</span>";
+    }else{
+      box.innerHTML=`<button onclick="startQuiz('${id}',this)">Start Quiz</button>`;
     }
 
+    div.appendChild(box);
     modules.appendChild(div);
     i++;
   });
@@ -222,83 +173,78 @@ async function loadModules(user){
   if(done===mods.size) certificateBox.style.display="block";
 }
 
-/* ===== QUIZ ENGINE ===== */
-let currentQuiz=[],qIndex=0,score=0,timer,intUser;
+/* ===== QUIZ ===== */
+async function startQuiz(moduleId,btn){
+  btn.disabled=true;
+  activeModuleId=moduleId;
 
-async function startQuiz(moduleId){
-  intUser=auth.currentUser;
   const snap=await db.collection("courses").doc(COURSE_ID)
     .collection("modules").doc(moduleId).get();
+
   currentQuiz=snap.data().quizzes;
   qIndex=0;score=0;
-  showQuestion(moduleId);
+
+  renderQuestion();
 }
 
-function showQuestion(moduleId){
+function renderQuestion(){
+  clearInterval(quizTimer);
+  const box=document.querySelector(`button[disabled]`).closest(".quiz-box");
   const q=currentQuiz[qIndex];
   let time=QUESTION_TIME;
 
-  const box=document.querySelector(".quiz-box");
   box.innerHTML=`
     <div class="timer">⏱ ${time}s</div>
     <p>${q.question}</p>
     ${q.options.map(o=>`
       <label><input type="radio" name="ans" value="${o}"> ${o}</label>
     `).join("")}
-    <button id="nextBtn">Submit</button>
+    <button id="submitBtn">Submit</button>
   `;
 
-  timer=setInterval(()=>{
+  quizTimer=setInterval(()=>{
     time--;
     box.querySelector(".timer").innerText=`⏱ ${time}s`;
-    if(time<=0) next(moduleId);
+    if(time<=0) submitAnswer();
   },1000);
 
-  document.getElementById("nextBtn").onclick=()=>next(moduleId);
+  document.getElementById("submitBtn").onclick=submitAnswer;
 }
 
-async function next(moduleId){
-  clearInterval(timer);
+function submitAnswer(){
+  clearInterval(quizTimer);
   const sel=document.querySelector("input[name='ans']:checked");
-  if(sel&&sel.value===currentQuiz[qIndex].answer) score++;
+  if(sel && sel.value===currentQuiz[qIndex].answer) score++;
   qIndex++;
-  qIndex<currentQuiz.length?showQuestion(moduleId):finishQuiz(moduleId);
+  qIndex<currentQuiz.length?renderQuestion():finishQuiz();
 }
 
-async function finishQuiz(moduleId){
+async function finishQuiz(){
   const percent=Math.round((score/currentQuiz.length)*100);
   const passed=percent>=PASS_MARK;
 
-  await db.collection("students").doc(intUser.uid).set({
+  await db.collection("students").doc(auth.currentUser.uid).set({
     enrolledCourses:{
       [COURSE_ID]:{
-        completedModules:{[moduleId]:passed},
-        quizResults:{[moduleId]:{percent,passed}}
+        completedModules:{[activeModuleId]:passed},
+        quizResults:{[activeModuleId]:{percent,passed}}
       }
     }
   },{merge:true});
 
-  alert(passed?`PASSED ${percent}%`:`FAILED ${percent}%`);
-  loadModules(intUser);
+  alert(`Quiz Completed: ${percent}%`);
+  loadModules(auth.currentUser);
 }
 
-/* ===== PROGRESS ===== */
 function updateProgress(d,t){
   const p=t?Math.round(d/t*100):0;
   progressFill.style.width=p+"%";
   progressText.innerText=p+"% Completed";
 }
 
-/* ===== CERTIFICATE ===== */
 function generateCertificate(){
-  alert("Certificate unlocked ✔");
+  alert("Certificate unlocked 🎉");
 }
-
-/* ===== ANTI-CHEAT ===== */
-document.addEventListener("copy",e=>e.preventDefault());
-document.addEventListener("keydown",e=>{
-  if(e.key==="PrintScreen") alert("Screenshots disabled");
-});
 </script>
 </body>
 </html>
