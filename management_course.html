@@ -69,7 +69,7 @@ const db = firebase.firestore();
 
 const COURSE_ID = "management_course";
 const PASS_MARK = 60;
-const QUESTION_TIME = 20; // Timer removed in redesign, but kept as constant for future use
+const QUESTION_TIME = 20; 
 
 let activeModuleId = null;
 let currentQuiz = [];
@@ -170,7 +170,6 @@ async function startQuiz(moduleId, btn){
   if (btn) {
     quizBox = btn.closest(".quiz-box");
   } else {
-    // Used by retryQuiz
     quizBox = document.querySelector(`.module:not(.locked) .quiz-box`);
   }
   
@@ -188,7 +187,6 @@ async function startQuiz(moduleId, btn){
 
 function renderQuestion(){
   if(currentQuestionIndex >= currentQuiz.length){
-    // Should be handled by submitAnswer, but as a safety check:
     finishQuiz();
     return;
   }
@@ -212,6 +210,7 @@ function renderQuestion(){
   quizBox.querySelector("#nextBtn").onclick = processSubmission;
 }
 
+// *** FINAL FIX: Aggressively cleans strings for comparison and ensures button works ***
 function processSubmission(){
     const sel = quizBox.querySelector("input[name='ans']:checked");
     if (!sel) {
@@ -219,10 +218,20 @@ function processSubmission(){
         return;
     }
     
-    // 1. Mark the answer for the current question
-    const studentAnswer = sel.value.trim();
-    const correctAnswer = currentQuiz[currentQuestionIndex].answer.trim() || "";
+    // Helper function to clean the string aggressively
+    const cleanString = (str) => {
+        if (!str) return '';
+        // 1. Replace all forms of space/whitespace/non-breaking spaces with a single space.
+        let cleaned = String(str).replace(/\s/g, ' ').replace(/\u00A0/g, ' ').replace(/\s\s+/g, ' ');
+        // 2. Trim final standard whitespace
+        return cleaned.trim();
+    };
 
+    // 1. Mark the answer for the current question
+    const studentAnswer = cleanString(sel.value);
+    const correctAnswer = cleanString(currentQuiz[currentQuestionIndex].answer);
+
+    // Final comparison after aggressive cleaning
     if (studentAnswer === correctAnswer) {
         currentScore++;
     }
@@ -231,20 +240,25 @@ function processSubmission(){
     currentQuestionIndex++;
 
     if (currentQuestionIndex < currentQuiz.length) {
-        // More questions remain
         renderQuestion();
     } else {
-        // Quiz is finished
-        // Display a final "See Results" message and button to clearly separate the action
+        // Quiz is finished - Display final screen
         quizBox.innerHTML = `
             <h3>Quiz Completed!</h3>
             <p>You have answered all ${currentQuiz.length} questions.</p>
-            <button onclick="finishQuiz()">See My Final Score</button>
+            <button id="seeResultsBtn">See My Final Score</button>
         `;
+        
+        // FIX for the button: Attach the handler programmatically
+        const resultsBtn = quizBox.querySelector("#seeResultsBtn");
+        if (resultsBtn) {
+            resultsBtn.onclick = finishQuiz;
+        }
     }
 }
+// ************************************************************************************
 
-/* FINISH QUIZ (MODIFIED TO RELY ON processSubmission COMPLETION) */
+/* FINISH QUIZ (UNCHANGED) */
 async function finishQuiz(){
   const percent = Math.round((currentScore / currentQuiz.length) * 100);
   const passed = percent >= PASS_MARK;
@@ -301,9 +315,6 @@ function retryQuiz(moduleId){
   currentScore = 0;
   startQuiz(moduleId, null); 
 }
-
-/* --- REDESIGNED QUIZ SYSTEM END --- */
-
 
 /* TTS (UNCHANGED) */
 function readAloud(btn){
