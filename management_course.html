@@ -5,7 +5,6 @@
 <title>Student Course</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -17,7 +16,7 @@ body{background:#f4f6fb;font-family:Inter,Segoe UI,sans-serif}
 
 img{max-width:100%;height:auto;display:block;margin:12px auto}
 
-.container{width:100%;padding:12px}
+.container{padding:12px}
 .header{background:linear-gradient(135deg,#5b5fff,#7a7eff);color:#fff;padding:16px;border-radius:16px}
 
 .progress-bar{height:10px;background:rgba(255,255,255,.3);border-radius:10px}
@@ -30,15 +29,17 @@ img{max-width:100%;height:auto;display:block;margin:12px auto}
 .lesson-content{margin-top:10px}
 
 .quiz-box{margin-top:12px;padding:12px;border:2px dashed #5b5fff;border-radius:12px}
-.quiz-box label{display:block;padding:10px;margin:6px 0;background:#eef2ff;border-radius:10px}
 
-button{width:100%;padding:14px;margin-top:10px;border:none;border-radius:12px;background:#5b5fff;color:#fff;font-weight:600}
+button{width:100%;padding:14px;margin-top:8px;border:none;border-radius:12px;background:#5b5fff;color:#fff;font-weight:600}
 button:disabled{background:#aaa}
 
+.listen-btn{background:#ffb700;color:#000}
 .pass{color:#16a34a;font-weight:bold}
 .fail{color:#dc2626;font-weight:bold}
-.score-tag{background:#16a34a;color:#fff;padding:4px 10px;border-radius:12px;font-size:13px;margin-left:6px}
-.listen-btn{background:#ffb700;color:#000;font-weight:600;margin-top:8px}
+.score-tag{background:#16a34a;color:#fff;padding:4px 10px;border-radius:12px;font-size:13px}
+
+.options-group label{display:block;margin-bottom:6px;cursor:pointer;}
+.options-group input[type="radio"]{margin-right:8px;}
 </style>
 </head>
 
@@ -48,9 +49,7 @@ button:disabled{background:#aaa}
 <div class="header">
   <h2>Management Course</h2>
   <p id="studentEmail"></p>
-  <div class="progress-bar">
-    <div class="progress-fill" id="progressFill"></div>
-  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
   <p id="progressText">0% Completed</p>
 </div>
 
@@ -65,29 +64,28 @@ firebase.initializeApp({
   projectId:"students-login-29409"
 });
 
-const auth=firebase.auth();
-const db=firebase.firestore();
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-const COURSE_ID="management_course";
-const PASS_MARK=60;
-const QUESTION_TIME=20;
+const COURSE_ID = "management_course";
+const PASS_MARK = 60;
+const QUESTION_TIME = 20;
 
-/* QUIZ STATE */
-let quizState="idle";
-let allowSubmit=true;
-let quizTimer=null;
-let quizBox=null;
-let currentQuiz=[];
-let currentQuestionIndex=0;
-let currentScore=0;
-let activeModuleId=null;
+let activeModuleId = null;
+let currentQuiz = [];
+let currentQuestionIndex = 0;
+let currentScore = 0;
+let quizBox = null;
+let quizTimer = null;
+
+let ttsUtter = null;
 
 /* AUTH */
 auth.onAuthStateChanged(async user=>{
   if(!user) return alert("Login required");
-  studentEmail.innerText=user.email;
+  studentEmail.innerText = user.email;
 
-  const ref=db.collection("students").doc(user.uid);
+  const ref = db.collection("students").doc(user.uid);
   if(!(await ref.get()).exists){
     await ref.set({email:user.email,enrolledCourses:{}});
   }
@@ -97,179 +95,266 @@ auth.onAuthStateChanged(async user=>{
 
 /* LOAD MODULES */
 async function loadModules(user){
-  const mods=await db.collection("courses")
+  const modsSnap = await db.collection("courses")
     .doc(COURSE_ID)
     .collection("modules")
     .where("status","==","published")
     .get();
 
-  const student=await db.collection("students").doc(user.uid).get();
-  const course=student.data()?.enrolledCourses?.[COURSE_ID]||{};
-  const completed=course.completedModules||{};
+  const studentSnap = await db.collection("students").doc(user.uid).get();
+  const data = studentSnap.data() || {};
+  const course = data.enrolledCourses?.[COURSE_ID] || {};
+  const completed = course.completedModules || {};
 
-  modules.innerHTML="";
-  let done=0;
-  let prevPassed=true;
-  let i=1;
+  modules.innerHTML = "";
 
-  mods.forEach(doc=>{
-    const m=doc.data(),id=doc.id;
-    const passed=completed[id]===true;
-    const locked=i>1 && !prevPassed;
+  let completedCount = 0;
+  let previousPassed = true;
+  let index = 1;
 
-    if(passed) done++;
-    prevPassed=passed;
+  modsSnap.forEach(doc=>{
+    const m = doc.data();
+    const id = doc.id;
+    const passed = completed[id] === true;
+    const locked = index > 1 && !previousPassed;
 
-    const div=document.createElement("div");
-    div.className="module"+(locked?" locked":"");
-    div.innerHTML=`
-      <h2>Module ${i}: ${m.title} ${passed?'<span class="score-tag">✓</span>':''}</h2>
+    if(passed) completedCount++;
+    previousPassed = passed;
+
+    const div = document.createElement("div");
+    div.className = "module" + (locked ? " locked" : "");
+    div.innerHTML = `
+      <h2>Module ${index}: ${m.title} ${passed?'<span class="score-tag">✓</span>':''}</h2>
       <div class="lesson-content">${m.content}</div>
     `;
 
-    const box=document.createElement("div");
-    box.className="quiz-box";
+    const box = document.createElement("div");
+    box.className = "quiz-box";
 
     if(locked){
-      box.innerHTML="🔒 Complete previous module first";
-    }else if(passed){
-      box.innerHTML="<span class='pass'>Completed</span>";
-    }else{
-      box.innerHTML=`
-        <button onclick="startQuiz('${id}',this)">Start Quiz</button>
+      box.innerHTML = "🔒 Complete previous module first";
+    } else if(passed){
+      box.innerHTML = "<span class='pass'>Completed</span>";
+    } else {
+      // NOTE: Passing the 'id' (moduleId) to startQuiz is crucial
+      box.innerHTML = `
+        <button onclick="startQuiz('${id}', this)">Start Quiz</button>
+        <button class="listen-btn" onclick="readAloud(this)">🔊 Listen</button>
+        <button class="listen-btn" onclick="pauseTTS()">⏸ Pause / Resume</button>
+        <button onclick="saveProgress()">💾 Save Progress</button>
       `;
     }
 
     div.appendChild(box);
     modules.appendChild(div);
-    i++;
+    index++;
   });
 
-  updateProgress(done,mods.size);
+  updateProgress(completedCount, modsSnap.size);
 }
 
-/* START QUIZ */
-async function startQuiz(moduleId,btn){
-  btn.disabled=true;
-  quizState="running";
-  allowSubmit=true;
+/* QUIZ */
+async function startQuiz(moduleId, btn){
+  // Disable the START button (if it exists) to prevent multiple clicks
+  if (btn) btn.disabled = true;
 
-  activeModuleId=moduleId;
-  currentQuestionIndex=0;
-  currentScore=0;
-
-  const snap=await db.collection("courses")
+  // Set up quiz context
+  activeModuleId = moduleId;
+  currentQuestionIndex = 0;
+  currentScore = 0;
+  
+  // Get quiz data
+  const snap = await db.collection("courses")
     .doc(COURSE_ID)
     .collection("modules")
     .doc(moduleId)
     .get();
 
-  currentQuiz=snap.data().quizzes;
-  quizBox=btn.closest(".quiz-box");
-
-  showNextQuestion();
-}
-
-/* SHOW QUESTION */
-function showNextQuestion(){
-  clearInterval(quizTimer);
-
-  if(currentQuestionIndex>=currentQuiz.length){
-    markQuiz();
+  currentQuiz = snap.data().quizzes;
+  
+  // Find the quiz box for subsequent rendering
+  if (btn) {
+    quizBox = btn.closest(".quiz-box");
+  } else {
+    // If called from retryQuiz, we need to find the specific box again
+    quizBox = document.querySelector(`.module:not(.locked) .quiz-box`);
+  }
+  
+  // Ensure we have a quizBox before continuing
+  if (!quizBox) {
+    console.error("Quiz box element not found.");
     return;
   }
 
-  allowSubmit=true;
-  let time=QUESTION_TIME;
-  const q=currentQuiz[currentQuestionIndex];
+  renderQuestion();
+}
 
-  quizBox.innerHTML=`
+function renderQuestion(){
+  clearInterval(quizTimer);
+
+  if(currentQuestionIndex >= currentQuiz.length){
+    finishQuiz();
+    return;
+  }
+
+  const q = currentQuiz[currentQuestionIndex];
+  let time = QUESTION_TIME;
+
+  quizBox.innerHTML = `
     <div class="timer">⏱ ${time}s</div>
-    <p><strong>${q.question}</strong></p>
-    ${q.options.map(o=>`
-      <label>
-        <input type="radio" name="ans" value="${o}"> ${o}
-      </label>
-    `).join("")}
-    <button id="submitBtn">Submit</button>
+    <p><strong>${currentQuestionIndex + 1}. ${q.question}</strong></p>
+    <div class="options-group">
+      ${q.options.map((o, i) =>`
+        <label><input type="radio" name="ans" value="${o}" id="opt-${i}"> ${o}</label><br>
+      `).join("")}
+    </div>
+    <button id="submitBtn">Submit Answer</button>
   `;
 
-  quizTimer=setInterval(()=>{
+  quizTimer = setInterval(()=>{
     time--;
-    const t=quizBox.querySelector(".timer");
-    if(t) t.innerText=`⏱ ${time}s`;
-    if(time<=0){
+    const timerEl = quizBox.querySelector(".timer");
+    if (timerEl) timerEl.innerText = `⏱ ${time}s`;
+
+    if(time <= 0){
       clearInterval(quizTimer);
-      handleAnswer();
+      // Automatically submit the answer
+      submitAnswer(); 
     }
   },1000);
 
-  quizBox.querySelector("#submitBtn").onclick=handleAnswer;
+  quizBox.querySelector("#submitBtn").onclick = submitAnswer;
 }
 
-/* HANDLE ANSWER */
-function handleAnswer(){
-  if(!allowSubmit || quizState!=="running") return;
-  allowSubmit=false;
-  clearInterval(quizTimer);
+function submitAnswer(){
+  // Clear timer when an answer is submitted manually or via timeout
+  clearInterval(quizTimer); 
 
-  const sel=quizBox.querySelector("input[name='ans']:checked");
-  if(sel && sel.value===currentQuiz[currentQuestionIndex].answer){
+  // Check the answer *before* incrementing the index
+  const sel = quizBox.querySelector("input[name='ans']:checked");
+  
+  // If an option was selected AND it matches the correct answer
+  if(sel && sel.value === currentQuiz[currentQuestionIndex].answer){
     currentScore++;
   }
 
+  // Move to the next question index
   currentQuestionIndex++;
-  setTimeout(showNextQuestion,50);
+
+  if(currentQuestionIndex < currentQuiz.length){
+    // Still more questions, render the next one
+    renderQuestion();
+  } else {
+    // All questions answered, finish the quiz
+    finishQuiz();
+  }
 }
 
-/* MARK QUIZ */
-async function markQuiz(){
-  quizState="finished";
-  clearInterval(quizTimer);
+/* FINISH QUIZ */
+async function finishQuiz(){
+  // Ensure the timer is stopped
+  clearInterval(quizTimer); 
 
-  const percent=Math.round((currentScore/currentQuiz.length)*100);
-  const passed=percent>=PASS_MARK;
+  const percent = Math.round((currentScore / currentQuiz.length) * 100);
+  const passed = percent >= PASS_MARK;
+  const user = auth.currentUser;
 
-  const ref=db.collection("students").doc(auth.currentUser.uid);
-  const snap=await ref.get();
-  const data=snap.data()||{};
-  const course=data.enrolledCourses?.[COURSE_ID]||{};
-  const completed=course.completedModules||{};
-  const results=course.quizResults||{};
+  // 1. Update Firestore
+  if (user) {
+    const ref = db.collection("students").doc(user.uid);
+    const snap = await ref.get();
+    const data = snap.data() || {};
+    const course = data.enrolledCourses?.[COURSE_ID] || {};
 
-  completed[activeModuleId]=passed;
-  results[activeModuleId]={percent,passed};
+    const completedModules = course.completedModules || {};
+    const quizResults = course.quizResults || {};
 
-  await ref.set({
+    // Only mark as complete in 'completedModules' if they passed
+    completedModules[activeModuleId] = passed; 
+    
+    quizResults[activeModuleId] = {
+      percent,
+      passed,
+      date: firebase.firestore.FieldValue.serverTimestamp(),
+      score: `${currentScore}/${currentQuiz.length}` // Added score info
+    };
+
+    await ref.set({
+      enrolledCourses:{
+        [COURSE_ID]:{
+          completedModules,
+          quizResults
+        }
+      }
+    },{merge:true});
+  }
+
+  // 2. Display Result in the quiz box
+  quizBox.innerHTML = `
+    <p>Quiz Results:</p>
+    <p>Score: <strong>${currentScore} / ${currentQuiz.length}</strong></p>
+    <p>Percentage: <strong>${percent}%</strong></p>
+    ${passed
+      ? `<p class="pass">✅ PASSED — Congratulations!</p>`
+      : `<p class="fail">❌ FAILED — Keep trying!</p>
+         <button onclick="retryQuiz('${activeModuleId}')">Retry Quiz</button>`
+    }
+  `;
+
+  // 3. Reload all modules to update progress bar and lock status for the next module
+  loadModules(user); 
+}
+
+function retryQuiz(moduleId){
+  // 1. Reset state
+  activeModuleId = moduleId;
+  currentQuestionIndex = 0;
+  currentScore = 0;
+  
+  // 2. Re-start the quiz process. We pass 'null' for the button.
+  startQuiz(moduleId, null); 
+}
+
+/* TTS */
+function readAloud(btn){
+  const content = btn.closest(".module").querySelector(".lesson-content");
+  if(!content) return;
+
+  if(ttsUtter) speechSynthesis.cancel();
+
+  const voices = speechSynthesis.getVoices();
+  const voice = voices.find(v=>v.lang.startsWith("en")) || voices[0];
+
+  ttsUtter = new SpeechSynthesisUtterance(content.innerText);
+  ttsUtter.voice = voice;
+  ttsUtter.rate = 0.95;
+  ttsUtter.pitch = 1.05;
+
+  speechSynthesis.speak(ttsUtter);
+}
+
+function pauseTTS(){
+  if(speechSynthesis.speaking && !speechSynthesis.paused) speechSynthesis.pause();
+  else if(speechSynthesis.paused) speechSynthesis.resume();
+}
+
+/* SAVE PROGRESS */
+async function saveProgress(){
+  await db.collection("students").doc(auth.currentUser.uid).set({
     enrolledCourses:{
       [COURSE_ID]:{
-        completedModules:completed,
-        quizResults:results
+        lastSaved: firebase.firestore.FieldValue.serverTimestamp()
       }
     }
   },{merge:true});
-
-  quizBox.innerHTML=passed
-    ? `<p class="pass">✅ PASSED — ${percent}%</p>`
-    : `<p class="fail">❌ FAILED — ${percent}%</p>
-       <button onclick="retryQuiz()">Retry Quiz</button>`;
-
-  loadModules(auth.currentUser);
-}
-
-/* RETRY */
-function retryQuiz(){
-  quizState="running";
-  currentQuestionIndex=0;
-  currentScore=0;
-  showNextQuestion();
+  alert("Progress saved ✔️");
 }
 
 /* PROGRESS */
-function updateProgress(d,t){
-  const p=t?Math.round(d/t*100):0;
-  progressFill.style.width=p+"%";
-  progressText.innerText=p+"% Completed";
+function updateProgress(done,total){
+  const p = total ? Math.round(done/total*100) : 0;
+  progressFill.style.width = p+"%";
+  progressText.innerText = p+"% Completed";
 }
 </script>
 </body>
