@@ -90,6 +90,19 @@ button:disabled{background:#aaa}
 }
 
 .cert-logos img{height:60px}
+
+input{
+  width:calc(50% - 8px);
+  padding:12px;
+  margin:4px;
+  border-radius:8px;
+  border:1px solid #ccc;
+}
+
+.certificate-box button{
+  width:100%;
+  margin-top:12px;
+}
 </style>
 </head>
 
@@ -123,9 +136,9 @@ button:disabled{background:#aaa}
   <input id="lname" placeholder="Surname">
   <button onclick="generateCertificate()">Generate Certificate</button>
 
-  <div id="certificate" class="certificate" style="display:none">
+  <div id="certificate" class="certificate" style="display:none;">
     <div class="cert-logos">
-      <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjxMsFTTcGbD2cXWdxIuETewXRpnOyFdmg6EyFu4z7veTIxf5dWbjRYvV-w8CYzay30IX9kkgbfwzgPkjQf64XZGTkmOTzak6LnjOgCL1o4kBvwZl0TRlH1bAS_KhsHCA9_5PsgppQQs9A2DR-ynbj3-DwfYS1gxCYzhRGVOliLI2BQs0s9PG3_oa4yzXjj/s1600/Lumii_20251221_225044758.png">
+      <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjxMsFTTcGbD2cXWdxIuETewXRpnOyFdmg6EyFu4z7veTIxf5dWbjRYvW8CYzay30IX9kkgbfwzgPkjQf64XZGTkmOTzak6LnjOgCL1o4kBvwZl0TRlH1bAS_KhsHCA9_5PsgppQQs9A2DR-ynbj3-DwfYS1gxCYzhRGVOliLI2BQs0s9PG3_oa4yzXjj/s1600/Lumii_20251221_225044758.png">
       <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhnNFRpSiba0ztBBehfuW2MWV7LjXfqoVWvjiHT_gLRNgmSSOQv74I5h9gVCyAF4RBjpeMbAYKSfmhpyE2v2ihNRlt4rC63vA0KIdHH0ZEkidtlm37CLrNV0Ty_vBfvQgRnfCmsGycBGwCE_sNedqdNStWhLbntzKfIVx6RFkNU6YIyRBplI0S-NODhKRNa/s1600/IMG-20251223-WA0001.jpg">
     </div>
 
@@ -148,51 +161,201 @@ firebase.initializeApp({
   projectId:"students-login-29409"
 });
 
-const auth=firebase.auth();
-const db=firebase.firestore();
-const COURSE_ID="management_course";
-const PASS_MARK=60;
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const COURSE_ID = "management_course";
+const PASS_MARK = 60;
+const QUESTION_TIME = 20;
+
+let activeModuleId=null;
+let currentQuiz=[];
+let currentQuestionIndex=0;
+let currentScore=0;
+let quizBox=null;
+let quizTimer=null;
+let timeLeft=QUESTION_TIME;
 
 auth.onAuthStateChanged(async user=>{
   if(!user) return alert("Login required");
+
   studentEmail.innerText=user.email;
   studentId.innerText=user.uid;
+
+  const ref=db.collection("students").doc(user.uid);
+  if(!(await ref.get()).exists){
+    await ref.set({email:user.email,enrolledCourses:{}});
+  }
   loadModules(user);
 });
 
 async function loadModules(user){
   const modsSnap=await db.collection("courses")
-    .doc(COURSE_ID).collection("modules")
-    .where("status","==","published").get();
+    .doc(COURSE_ID)
+    .collection("modules")
+    .where("status","==","published")
+    .get();
 
   const snap=await db.collection("students").doc(user.uid).get();
   const completed=snap.data()?.enrolledCourses?.[COURSE_ID]?.completedModules||{};
 
   modules.innerHTML="";
-  let done=0,index=1,prev=true;
+  let done=0,prev=true,index=1;
 
   modsSnap.forEach(doc=>{
-    const passed=completed[doc.id]===true;
+    const m=doc.data(),id=doc.id;
+    const passed=completed[id]===true;
     if(passed) done++;
+    const locked=index>1&&!prev;
     prev=passed;
 
     const div=document.createElement("div");
-    div.className="module";
-    div.innerHTML=`<h3>Module ${index}: ${doc.data().title} ${passed?'✓':''}</h3>`;
+    div.className="module"+(locked?" locked":"");
+    div.innerHTML=`
+      <h3>Module ${index}: ${m.title} ${passed?'<span class="score-tag">✓</span>':''}</h3>
+      <div class="lesson-content">${m.content}</div>
+    `;
+
+    const box=document.createElement("div");
+    box.className="quiz-box";
+
+    if(locked){
+      box.innerHTML="🔒 Complete previous module first";
+    }else if(passed){
+      box.innerHTML="<span class='pass'>Completed</span>";
+    }else{
+      box.innerHTML=`<button onclick="startQuiz('${id}',this)">Start Quiz</button>`;
+    }
+
+    div.appendChild(box);
     modules.appendChild(div);
     index++;
   });
 
   updateProgress(done,modsSnap.size);
-  if(done===modsSnap.size && modsSnap.size>0){
-    document.getElementById("certificateBox").style.display="block";
+  checkCertificateEligibility();
+}
+
+async function startQuiz(moduleId,btn){
+  btn.disabled=true;
+  activeModuleId=moduleId;
+  currentQuestionIndex=0;
+  currentScore=0;
+
+  const snap=await db.collection("courses")
+    .doc(COURSE_ID).collection("modules")
+    .doc(moduleId).get();
+
+  currentQuiz=snap.data().quizzes;
+  quizBox=btn.closest(".quiz-box");
+
+  const moduleDiv=quizBox.closest(".module");
+  moduleDiv.querySelector(".lesson-content").style.display="none"; 
+
+  clearInterval(quizTimer);
+  timeLeft=QUESTION_TIME;
+
+  quizTimer=setInterval(()=>{
+    timeLeft--;
+    const t=document.getElementById("timeLeft");
+    if(t) t.innerText=timeLeft;
+    if(timeLeft<=0){
+      clearInterval(quizTimer);
+      finishQuiz(); 
+    }
+  },1000);
+
+  renderQuestion();
+}
+
+function renderQuestion(){
+  const q=currentQuiz[currentQuestionIndex];
+  const isLast=currentQuestionIndex===currentQuiz.length-1;
+
+  quizBox.innerHTML=`
+    <div class="timer">⏱ <span id="timeLeft">${timeLeft}</span>s</div>
+    <p><strong>${q.question}</strong></p>
+    <div class="options-group">
+      ${q.options.map(o=>`
+        <label><input type="radio" name="ans" value="${o}"> ${o}</label>
+      `).join("")}
+    </div>
+    <button onclick="processSubmission()">${isLast?"Finish Quiz":"Next Question"}</button>
+  `;
+}
+
+function processSubmission(){
+  const sel=quizBox.querySelector("input[name='ans']:checked");
+  if(!sel) return alert("Select an answer");
+
+  const clean=s=>String(s).replace(/\s+/g," ").trim();
+  if(clean(sel.value)===clean(currentQuiz[currentQuestionIndex].answer)){
+    currentScore++;
+  }
+
+  currentQuestionIndex++;
+  
+  if(currentQuestionIndex<currentQuiz.length){
+    renderQuestion();
+  }else{
+    clearInterval(quizTimer); 
+    quizBox.innerHTML=`
+      <h3>Quiz Completed!</h3>
+      <p>Processing results...</p>
+    `;
+    finishQuiz(); 
   }
 }
 
+async function finishQuiz(){
+  clearInterval(quizTimer); 
+
+  const percent=Math.round((currentScore/currentQuiz.length)*100);
+  const passed=percent>=PASS_MARK;
+
+  const user = auth.currentUser;
+
+  if (user) {
+      const ref=db.collection("students").doc(user.uid);
+      try {
+          await ref.set({
+            enrolledCourses:{
+              [COURSE_ID]:{
+                completedModules:{[activeModuleId]:passed}
+              }
+            }
+          },{merge:true});
+      } catch (e) {
+          console.error("Failed to save progress:", e);
+      }
+  }
+
+  quizBox.innerHTML=`
+    <h3>Results</h3>
+    <p>Total Score: <strong>${currentScore}/${currentQuiz.length}</strong> (${percent}%)</p>
+    ${passed?'<p class="pass">✅ PASSED</p>':'<p class="fail">❌ FAILED</p>'}
+    <button onclick="loadModules(auth.currentUser)">Continue</button>
+  `;
+
+  const moduleDiv=quizBox.closest(".module");
+  if (moduleDiv) moduleDiv.querySelector(".lesson-content").style.display="block";
+}
+
 function updateProgress(done,total){
-  const p=Math.round(done/total*100);
+  const p=total?Math.round(done/total*100):0;
   progressFill.style.width=p+"%";
   progressText.innerText=p+"% Completed";
+}
+
+function checkCertificateEligibility(){
+  const modulesDivs=document.querySelectorAll(".module");
+  let completed=0;
+  modulesDivs.forEach(m=>{
+    if(m.querySelector(".pass")) completed++;
+  });
+  if(completed===modulesDivs.length && modulesDivs.length>0){
+    document.getElementById("certificateBox").style.display="block";
+  }
 }
 
 function generateCertificate(){
