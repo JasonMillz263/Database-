@@ -15,13 +15,10 @@ html,body{margin:0;padding:0;width:100%;overflow-x:hidden}
 body{background:#f4f6fb;font-family:Inter,Segoe UI,sans-serif}
 
 .container{padding:12px}
-
 img{max-width:100%;height:auto}
 
-/* FIXED IMAGE OVERFLOW */
 .lesson-content img{
   max-width:100%;
-  height:auto;
   border-radius:12px;
   display:block;
   margin:12px auto;
@@ -34,101 +31,65 @@ img{max-width:100%;height:auto}
   border-radius:16px
 }
 
-.nav-buttons{
-  display:flex;
-  gap:10px;
-  margin:10px 0
-}
-
+.nav-buttons{display:flex;gap:10px;margin:10px 0}
 .nav-buttons button{
-  flex:1;
-  background:#fff;
-  color:#5b5fff;
-  border:none;
-  padding:10px;
-  border-radius:10px;
-  font-weight:600;
-  cursor:pointer
+  flex:1;background:#fff;color:#5b5fff;border:none;
+  padding:10px;border-radius:10px;font-weight:600;cursor:pointer
 }
 
-.progress-bar{
-  height:10px;
-  background:rgba(255,255,255,.3);
-  border-radius:10px
-}
+.progress-bar{height:10px;background:rgba(255,255,255,.3);border-radius:10px}
+.progress-fill{height:100%;background:#fff;width:0}
 
-.progress-fill{
-  height:100%;
-  background:#fff;
-  width:0
-}
-
-.modules{
-  margin-top:16px;
-  display:flex;
-  flex-direction:column;
-  gap:14px
-}
+.modules{margin-top:16px;display:flex;flex-direction:column;gap:14px}
 
 .module{
-  background:#fff;
-  border:3px solid #5b5fff;
-  border-radius:16px;
-  padding:14px;
-  overflow:hidden;
+  background:#fff;border:3px solid #5b5fff;
+  border-radius:16px;padding:14px
 }
 
 .locked{opacity:.5}
 
 .quiz-box{
-  margin-top:12px;
-  padding:12px;
-  border:2px dashed #5b5fff;
-  border-radius:12px
+  margin-top:12px;padding:12px;
+  border:2px dashed #5b5fff;border-radius:12px
 }
 
 button{
-  width:100%;
-  padding:14px;
-  margin-top:8px;
-  border:none;
-  border-radius:12px;
-  background:#5b5fff;
-  color:#fff;
-  font-weight:600;
-  cursor:pointer
+  width:100%;padding:14px;margin-top:8px;
+  border:none;border-radius:12px;
+  background:#5b5fff;color:#fff;font-weight:600;cursor:pointer
 }
 
 button:disabled{background:#aaa}
-
-.listen-btn{background:#ffb700;color:#000}
-
 .pass{color:#16a34a;font-weight:bold}
 .fail{color:#dc2626;font-weight:bold}
+.score-tag{background:#16a34a;color:#fff;padding:4px 10px;border-radius:12px;font-size:13px}
+.timer{text-align:center;color:#dc2626;font-weight:700}
 
-.score-tag{
-  background:#16a34a;
-  color:#fff;
-  padding:4px 10px;
-  border-radius:12px;
-  font-size:13px
+/* CERTIFICATE */
+.certificate-box{
+  margin-top:30px;
+  background:#fff;
+  padding:20px;
+  border-radius:16px;
+  border:3px solid #16a34a;
+  display:none;
 }
 
-.options-group label{
-  display:block;
-  margin-bottom:6px;
-  cursor:pointer;
-  padding:8px;
-  border:1px solid #ddd;
-  border-radius:8px
-}
-
-.timer{
-  font-weight:700;
-  color:#dc2626;
+.certificate{
+  margin-top:20px;
+  padding:30px;
+  border:2px solid #ddd;
   text-align:center;
-  margin-bottom:10px
 }
+
+.cert-logos{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:20px;
+}
+
+.cert-logos img{height:60px}
 </style>
 </head>
 
@@ -141,8 +102,8 @@ button:disabled{background:#aaa}
   <p>ID: <span id="studentId"></span></p>
 
   <div class="nav-buttons">
-    <button onclick="location.href='https://jasonmillz263.github.io/Database-/student.html'">⬅ Courses</button>
-    <button onclick="location.href='https://jasonmillz263.github.io/Database-/student.html'">🏠 Dashboard</button>
+    <button onclick="location.href='student.html'">⬅ Courses</button>
+    <button onclick="location.href='student.html'">🏠 Dashboard</button>
   </div>
 
   <div class="progress-bar">
@@ -153,6 +114,31 @@ button:disabled{background:#aaa}
 
 <div class="modules" id="modules"></div>
 
+<!-- CERTIFICATE SECTION -->
+<div class="certificate-box" id="certificateBox">
+  <h2>🎉 Congratulations!</h2>
+  <p>You have completed all modules. Enter your name to generate your certificate.</p>
+
+  <input id="fname" placeholder="First Name">
+  <input id="lname" placeholder="Surname">
+  <button onclick="generateCertificate()">Generate Certificate</button>
+
+  <div id="certificate" class="certificate" style="display:none">
+    <div class="cert-logos">
+      <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjxMsFTTcGbD2cXWdxIuETewXRpnOyFdmg6EyFu4z7veTIxf5dWbjRYvV-w8CYzay30IX9kkgbfwzgPkjQf64XZGTkmOTzak6LnjOgCL1o4kBvwZl0TRlH1bAS_KhsHCA9_5PsgppQQs9A2DR-ynbj3-DwfYS1gxCYzhRGVOliLI2BQs0s9PG3_oa4yzXjj/s1600/Lumii_20251221_225044758.png">
+      <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhnNFRpSiba0ztBBehfuW2MWV7LjXfqoVWvjiHT_gLRNgmSSOQv74I5h9gVCyAF4RBjpeMbAYKSfmhpyE2v2ihNRlt4rC63vA0KIdHH0ZEkidtlm37CLrNV0Ty_vBfvQgRnfCmsGycBGwCE_sNedqdNStWhLbntzKfIVx6RFkNU6YIyRBplI0S-NODhKRNa/s1600/IMG-20251223-WA0001.jpg">
+    </div>
+
+    <h1 id="certName"></h1>
+    <p>has successfully completed</p>
+    <h3>Management Course</h3>
+    <p>Awarded by <strong>FOODPRENEUR BUSINESS ACADEMY</strong></p>
+    <p id="certDate"></p>
+
+    <button onclick="window.print()">Print / Save PDF</button>
+  </div>
+</div>
+
 </div>
 
 <script>
@@ -162,179 +148,61 @@ firebase.initializeApp({
   projectId:"students-login-29409"
 });
 
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-const COURSE_ID = "management_course";
-const PASS_MARK = 60;
-const QUESTION_TIME = 20;
-
-let activeModuleId=null;
-let currentQuiz=[];
-let currentQuestionIndex=0;
-let currentScore=0;
-let quizBox=null;
-let quizTimer=null;
-let timeLeft=QUESTION_TIME;
+const auth=firebase.auth();
+const db=firebase.firestore();
+const COURSE_ID="management_course";
+const PASS_MARK=60;
 
 auth.onAuthStateChanged(async user=>{
   if(!user) return alert("Login required");
-
   studentEmail.innerText=user.email;
   studentId.innerText=user.uid;
-
-  const ref=db.collection("students").doc(user.uid);
-  if(!(await ref.get()).exists){
-    await ref.set({email:user.email,enrolledCourses:{}});
-  }
   loadModules(user);
 });
 
 async function loadModules(user){
   const modsSnap=await db.collection("courses")
-    .doc(COURSE_ID)
-    .collection("modules")
-    .where("status","==","published")
-    .get();
+    .doc(COURSE_ID).collection("modules")
+    .where("status","==","published").get();
 
   const snap=await db.collection("students").doc(user.uid).get();
   const completed=snap.data()?.enrolledCourses?.[COURSE_ID]?.completedModules||{};
 
   modules.innerHTML="";
-  let done=0,prev=true,index=1;
+  let done=0,index=1,prev=true;
 
   modsSnap.forEach(doc=>{
-    const m=doc.data(),id=doc.id;
-    const passed=completed[id]===true;
-    const locked=index>1&&!prev;
+    const passed=completed[doc.id]===true;
     if(passed) done++;
     prev=passed;
 
     const div=document.createElement("div");
-    div.className="module"+(locked?" locked":"");
-    div.innerHTML=`
-      <h3>Module ${index}: ${m.title} ${passed?'<span class="score-tag">✓</span>':''}</h3>
-      <div class="lesson-content">${m.content}</div>
-    `;
-
-    const box=document.createElement("div");
-    box.className="quiz-box";
-
-    if(locked){
-      box.innerHTML="🔒 Complete previous module first";
-    }else if(passed){
-      box.innerHTML="<span class='pass'>Completed</span>";
-    }else{
-      box.innerHTML=`<button onclick="startQuiz('${id}',this)">Start Quiz</button>`;
-    }
-
-    div.appendChild(box);
+    div.className="module";
+    div.innerHTML=`<h3>Module ${index}: ${doc.data().title} ${passed?'✓':''}</h3>`;
     modules.appendChild(div);
     index++;
   });
 
   updateProgress(done,modsSnap.size);
-}
-
-async function startQuiz(moduleId,btn){
-  btn.disabled=true;
-  activeModuleId=moduleId;
-  currentQuestionIndex=0;
-  currentScore=0;
-
-  const snap=await db.collection("courses")
-    .doc(COURSE_ID).collection("modules")
-    .doc(moduleId).get();
-
-  currentQuiz=snap.data().quizzes;
-  quizBox=btn.closest(".quiz-box");
-
-  const moduleDiv=quizBox.closest(".module");
-  moduleDiv.querySelector(".lesson-content").style.display="none";
-
-  clearInterval(quizTimer);
-  timeLeft=QUESTION_TIME;
-
-  quizTimer=setInterval(()=>{
-    timeLeft--;
-    const t=document.getElementById("timeLeft");
-    if(t) t.innerText=timeLeft;
-    if(timeLeft<=0){
-      clearInterval(quizTimer);
-      finishQuiz();
-    }
-  },1000);
-
-  renderQuestion();
-}
-
-function renderQuestion(){
-  const q=currentQuiz[currentQuestionIndex];
-  const isLast=currentQuestionIndex===currentQuiz.length-1;
-
-  quizBox.innerHTML=`
-    <div class="timer">⏱ <span id="timeLeft">${timeLeft}</span>s</div>
-    <p><strong>${q.question}</strong></p>
-    <div class="options-group">
-      ${q.options.map(o=>`
-        <label><input type="radio" name="ans" value="${o}"> ${o}</label>
-      `).join("")}
-    </div>
-    <button onclick="processSubmission()">${isLast?"Finish Quiz":"Next Question"}</button>
-  `;
-}
-
-function processSubmission(){
-  const sel=quizBox.querySelector("input[name='ans']:checked");
-  if(!sel) return alert("Select an answer");
-
-  const clean=s=>String(s).replace(/\s+/g," ").trim();
-  if(clean(sel.value)===clean(currentQuiz[currentQuestionIndex].answer)){
-    currentScore++;
+  if(done===modsSnap.size && modsSnap.size>0){
+    document.getElementById("certificateBox").style.display="block";
   }
-
-  currentQuestionIndex++;
-  if(currentQuestionIndex<currentQuiz.length){
-    renderQuestion();
-  }else{
-    quizBox.innerHTML=`
-      <h3>Quiz Completed</h3>
-      <button id="seeResultsBtn">See My Results</button>
-    `;
-    document.getElementById("seeResultsBtn").onclick=finishQuiz;
-  }
-}
-
-async function finishQuiz(){
-  clearInterval(quizTimer);
-
-  const percent=Math.round((currentScore/currentQuiz.length)*100);
-  const passed=percent>=PASS_MARK;
-
-  const ref=db.collection("students").doc(auth.currentUser.uid);
-  await ref.set({
-    enrolledCourses:{
-      [COURSE_ID]:{
-        completedModules:{[activeModuleId]:passed}
-      }
-    }
-  },{merge:true});
-
-  quizBox.innerHTML=`
-    <h3>Results</h3>
-    <p>${currentScore}/${currentQuiz.length} (${percent}%)</p>
-    ${passed?'<p class="pass">PASSED</p>':'<p class="fail">FAILED</p>'}
-    <button onclick="loadModules(auth.currentUser)">Continue</button>
-  `;
-
-  const moduleDiv=quizBox.closest(".module");
-  moduleDiv.querySelector(".lesson-content").style.display="block";
 }
 
 function updateProgress(done,total){
-  const p=total?Math.round(done/total*100):0;
+  const p=Math.round(done/total*100);
   progressFill.style.width=p+"%";
   progressText.innerText=p+"% Completed";
+}
+
+function generateCertificate(){
+  const f=fname.value.trim();
+  const l=lname.value.trim();
+  if(!f||!l) return alert("Enter full name");
+
+  certName.innerText=f+" "+l;
+  certDate.innerText="Completed on "+new Date().toDateString();
+  certificate.style.display="block";
 }
 </script>
 </body>
