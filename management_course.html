@@ -10,59 +10,90 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
-/* Reset and Base Styles */
 *{box-sizing:border-box}
-html,body{margin:0;padding:0;width:100%;overflow-x:hidden}
-body{background:#f4f6fb;font-family:Inter,Segoe UI,sans-serif}
-img{max-width:100%;height:auto;display:block;margin:12px auto}
+body{margin:0;font-family:Inter,Segoe UI,sans-serif;background:#f4f6fb}
+
 .container{padding:12px}
 
-/* Header and Progress */
-.header{background:linear-gradient(135deg,#5b5fff,#7a7eff);color:#fff;padding:16px;border-radius:16px}
-.progress-bar{height:10px;background:rgba(255,255,255,.3);border-radius:10px}
+.header{
+  background:linear-gradient(135deg,#5b5fff,#7a7eff);
+  color:#fff;
+  padding:16px;
+  border-radius:16px
+}
+
+.header small{opacity:.9}
+
+.nav-buttons{
+  display:flex;
+  gap:10px;
+  margin-top:10px
+}
+
+.nav-buttons button{
+  flex:1;
+  background:#fff;
+  color:#5b5fff;
+  border:none;
+  padding:10px;
+  border-radius:10px;
+  font-weight:600;
+  cursor:pointer
+}
+
+.progress-bar{height:10px;background:rgba(255,255,255,.3);border-radius:10px;margin-top:10px}
 .progress-fill{height:100%;background:#fff;width:0}
 
-/* Navigation Group */
-.nav-group{display:flex;gap:10px;margin-bottom:12px;}
-.nav-group button{padding:8px 12px;width:auto;margin-top:0;border-radius:8px;}
-.back-btn{background:#aaa;color:#fff;}
-.dashboard-btn{background:#ffb700;color:#000;}
-
-/* Quiz Container (Security/Focus View) */
-#quizContainer {
-    display: none; /* Initially hidden */
-    background: #fff;
-    padding: 20px;
-    border-radius: 16px;
-    margin-top: 16px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-#timerDisplay {
-    font-size: 1.5em;
-    font-weight: bold;
-    color: #dc2626; /* Red for emphasis */
-    margin-bottom: 15px;
-    text-align: center;
-}
-
-/* Modules and Lessons */
 .modules{margin-top:16px;display:flex;flex-direction:column;gap:14px}
-.module{background:#fff;border:3px solid #5b5fff;border-radius:16px;padding:14px}
-.locked{opacity:.5}
-.lesson-content{margin-top:10px}
-.quiz-box{margin-top:12px;padding:12px;border:2px dashed #5b5fff;border-radius:12px}
 
-/* Buttons and Status */
-button{width:100%;padding:14px;margin-top:8px;border:none;border-radius:12px;background:#5b5fff;color:#fff;font-weight:600; cursor:pointer;}
+.module{
+  background:#fff;
+  border:3px solid #5b5fff;
+  border-radius:16px;
+  padding:14px
+}
+
+.locked{opacity:.5}
+
+.quiz-box{
+  margin-top:12px;
+  padding:12px;
+  border:2px dashed #5b5fff;
+  border-radius:12px
+}
+
+button{
+  width:100%;
+  padding:14px;
+  margin-top:8px;
+  border:none;
+  border-radius:12px;
+  background:#5b5fff;
+  color:#fff;
+  font-weight:600;
+  cursor:pointer
+}
+
 button:disabled{background:#aaa}
-.listen-btn{background:#ffb700;color:#000}
+
+.timer{
+  font-weight:700;
+  color:#dc2626;
+  text-align:center;
+  margin-bottom:10px
+}
+
 .pass{color:#16a34a;font-weight:bold}
 .fail{color:#dc2626;font-weight:bold}
-.score-tag{background:#16a34a;color:#fff;padding:4px 10px;border-radius:12px;font-size:13px}
 
-/* Quiz Options */
-.options-group label{display:block;margin-bottom:6px;cursor:pointer;padding:8px;border:1px solid #ddd;border-radius:8px;}
-.options-group input[type="radio"]{margin-right:8px;}
+.options-group label{
+  display:block;
+  padding:8px;
+  border:1px solid #ddd;
+  border-radius:8px;
+  margin-bottom:6px;
+  cursor:pointer
+}
 </style>
 </head>
 
@@ -70,25 +101,22 @@ button:disabled{background:#aaa}
 <div class="container">
 
 <div class="header">
-  <div class="nav-group">
-    <button class="back-btn" onclick="goToPage('https://jasonmillz263.github.io/Database-/student.html')">← Courses Offered</button>
-    <button class="dashboard-btn" onclick="goToPage('https://jasonmillz263.github.io/Database-/student.html')">Dashboard</button>
-  </div>
-  
   <h2>Management Course</h2>
-  <p id="studentInfo"></p>
-  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  <small>Email: <span id="studentEmail"></span></small><br>
+  <small>ID: <span id="studentId"></span></small>
+
+  <div class="nav-buttons">
+    <button onclick="location.href='https://jasonmillz263.github.io/Database-/student.html'">⬅ Courses Offered</button>
+    <button onclick="location.href='https://jasonmillz263.github.io/Database-/student.html'">🏠 Dashboard</button>
+  </div>
+
+  <div class="progress-bar">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
   <p id="progressText">0% Completed</p>
 </div>
 
-<div id="mainContent">
-  <div class="modules" id="modules"></div>
-</div>
-
-<div id="quizContainer">
-    <div id="timerDisplay">Time Left: <span id="timeValue"></span> seconds</div>
-    <div id="quizContent"></div>
-</div>
+<div class="modules" id="modules"></div>
 
 </div>
 
@@ -104,352 +132,142 @@ const db = firebase.firestore();
 
 const COURSE_ID = "management_course";
 const PASS_MARK = 60;
-const QUESTION_TIME = 20; // Timer set to 20 seconds per question
+const QUIZ_TIME = 60; // seconds
 
-let activeModuleId = null;
-let currentQuiz = [];
-let currentQuestionIndex = 0;
-let currentScore = 0;
-let quizBox = null;
-let ttsUtter = null;
-let timerInterval = null;
+let quizTimer = null;
+let timeLeft = QUIZ_TIME;
 
-/* AUTH (MODIFIED: Added error handling and displays Email + UID) */
 auth.onAuthStateChanged(async user=>{
-  if(!user) {
-    console.error("Authentication required. Redirecting or waiting for login.");
-    return alert("Login required");
+  if(!user) return alert("Login required");
+
+  studentEmail.innerText = user.email;
+  studentId.innerText = user.uid;
+
+  const ref = db.collection("students").doc(user.uid);
+  if(!(await ref.get()).exists){
+    await ref.set({email:user.email,enrolledCourses:{}});
   }
 
-  try {
-    const studentInfo = document.getElementById("studentInfo");
-    if (studentInfo) {
-        studentInfo.innerText = `${user.email} (ID: ${user.uid})`;
-    }
-
-    const ref = db.collection("students").doc(user.uid);
-    if(!(await ref.get()).exists){
-      await ref.set({email:user.email,enrolledCourses:{}});
-    }
-
-    loadModules(user);
-  } catch (error) {
-    console.error("Error during authentication state change or initial setup:", error);
-    alert("An error occurred during student setup. Check console for details.");
-  }
+  loadModules(user);
 });
 
-/* LOAD MODULES (MODIFIED: Added try/catch and view switching) */
 async function loadModules(user){
-  // 1. Set View State: Show Modules, Hide Quiz
-  document.getElementById('mainContent').style.display = 'block';
-  document.getElementById('quizContainer').style.display = 'none';
-  
-  try {
-    // 2. Fetch course modules
-    const modsSnap = await db.collection("courses")
-      .doc(COURSE_ID)
-      .collection("modules")
-      .where("status","==","published")
-      .get();
-    
-    if (modsSnap.empty) {
-        modules.innerHTML = "<p>No published modules found for this course.</p>";
-        updateProgress(0, 0);
-        return;
-    }
+  const mods = await db.collection("courses")
+    .doc(COURSE_ID)
+    .collection("modules")
+    .where("status","==","published")
+    .get();
 
-    // 3. Fetch student progress
-    const studentSnap = await db.collection("students").doc(user.uid).get();
-    const data = studentSnap.data() || {};
-    const course = data.enrolledCourses?.[COURSE_ID] || {};
-    const completed = course.completedModules || {};
+  const snap = await db.collection("students").doc(user.uid).get();
+  const completed = snap.data()?.enrolledCourses?.[COURSE_ID]?.completedModules || {};
 
-    modules.innerHTML = "";
+  modules.innerHTML="";
+  let done=0, index=1, prev=true;
 
-    let completedCount = 0;
-    let previousPassed = true;
-    let index = 1;
+  mods.forEach(doc=>{
+    const m=doc.data(), id=doc.id;
+    const passed = completed[id]===true;
+    const locked = index>1 && !prev;
+    if(passed) done++;
+    prev=passed;
 
-    // 4. Render modules
-    modsSnap.forEach(doc=>{
-      const m = doc.data();
-      const id = doc.id;
-      const passed = completed[id] === true;
-      const locked = index > 1 && !previousPassed;
+    const div=document.createElement("div");
+    div.className="module"+(locked?" locked":"");
+    div.innerHTML=`
+      <h3>Module ${index}: ${m.title}</h3>
+      <div class="lesson-content">${m.content}</div>
+      <div class="quiz-box">${
+        locked ? "🔒 Complete previous module"
+        : passed ? "<span class='pass'>Completed</span>"
+        : `<button onclick="startQuiz('${id}',this)">Start Quiz</button>`
+      }</div>
+    `;
+    modules.appendChild(div);
+    index++;
+  });
 
-      if(passed) completedCount++;
-      previousPassed = passed;
+  updateProgress(done,mods.size);
+}
 
-      const div = document.createElement("div");
-      div.className = "module" + (locked ? " locked" : "");
-      div.innerHTML = `
-        <h2>Module ${index}: ${m.title} ${passed?'<span class="score-tag">✓</span>':''}</h2>
-        <div class="lesson-content">${m.content}</div>
-      `;
+async function startQuiz(moduleId,btn){
+  btn.disabled=true;
+  const moduleDiv=btn.closest(".module");
+  moduleDiv.querySelector(".lesson-content").style.display="none";
 
-      const box = document.createElement("div");
-      box.className = "quiz-box";
+  const snap=await db.collection("courses")
+    .doc(COURSE_ID).collection("modules")
+    .doc(moduleId).get();
 
-      if(locked){
-        box.innerHTML = "🔒 Complete previous module first";
-      } else if(passed){
-        box.innerHTML = "<span class='pass'>Completed</span>";
-      } else {
-        box.innerHTML = `
-          <button onclick="startQuiz('${id}', this)">Start Quiz</button>
-          <button class="listen-btn" onclick="readAloud(this)">🔊 Listen</button>
-          <button class="listen-btn" onclick="pauseTTS()">⏸ Pause / Resume</button>
-        `;
+  const quiz=snap.data().quizzes;
+  let i=0, score=0;
+  const box=moduleDiv.querySelector(".quiz-box");
+
+  startTimer(box,()=>finish());
+
+  function render(){
+    if(i>=quiz.length) return finish();
+    const q=quiz[i];
+    box.innerHTML=`
+      <div class="timer">⏱ ${timeLeft}s</div>
+      <p><b>${q.question}</b></p>
+      <div class="options-group">
+        ${q.options.map(o=>`
+          <label><input type="radio" name="ans"> ${o}</label>
+        `).join("")}
+      </div>
+      <button onclick="next()">Next</button>
+    `;
+  }
+
+  function next(){
+    const sel=box.querySelector("input:checked");
+    if(!sel) return alert("Select answer");
+    if(sel.parentElement.innerText.trim()===quiz[i].answer.trim()) score++;
+    i++; render();
+  }
+
+  async function finish(){
+    clearInterval(quizTimer);
+    const percent=Math.round(score/quiz.length*100);
+    const passed=percent>=PASS_MARK;
+
+    await db.collection("students").doc(auth.currentUser.uid).set({
+      enrolledCourses:{
+        [COURSE_ID]:{
+          completedModules:{[moduleId]:passed}
+        }
       }
+    },{merge:true});
 
-      div.appendChild(box);
-      modules.appendChild(div);
-      index++;
-    });
-
-    updateProgress(completedCount, modsSnap.size);
-
-  } catch (error) {
-    console.error("Error loading modules or student data:", error);
-    modules.innerHTML = `<p style="color: red;">Failed to load course modules. Please check the console for Firebase errors.</p>`;
-    updateProgress(0, 0);
+    box.innerHTML=`
+      <h3>Result</h3>
+      <p>${score}/${quiz.length} (${percent}%)</p>
+      ${passed?'<p class="pass">PASSED</p>':'<p class="fail">FAILED</p>'}
+      <button onclick="loadModules(auth.currentUser)">Continue</button>
+    `;
   }
+
+  render();
 }
 
-// --- QUIZ TIMER FUNCTIONS ---
-
-function startTimer() {
-  clearInterval(timerInterval);
-  let timeLeft = QUESTION_TIME;
-  const timeValue = document.getElementById('timeValue');
-
-  timeValue.innerText = timeLeft;
-
-  timerInterval = setInterval(() => {
+function startTimer(box,timeout){
+  timeLeft=QUIZ_TIME;
+  clearInterval(quizTimer);
+  quizTimer=setInterval(()=>{
     timeLeft--;
-    timeValue.innerText = timeLeft;
-
-    if (timeLeft <= 0) {
-      clearInterval(timerInterval);
-      processSubmission(true); // Auto-submit if time runs out
+    const t=box.querySelector(".timer");
+    if(t) t.innerText=`⏱ ${timeLeft}s`;
+    if(timeLeft<=0){
+      clearInterval(quizTimer);
+      timeout();
     }
-  }, 1000);
+  },1000);
 }
 
-function stopTimer() {
-  clearInterval(timerInterval);
-}
-
-/* START QUIZ (Sets up dedicated quiz view) */
-async function startQuiz(moduleId, btn){
-  if (btn) btn.disabled = true;
-  stopTimer();
-
-  // Switch to quiz view
-  document.getElementById('mainContent').style.display = 'none';
-  document.getElementById('quizContainer').style.display = 'block';
-  quizBox = document.getElementById('quizContent'); 
-
-  activeModuleId = moduleId;
-  currentQuestionIndex = 0;
-  currentScore = 0;
-  
-  try {
-    const snap = await db.collection("courses")
-      .doc(COURSE_ID)
-      .collection("modules")
-      .doc(moduleId)
-      .get();
-
-    currentQuiz = snap.data().quizzes;
-    
-    if (currentQuiz && currentQuiz.length > 0) {
-      renderQuestion();
-    } else {
-      quizBox.innerHTML = "<p>No quizzes found for this module.</p>";
-    }
-  } catch (error) {
-      console.error("Error fetching quiz data:", error);
-      quizBox.innerHTML = `<p style="color: red;">Failed to load quiz. Check Firebase connection.</p>`;
-  }
-}
-
-/* RENDER QUESTION (Starts Timer) */
-function renderQuestion(){
-  if(currentQuestionIndex >= currentQuiz.length){
-    finishQuiz();
-    return;
-  }
-
-  const q = currentQuiz[currentQuestionIndex];
-  
-  const isLastQuestion = (currentQuestionIndex === currentQuiz.length - 1);
-  const buttonText = isLastQuestion ? "See My Results" : "Next Question";
-
-  quizBox.innerHTML = `
-    <p>Question ${currentQuestionIndex + 1} of ${currentQuiz.length}</p>
-    <p><strong>${q.question}</strong></p>
-    <div class="options-group">
-      ${q.options.map((o, i) =>`
-        <label><input type="radio" name="ans" value="${o}" required> ${o}</label>
-      `).join("")}
-    </div>
-    <button id="nextBtn">${buttonText}</button>
-  `;
-
-  quizBox.querySelector("#nextBtn").onclick = processSubmission;
-  startTimer();
-}
-
-/* PROCESS SUBMISSION (Stops Timer, checks answer, advances) */
-function processSubmission(timedOut = false){
-    stopTimer();
-
-    const sel = quizBox.querySelector("input[name='ans']:checked");
-    
-    if (!sel && !timedOut) {
-        alert("Please select an answer before proceeding.");
-        startTimer(); // Restart timer
-        return;
-    }
-
-    if (sel) {
-        const cleanString = (str) => {
-            if (!str) return '';
-            let cleaned = String(str).replace(/\s/g, ' ').replace(/\u00A0/g, ' ').replace(/\s\s+/g, ' ');
-            return cleaned.trim();
-        };
-
-        const studentAnswer = cleanString(sel.value);
-        const correctAnswer = cleanString(currentQuiz[currentQuestionIndex].answer);
-
-        if (studentAnswer === correctAnswer) {
-            currentScore++;
-        }
-    }
-
-    currentQuestionIndex++;
-
-    if (currentQuestionIndex < currentQuiz.length) {
-        renderQuestion();
-    } else {
-        quizBox.innerHTML = `
-            <h3>Quiz Completed!</h3>
-            <p>You have answered all ${currentQuiz.length} questions.</p>
-            <button id="seeResultsBtn">See My Final Score</button>
-        `;
-        
-        const resultsBtn = quizBox.querySelector("#seeResultsBtn");
-        if (resultsBtn) {
-            resultsBtn.onclick = finishQuiz;
-        }
-    }
-}
-
-/* FINISH QUIZ (Saves results and prepares continuation) */
-async function finishQuiz(){
-  stopTimer();
-
-  const percent = Math.round((currentScore / currentQuiz.length) * 100);
-  const passed = percent >= PASS_MARK;
-  const user = auth.currentUser;
-
-  // 1. Update Firestore
-  if (user) {
-    try {
-        const ref = db.collection("students").doc(user.uid);
-        const snap = await ref.get();
-        const data = snap.data() || {};
-        const course = data.enrolledCourses?.[COURSE_ID] || {};
-
-        const completedModules = course.completedModules || {};
-        const quizResults = course.quizResults || {};
-
-        completedModules[activeModuleId] = passed; 
-        
-        quizResults[activeModuleId] = {
-          percent,
-          passed,
-          date: firebase.firestore.FieldValue.serverTimestamp(),
-          score: `${currentScore}/${currentQuiz.length}`
-        };
-
-        await ref.set({
-          enrolledCourses:{
-            [COURSE_ID]:{
-              completedModules,
-              quizResults
-            }
-          }
-        },{merge:true});
-    } catch (error) {
-        console.error("Error saving quiz results:", error);
-        alert("Warning: Quiz results could not be saved to the database.");
-    }
-  }
-
-  // 2. Display Result
-  quizBox.innerHTML = `
-    <h3>Results for Module Quiz</h3>
-    <p>Total Score: <strong>${currentScore} / ${currentQuiz.length}</strong></p>
-    <p>Percentage: <strong>${percent}%</strong></p>
-    ${passed
-      ? `<p class="pass">✅ PASSED — Congratulations! You can now continue.</p>`
-      : `<p class="fail">❌ FAILED — Keep trying! (Required: ${PASS_MARK}%)</p>
-         <button onclick="retryQuiz('${activeModuleId}')">Retry Quiz</button>`
-    }
-    <button id="continueBtn" style="margin-top: 20px;">Continue to Modules</button>
-  `;
-
-  // 3. Set the Continue button to trigger the module reload
-  document.getElementById('continueBtn').onclick = () => {
-      loadModules(user); 
-  };
-}
-
-function retryQuiz(moduleId){
-  activeModuleId = moduleId;
-  currentQuestionIndex = 0;
-  currentScore = 0;
-  startQuiz(moduleId, null); 
-}
-
-/* TTS (UNCHANGED) */
-function readAloud(btn){
-  const content = btn.closest(".module").querySelector(".lesson-content");
-  if(!content) return;
-
-  if(ttsUtter) speechSynthesis.cancel();
-
-  const voices = speechSynthesis.getVoices();
-  const voice = voices.find(v=>v.lang.startsWith("en")) || voices[0];
-
-  ttsUtter = new SpeechSynthesisUtterance(content.innerText);
-  ttsUtter.voice = voice;
-  ttsUtter.rate = 0.95;
-  ttsUtter.pitch = 1.05;
-
-  speechSynthesis.speak(ttsUtter);
-}
-
-function pauseTTS(){
-  if(speechSynthesis.speaking && !speechSynthesis.paused) speechSynthesis.pause();
-  else if(speechSynthesis.paused) speechSynthesis.resume();
-}
-
-
-/* PROGRESS (UNCHANGED) */
 function updateProgress(done,total){
-  const p = total ? Math.round(done/total*100) : 0;
-  progressFill.style.width = p+"%";
-  progressText.innerText = p+"% Completed";
-}
-
-/* NAVIGATION FUNCTION (UNCHANGED) */
-function goToPage(url) {
-  // Use the built-in device action to open the URL
-  device_actions:open_url(url: url);
+  const p=Math.round(done/total*100);
+  progressFill.style.width=p+"%";
+  progressText.innerText=p+"% Completed";
 }
 </script>
 </body>
