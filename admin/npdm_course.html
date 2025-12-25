@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Admin – New Product Development & Management Course</title>
+<title>Admin – New Product Development and Management Course</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -20,6 +20,7 @@ body{
 }
 body.dark{background:#0f172a;color:#f8fafc}
 
+/* HEADER */
 header{
 background:#4f46e5;
 color:#fff;
@@ -63,6 +64,7 @@ cursor:pointer;
 color:#fff;
 }
 
+/* CARDS */
 .card{
 background:#fff;
 padding:14px;
@@ -78,6 +80,7 @@ from{opacity:0;transform:translateY(6px)}
 to{opacity:1;transform:none}
 }
 
+/* INPUTS */
 input,button{
 width:100%;
 padding:12px;
@@ -97,11 +100,13 @@ transition:transform .15s ease,box-shadow .15s ease;
 }
 button:active{transform:scale(.96)}
 
+/* BUTTON COLORS */
 .publish{background:#16a34a;color:#fff}
 .draft{background:#f59e0b;color:#000}
 .delete{background:#dc2626;color:#fff}
 .view{background:#0ea5e9;color:#fff}
 
+/* QUIZ */
 .quiz{
 background:#eef2ff;
 padding:10px;
@@ -113,6 +118,7 @@ gap:6px;
 }
 body.dark .quiz{background:#334155}
 
+/* TABS */
 .tabs{
 display:flex;
 gap:8px;
@@ -121,6 +127,7 @@ margin-top:14px;
 .tabs button{flex:1;background:#e5e7eb}
 .tabs button.active{background:#4f46e5;color:#fff}
 
+/* QUILL */
 #quill{
 border-radius:12px;
 overflow:hidden;
@@ -132,11 +139,19 @@ padding:12px;
 }
 .ql-editor img{
 max-width:100%;
+width:auto;
+height:auto;
 display:block;
 margin:12px auto;
 border-radius:10px;
 }
+.viewer img{
+max-width:100%;
+width:auto;
+height:auto;
+}
 
+/* TOAST */
 #toast{
 position:fixed;
 bottom:20px;
@@ -153,8 +168,10 @@ z-index:9999;
 animation:fadeIn .2s ease;
 }
 #toast.hidden{display:none}
+
 .hidden{display:none}
 
+/* MOBILE */
 @media(min-width:768px){
 body{max-width:720px;margin:auto}
 }
@@ -167,7 +184,7 @@ body{max-width:720px;margin:auto}
   <div class="header-top">
     <div class="header-left">
       <i class="fa fa-user-shield"></i>
-      <b>New Product Development & Management</b>
+      <b>New Product Development & Management Course</b>
     </div>
     <div class="header-right">
       <div id="authStatus" class="header-chip">Checking…</div>
@@ -222,101 +239,182 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebas
 import { getFirestore, collection, doc, addDoc, getDocs, updateDoc, getDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-/* 🔥 NEW COURSE TARGET */
+/* 🔒 ONLY CHANGE: NEW COURSE DOCUMENT */
 const COURSE_ID = "new_product_development_and_management_course";
 
 const app = initializeApp({
-  apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
-  authDomain:"students-login-29409.firebaseapp.com",
-  projectId:"students-login-29409"
+apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+authDomain:"students-login-29409.firebaseapp.com",
+projectId:"students-login-29409"
 });
 
 const db = getFirestore(app);
 const auth = getAuth(app);
-
 signInWithEmailAndPassword(auth,"ADMIN_EMAIL","ADMIN_PASSWORD");
 
 onAuthStateChanged(auth, async user=>{
-  if(!user){authStatus.innerText="Not logged in";return;}
-  const admin = await getDoc(doc(db,"admins",user.uid));
-  if(!admin.exists()){authStatus.innerText="Not admin";return;}
-  authStatus.innerText="Admin Verified";
-  addModuleCard.classList.remove("hidden");
-  loadModules();
+if(!user){authStatus.innerText="Not logged in";return;}
+const admin = await getDoc(doc(db,"admins",user.uid));
+if(!admin.exists()){authStatus.innerText="Not admin";return;}
+authStatus.innerText="Admin Verified";
+addModuleCard.classList.remove("hidden");
+loadModules();
 });
 
-const quill = new Quill("#quill",{theme:"snow"});
+/* QUILL IMAGE HANDLER WITH TOAST */
+const quill = new Quill("#quill",{
+theme:"snow",
+modules:{
+toolbar:{
+container:[
+[{header:[1,2,3,false]}],
+["bold","italic","underline"],
+[{list:"ordered"},{list:"bullet"}],
+["link","image"],["clean"]
+],
+handlers:{image:imageHandler}
+}
+}
+});
 
-let quizzes=[],editingId=null;
+function imageHandler(){
+const input=document.createElement("input");
+input.type="file";
+input.accept="image/*";
+input.click();
 
-async function loadModules(){
-  publishedTab.innerHTML=draftTab.innerHTML=binTab.innerHTML="";
-  const s = await getDocs(
-    query(collection(db,"courses",COURSE_ID,"modules"),orderBy("updatedAt","desc"))
-  );
-  s.forEach(d=>{
-    const m=d.data();
-    const box=`<div class="quiz">
-      <b>${m.title}</b>
-      <button class="view" onclick="viewModule('${d.id}')">View</button>
-      <button onclick="edit('${d.id}')">Edit</button>
-      <button class="delete" onclick="softDelete('${d.id}')">Delete</button>
-    </div>`;
-    (m.status==="published"?publishedTab:m.status==="draft"?draftTab:binTab).innerHTML+=box;
-  });
+input.onchange=()=>{
+const file=input.files[0];
+if(!file)return;
+
+toastText.innerText="Uploading image 0%";
+toast.classList.remove("hidden");
+
+const reader=new FileReader();
+reader.onprogress=e=>{
+if(e.lengthComputable){
+toastText.innerText=`Uploading image ${Math.round((e.loaded/e.total)*100)}%`;
+}
+};
+reader.onload=()=>{
+const range=quill.getSelection(true);
+quill.insertEmbed(range.index,"image",reader.result);
+toastText.innerText="Image uploaded";
+setTimeout(()=>toast.classList.add("hidden"),1200);
+};
+reader.readAsDataURL(file);
+};
 }
 
-window.saveModule=async status=>{
-  const ref = collection(db,"courses",COURSE_ID,"modules");
-  const data={
-    title:title.value,
-    videoUrl:videoUrl.value,
-    content:quill.root.innerHTML,
-    quizzes,
-    status,
-    updatedAt:serverTimestamp()
-  };
-  editingId
-    ? await updateDoc(doc(ref,editingId),data)
-    : await addDoc(ref,data);
-  reset(); loadModules();
+let quizzes=[],editingId=null,editingQuiz=null;
+
+window.addQuiz=()=>{
+const quiz={question:q.value,options:[o1.value,o2.value,o3.value,o4.value],answer:a.value};
+editingQuiz!==null?quizzes[editingQuiz]=quiz:quizzes.push(quiz);
+editingQuiz=null;
+q.value=o1.value=o2.value=o3.value=o4.value=a.value="";
+renderQuizzes();
 };
 
+function renderQuizzes(){
+quizList.innerHTML="";
+quizzes.forEach((x,i)=>{
+quizList.innerHTML+=`<div class="quiz">
+<b>${i+1}. ${x.question}</b>
+<button onclick="editQuiz(${i})">Edit</button>
+<button class="delete" onclick="deleteQuiz(${i})">Delete</button>
+</div>`;
+});
+}
+
+window.editQuiz=i=>{
+const x=quizzes[i];
+q.value=x.question;
+[o1.value,o2.value,o3.value,o4.value]=x.options;
+a.value=x.answer;
+editingQuiz=i;
+};
+
+window.deleteQuiz=i=>{quizzes.splice(i,1);renderQuizzes();};
+
+window.saveModule=async status=>{
+toastText.innerText=status==="published"?"Publishing...":"Saving draft...";
+toast.classList.remove("hidden");
+const refc=collection(db,"courses",COURSE_ID,"modules");
+const data={title:title.value,videoUrl:videoUrl.value,content:quill.root.innerHTML,quizzes,status,updatedAt:serverTimestamp()};
+editingId?await updateDoc(doc(refc,editingId),data):await addDoc(refc,data);
+toast.classList.add("hidden");
+reset();loadModules();
+};
+
+async function loadModules(){
+publishedTab.innerHTML=draftTab.innerHTML=binTab.innerHTML="";
+let n=1;
+const s=await getDocs(query(collection(db,"courses",COURSE_ID,"modules"),orderBy("updatedAt","desc")));
+s.forEach(d=>{
+const m=d.data();
+const t=m.status==="published"?`${n++}. ${m.title}`:m.title;
+const box=`<div class="quiz">
+<b>${t}</b>
+<button class="view" onclick="viewModule('${d.id}')">View</button>
+<button onclick="edit('${d.id}')">Edit</button>
+<button class="delete" onclick="softDelete('${d.id}')">Delete</button>
+</div>`;
+(m.status==="published"?publishedTab:m.status==="draft"?draftTab:binTab).innerHTML+=box;
+});
+}
+
 window.viewModule=async id=>{
-  const s=await getDoc(doc(db,"courses",COURSE_ID,"modules",id));
-  const m=s.data();
-  viewer.innerHTML=`<h3>${m.title}</h3>${m.content}`;
-  viewer.classList.remove("hidden");
+history.pushState({page:"viewer"},"");
+const s=await getDoc(doc(db,"courses",COURSE_ID,"modules",id));
+const m=s.data();
+viewer.innerHTML=`<h3>${m.title}</h3>${m.content}<button onclick="history.back()">⬅ Back</button>`;
+viewer.classList.remove("hidden");
+};
+
+window.onpopstate=()=>{
+viewer.classList.add("hidden");
+editor.classList.add("hidden");
 };
 
 window.edit=async id=>{
-  const s=await getDoc(doc(db,"courses",COURSE_ID,"modules",id));
-  const m=s.data();
-  title.value=m.title;
-  videoUrl.value=m.videoUrl;
-  quill.root.innerHTML=m.content;
-  quizzes=m.quizzes||[];
-  editingId=id;
-  editor.classList.remove("hidden");
+history.pushState({page:"editor"},"");
+const s=await getDoc(doc(db,"courses",COURSE_ID,"modules",id));
+const m=s.data();
+title.value=m.title;
+videoUrl.value=m.videoUrl;
+quill.root.innerHTML=m.content;
+quizzes=m.quizzes||[];
+editingId=id;
+editor.classList.remove("hidden");
+renderQuizzes();
 };
 
-window.softDelete=id=>
-  updateDoc(doc(db,"courses",COURSE_ID,"modules",id),{status:"deleted"}).then(loadModules);
+window.softDelete=async id=>{
+await updateDoc(doc(db,"courses",COURSE_ID,"modules",id),{status:"deleted"});
+loadModules();
+};
 
 function reset(){
-  title.value=videoUrl.value="";
-  quill.root.innerHTML="";
-  quizzes=[];
-  editingId=null;
+title.value=videoUrl.value="";
+quill.root.innerHTML="";
+quizzes=[];
+editingId=null;
+renderQuizzes();
 }
 
-window.openEditor=()=>editor.classList.remove("hidden");
-window.showTab=(id,btn)=>{
-  ["publishedTab","draftTab","binTab"].forEach(t=>document.getElementById(t).classList.add("hidden"));
-  document.getElementById(id).classList.remove("hidden");
-  document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
-  btn.classList.add("active");
+window.openEditor=()=>{
+history.pushState({page:"editor"},"");
+editor.classList.remove("hidden");
 };
+
+window.showTab=(id,btn)=>{
+["publishedTab","draftTab","binTab"].forEach(t=>document.getElementById(t).classList.add("hidden"));
+document.getElementById(id).classList.remove("hidden");
+document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
+btn.classList.add("active");
+};
+
 window.toggleTheme=()=>document.body.classList.toggle("dark");
 </script>
 
