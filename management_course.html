@@ -12,262 +12,175 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 
     <style>
-        /* --- COLOR & THEME VARIABLES --- */
+        /* --- VARIABLES --- */
         :root {
-            /* Light Mode Defaults */
             --bg-body: #f4f6fb;
             --bg-card: #ffffff;
             --text-main: #1f2937;
             --text-muted: #6b7280;
             --border-color: #e5e7eb;
-            
-            /* Vibrant Colors */
             --primary-gradient: linear-gradient(135deg, #5b5fff, #7a7eff);
             --primary-solid: #5b5fff;
             --accent-yellow: #ffb700;
             --accent-red: #dc2626;
             --success-green: #16a34a;
-            
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
-        /* Dark Mode Overrides */
         [data-theme="dark"] {
-            --bg-body: #0f172a;
-            --bg-card: #1e293b;
-            --text-main: #f3f4f6;
-            --text-muted: #9ca3af;
-            --border-color: #334155;
+            --bg-body: #0f172a; --bg-card: #1e293b; --text-main: #f3f4f6;
+            --text-muted: #9ca3af; --border-color: #334155;
             --shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
 
-        /* --- BASE RESET --- */
-        * { box-sizing: border-box; transition: background 0.3s, color 0.3s, border 0.3s; }
+        * { box-sizing: border-box; transition: background 0.3s, color 0.3s; }
         body { margin: 0; padding: 0; width: 100%; font-family: 'Inter', sans-serif; background: var(--bg-body); color: var(--text-main); }
-        
-        .container { max-width: 900px; margin: 0 auto; padding: 20px; min-height: 100vh; position: relative; z-index: 1; }
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; min-height: 100vh; }
 
-        /* --- MODERN HEADER --- */
+        /* HEADER & MODULES */
         .header {
-            background: var(--primary-gradient);
-            color: #fff;
-            padding: 30px;
-            border-radius: 20px;
+            background: var(--primary-gradient); color: #fff; padding: 30px;
+            border-radius: 20px; margin-bottom: 30px; position: relative; overflow: hidden;
             box-shadow: 0 10px 25px rgba(91, 95, 255, 0.3);
-            margin-bottom: 30px;
-            position: relative;
-            overflow: hidden;
         }
-
-        .header h2 { margin: 0; font-family: 'Playfair Display', serif; font-size: 2.5rem; letter-spacing: 1px; }
-        .header p { opacity: 0.9; margin-top: 5px; font-weight: 500; }
+        .header h2 { margin: 0; font-family: 'Playfair Display', serif; font-size: 2.5rem; }
         
-        .top-nav-row { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; flex-wrap: wrap; gap: 10px; }
-        .nav-buttons { display: flex; gap: 10px; }
-        
-        .nav-btn {
+        .top-nav-row { display: flex; justify-content: space-between; margin-top: 20px; gap: 10px; flex-wrap: wrap; }
+        .nav-btn, .theme-switch {
             background: rgba(255,255,255,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.3);
             padding: 8px 16px; border-radius: 50px; cursor: pointer; backdrop-filter: blur(5px); font-weight: 600;
         }
-        .nav-btn:hover { background: #fff; color: var(--primary-solid); }
+        .theme-switch { background: var(--accent-yellow); color: #000; border: none; }
 
-        .theme-switch {
-            background: var(--accent-yellow); color: #000; border: none; padding: 8px 16px;
-            border-radius: 50px; cursor: pointer; font-weight: 800; box-shadow: 0 2px 10px rgba(255, 183, 0, 0.4);
-        }
-
-        /* Progress Bar */
-        .progress-wrapper { margin-top: 20px; }
-        .progress-bar { height: 8px; background: rgba(255,255,255,0.3); border-radius: 10px; overflow: hidden; }
+        .progress-bar { height: 8px; background: rgba(255,255,255,0.3); border-radius: 10px; margin-top: 20px; overflow: hidden; }
         .progress-fill { height: 100%; background: var(--accent-yellow); width: 0%; transition: width 0.5s ease; }
-        .progress-text { margin-top: 8px; font-size: 0.85rem; font-weight: 700; text-align: right; color: #fff; }
 
-        /* --- MODULES (Grid / Card) --- */
+        /* MODULE CARDS */
         .modules { display: flex; flex-direction: column; gap: 20px; }
-
-        .module {
-            background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px;
-            padding: 0; overflow: hidden; box-shadow: var(--shadow); position: relative;
-        }
+        .module { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); }
         .module.locked { opacity: 0.6; pointer-events: none; filter: grayscale(1); }
-
-        .module-header {
-            padding: 20px 25px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;
-        }
+        
+        .module-header { padding: 20px 25px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
         .module-header h3 { margin: 0; font-size: 1.2rem; color: var(--text-main); }
-        .status-badge { background: var(--success-green); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; display: none; }
-        .module.completed .status-badge { display: inline-block; }
-
-        /* PREVIEW CONTENT (Half visible) */
+        
+        /* PREVIEW (Truncated) */
         .lesson-preview { 
-            padding: 25px; line-height: 1.6; color: var(--text-muted); font-size: 1rem;
-            max-height: 150px; overflow: hidden; position: relative;
-            mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
-            -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+            padding: 25px; color: var(--text-muted); height: 120px; overflow: hidden; 
+            mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
         }
-        .lesson-preview img { display: none; } /* Hide images in preview */
-
-        .module-footer {
-            background: rgba(0,0,0,0.02); padding: 15px 25px; border-top: 1px solid var(--border-color); text-align: center;
-        }
+        .lesson-preview img { display: none; }
         
-        /* --- FULL SCREEN READER MODAL --- */
-        .reader-modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-body); z-index: 1000; overflow-y: auto; animation: slideUp 0.3s ease-out;
-        }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .module-footer { padding: 15px 25px; border-top: 1px solid var(--border-color); text-align: center; background: rgba(0,0,0,0.02); }
 
-        .reader-container {
-            max-width: 800px; margin: 0 auto; padding: 40px 20px; background: var(--bg-card);
-            min-height: 100vh; box-shadow: 0 0 50px rgba(0,0,0,0.1); padding-bottom: 100px;
-        }
-
-        .reader-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 30px; border-bottom: 2px solid var(--border-color); padding-bottom: 20px;
-        }
-        .reader-header h2 { margin: 0; color: var(--primary-solid); font-family: 'Playfair Display'; }
+        /* FULL READER MODAL */
+        .reader-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-body); z-index: 1000; overflow-y: auto; }
+        .reader-container { max-width: 800px; margin: 0 auto; padding: 40px 20px; background: var(--bg-card); min-height: 100vh; padding-bottom: 120px; }
         
-        .close-reader {
-            background: transparent; border: 2px solid var(--text-muted); color: var(--text-muted);
-            width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; cursor: pointer;
-        }
-
+        .reader-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid var(--border-color); padding-bottom: 20px; }
+        .close-reader { background: transparent; border: 2px solid var(--text-muted); width: 40px; height: 40px; border-radius: 50%; cursor: pointer; color: var(--text-main); }
+        
         .reader-content { font-size: 1.15rem; line-height: 1.8; color: var(--text-main); margin-bottom: 40px; }
         .reader-content img { max-width: 100%; border-radius: 12px; margin: 20px 0; display: block; }
+        .highlight-sentence { background-color: rgba(255, 183, 0, 0.3); border-radius: 4px; transition: background 0.3s; }
 
-        /* TTS Controls Sticky */
-        .tts-controls {
+        /* MUSIC PLAYER STYLE TTS CONTROLS */
+        .tts-player {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            background: #1e293b; padding: 10px 20px; border-radius: 50px;
-            display: flex; gap: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); z-index: 2000;
+            background: #1e293b; padding: 15px 25px; border-radius: 16px;
+            width: 90%; max-width: 500px; display: none; flex-direction: column; gap: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 2000;
         }
-
-        /* --- BUTTONS & QUIZ --- */
-        button { padding: 12px 20px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 0.95rem; }
-        .btn-primary { background: var(--primary-solid); color: #fff; }
-        .btn-yellow { background: var(--accent-yellow); color: #000; }
-        .btn-outline { background: transparent; border: 2px solid var(--border-color); color: var(--text-main); width: 100%; }
-        .btn-outline:hover { border-color: var(--primary-solid); color: var(--primary-solid); }
-
-        .quiz-wrapper { 
-            margin-top: 40px; padding: 30px; border: 2px solid var(--border-color); border-radius: 15px; 
-            background: rgba(91, 95, 255, 0.03); 
-        }
-        .timer { color: var(--accent-red); font-weight: 800; font-size: 1.2rem; margin-bottom: 15px; display: block; }
-        .options-group label {
-            display: block; padding: 15px; border: 2px solid var(--border-color);
-            border-radius: 10px; margin-bottom: 10px; cursor: pointer; font-weight: 500; background: var(--bg-card);
-        }
-        .options-group label:hover { border-color: var(--primary-solid); }
-        .pass-msg { color: var(--success-green); font-weight: bold; font-size: 1.2rem; text-align: center;}
-        .fail-msg { color: var(--accent-red); font-weight: bold; font-size: 1.2rem; text-align: center;}
-
-        /* --- CERTIFICATE --- */
-        #certificateSection { display: none; animation: fadeIn 1s; }
-        #nameInput {
-            background: var(--bg-card); padding: 40px; border-radius: 20px; text-align: center;
-            box-shadow: var(--shadow); max-width: 600px; margin: 40px auto; border: 2px solid var(--accent-yellow);
-        }
-        #nameForm input { width: 100%; padding: 15px; border: 2px solid var(--border-color); border-radius: 10px; margin-bottom: 15px; }
+        .tts-controls-row { display: flex; align-items: center; justify-content: center; gap: 20px; }
+        .tts-btn { background: transparent; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; }
+        .tts-btn:hover { color: var(--accent-yellow); }
         
+        /* Seek Slider */
+        .tts-seek-container { width: 100%; display: flex; align-items: center; gap: 10px; color: #9ca3af; font-size: 0.8rem; }
+        .tts-slider { -webkit-appearance: none; width: 100%; height: 5px; background: #475569; border-radius: 5px; outline: none; }
+        .tts-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 15px; height: 15px; background: var(--accent-yellow); border-radius: 50%; cursor: pointer; }
+
+        /* QUIZ */
+        .quiz-wrapper { margin-top: 40px; padding: 30px; border: 2px dashed var(--border-color); border-radius: 15px; background: rgba(91, 95, 255, 0.03); text-align: center; }
+        .options-group label { display: block; padding: 15px; border: 2px solid var(--border-color); border-radius: 10px; margin-bottom: 10px; cursor: pointer; text-align: left; background: var(--bg-card); }
+        .options-group label:hover { border-color: var(--primary-solid); }
+
+        /* Buttons */
+        .btn-primary { background: var(--primary-solid); color: #fff; padding: 12px 25px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; }
+        .btn-outline { background: transparent; border: 2px solid var(--border-color); color: var(--text-main); width: 100%; padding: 10px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+        .btn-outline:hover { color: var(--primary-solid); border-color: var(--primary-solid); }
+
+        /* Certificate */
+        #certificateSection { display: none; }
+        #nameInput { text-align: center; background: var(--bg-card); padding: 40px; border-radius: 20px; border: 2px solid var(--accent-yellow); max-width: 600px; margin: 40px auto; }
+        #nameForm input { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 10px; border: 1px solid #ccc; }
+        
+        /* Print Styles */
         @media print {
             body * { visibility: hidden; }
             #certificatePreviewWrapper, #certificatePreviewWrapper * { visibility: visible; }
             #certificatePreviewWrapper { position: absolute; left: 0; top: 0; width: 100%; }
-            .certificate { border: none !important; margin: 0 !important; width: 100% !important; height: 100vh !important; transform: scale(0.8); transform-origin: top left; }
+            .certificate { border: none !important; margin: 0 !important; width: 100% !important; height: 100vh !important; }
         }
-        
-        .certificate {
-            width: 794px; height: 1123px; margin: 20px auto; background: #fff; border: 15px solid var(--accent-yellow); position: relative; color: #000; text-align: left;
-        }
+        .certificate { width: 794px; height: 1123px; margin: 20px auto; background: #fff; border: 15px solid var(--accent-yellow); position: relative; color: #000; text-align: left; }
         .cert-header-band { height: 180px; background: linear-gradient(135deg, #f7931e, #cfcfcf); padding: 30px; display: flex; align-items: center; }
-        .cert-logos { background: #fff; padding: 10px 20px; border-radius: 8px; display: flex; gap: 20px; }
-        .cert-logos img { height: 60px; }
+        .cert-logos img { height: 60px; margin-right: 20px; }
         .cert-body { padding: 80px; text-align: center; }
-        .cert-title { font-size: 40px; font-weight: bold; font-family: 'Playfair Display'; margin-bottom: 20px; }
+        .cert-title { font-size: 40px; font-weight: bold; margin-bottom: 20px; }
         .cert-name { font-size: 32px; font-weight: bold; border-bottom: 2px solid #000; display: inline-block; padding: 10px 40px; margin: 20px 0; text-transform: uppercase; }
         .cert-course { font-size: 28px; color: #f7931e; font-weight: bold; margin: 30px 0; }
-        .cert-footer { position: absolute; bottom: 50px; width: 100%; padding: 0 80px; display: flex; justify-content: space-between; font-size: 14px; }
-        
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
+        .cert-footer { position: absolute; bottom: 50px; width: 100%; padding: 0 80px; display: flex; justify-content: space-between; }
     </style>
 </head>
 <body>
 
 <div class="container" id="mainDashboard">
-    
     <div class="header">
         <h2>Management Course</h2>
         <p>Student ID: <span id="studentIdDisplay">Connecting...</span></p>
-        
         <div class="top-nav-row">
-            <div class="nav-buttons">
-                <button class="nav-btn" onclick="location.href='https://jasonmillz263.github.io/Database-/student.html'">⬅ Courses</button>
-                <button class="nav-btn" onclick="location.href='https://jasonmillz263.github.io/Database-/student.html'">🏠 Dashboard</button>
-            </div>
-            <button class="theme-switch" onclick="toggleTheme()">🌗 Light/Dark</button>
+            <button class="nav-btn" onclick="location.href='https://jasonmillz263.github.io/Database-/student.html'">⬅ Dashboard</button>
+            <button class="theme-switch" onclick="toggleTheme()">🌗 Mode</button>
         </div>
-
-        <div class="progress-wrapper">
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
-            </div>
-            <div class="progress-text" id="progressText">0% COMPLETED</div>
-        </div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
     </div>
 
     <div id="modules" class="modules">
-        <div id="loader" style="text-align:center; padding:20px;">
-            <div style="display:inline-block; width:30px; height:30px; border:4px solid #ddd; border-top-color:var(--primary-solid); border-radius:50%; animation: spin 1s linear infinite;"></div>
-            <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
-        </div>
+        <div style="text-align:center; padding:20px;">Loading...</div>
     </div>
 
     <div id="certificateSection">
         <div id="nameInput">
             <h3>🎉 Course Completed!</h3>
-            <p>Please enter your name exactly as you want it on your certificate.</p>
+            <p>Enter your name for the certificate:</p>
             <form id="nameForm">
                 <input type="text" id="firstNameInput" placeholder="First Name" required>
                 <input type="text" id="lastNameInput" placeholder="Last Name" required>
                 <button type="submit" class="btn-primary">Generate Certificate</button>
             </form>
-            <br>
-            <button class="btn-outline" onclick="location.href='https://jasonmillz263.github.io/Database-/student.html'">Return to Dashboard</button>
         </div>
-
         <div id="certificatePreviewWrapper" style="display:none;">
             <div class="certificate">
                 <div class="cert-header-band">
                     <div class="cert-logos">
-                        <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhnNFRpSiba0ztBBehfuW2MWV7LjXfqoVWvjiHT_gLRNgmSSOQv74I5h9gVCyAF4RBjpeMbAYKSfmhpyE2v2ihNRlt4rC63vA0KIdHH0ZEkidtlm37CLrNV0Ty_vBfvQgRnfCmsGycBGwCE_sNedqdNStWhLbntzKfIVx6RFkNU6YIyRBplI0S-NODhKRNa/s1600/IMG-20251223-WA0001.jpg" alt="Logo 1">
-                        <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhIuGx_Tl93TWp5OZYxIn7iCPb3FhwXGTZTr_xVjfUAOy4dt2YzXq0c7H4VizrvCBNkCO12IlSymo4R-7Nq9mSffdpB9w6Yge3O2i0UovqE45XIW1jEyvZJg6sOjDfUUhdRJs2x_Bqui6goNnXmcV8hguXwcIUqsvMv5-kY-yNeo-Onr9TVspl88fBfiEsV/s1600/IMG-20251223-WA0001.png" alt="Logo 2">
+                        <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhnNFRpSiba0ztBBehfuW2MWV7LjXfqoVWvjiHT_gLRNgmSSOQv74I5h9gVCyAF4RBjpeMbAYKSfmhpyE2v2ihNRlt4rC63vA0KIdHH0ZEkidtlm37CLrNV0Ty_vBfvQgRnfCmsGycBGwCE_sNedqdNStWhLbntzKfIVx6RFkNU6YIyRBplI0S-NODhKRNa/s1600/IMG-20251223-WA0001.jpg">
                     </div>
                 </div>
                 <div class="cert-body">
                     <div class="cert-title">Certificate of Completion</div>
                     <p>This is to certify that</p>
                     <div class="cert-name" id="certStudentName">STUDENT NAME</div>
-                    <p>Has successfully completed the course entitled</p>
-                    <div class="cert-course" id="certCourseName">MANAGEMENT COURSE</div>
-                    <p>Awarded by <strong>FoodPreneur Business Academy</strong> in partnership with <strong>RHAC</strong>.</p>
+                    <p>Has successfully completed</p>
+                    <div class="cert-course">MANAGEMENT COURSE</div>
+                    <p>Awarded by <strong>FoodPreneur Business Academy</strong></p>
                 </div>
                 <div class="cert-footer">
-                    <div>
-                        <strong>Date:</strong> <span id="certDate"></span><br>
-                        <strong>ID:</strong> FPBA-2025
-                    </div>
-                    <div style="text-align:center;">
-                        <div style="border-bottom:1px solid #000; width:200px; margin-bottom:5px;"></div>
-                        Academy Director
-                    </div>
+                    <div><strong>Date:</strong> <span id="certDate"></span></div>
+                    <div>Academy Director</div>
                 </div>
             </div>
             <div style="text-align:center; margin-top:20px;">
-                <button class="btn-primary" onclick="window.print()">Print / Save PDF</button>
+                <button class="btn-primary" onclick="window.print()">Print / PDF</button>
             </div>
         </div>
     </div>
@@ -276,21 +189,27 @@
 <div id="readerModal" class="reader-modal">
     <div class="reader-container">
         <div class="reader-header">
-            <h2 id="readerTitle">Module Title</h2>
-            <button class="close-reader" onclick="closeReader()">✕ Close</button>
+            <h2 id="readerTitle">Module</h2>
+            <button class="close-reader" onclick="closeReader()">✕</button>
         </div>
         
         <div id="readerBody" class="reader-content"></div>
 
-        <div id="readerQuizArea" class="quiz-wrapper">
-            <h3 style="text-align:center;">Loading Quiz...</h3>
-        </div>
+        <div id="readerQuizArea" class="quiz-wrapper"></div>
     </div>
 
-    <div class="tts-controls" id="ttsControls" style="display:none;">
-        <button class="btn-primary" onclick="TTSManager.play()">🔊 Play</button>
-        <button class="btn-yellow" onclick="TTSManager.pause()">⏸ Pause</button>
-        <button class="btn-yellow" onclick="TTSManager.stop()">⏹ Stop</button>
+    <div class="tts-player" id="ttsPlayer">
+        <div class="tts-seek-container">
+            <span id="ttsCurrentTime">0%</span>
+            <input type="range" min="0" max="100" value="0" class="tts-slider" id="ttsSeekSlider" oninput="TTSManager.seek(this.value)">
+            <span id="ttsTotalTime">100%</span>
+        </div>
+        <div class="tts-controls-row">
+            <button class="tts-btn" onclick="TTSManager.prev()">⏮</button>
+            <button class="tts-btn" id="ttsPlayPauseBtn" onclick="TTSManager.toggle()">▶</button>
+            <button class="tts-btn" onclick="TTSManager.next()">⏭</button>
+            <button class="tts-btn" onclick="TTSManager.stop()" style="font-size:1rem; margin-left:15px;">⏹ Stop</button>
+        </div>
     </div>
 </div>
 <script>
@@ -303,72 +222,155 @@ document.addEventListener('DOMContentLoaded', function() {
         projectId: "students-login-29409"
     };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    
     const auth = firebase.auth();
     const db = firebase.firestore();
     const COURSE_ID = "management_course";
     
-    // --- 2. GLOBAL VARIABLES ---
-    let quizTimerInterval = null;
-    let currentQuizData = [];
-    let currentQIndex = 0;
-    let currentScore = 0;
-    let currentUtterance = null; // Important: Global var for TTS
+    // --- 2. ADVANCED TEXT CLEANER ---
+    // Removes "I can't see..." text even if hidden in HTML tags
+    function cleanLessonContent(htmlContent) {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = htmlContent;
+        
+        // Strategy 1: Remove specific string from innerHTML
+        let contentStr = tempDiv.innerHTML;
+        // Regex looks for "I can't see" with any surrounding spaces or tags
+        contentStr = contentStr.replace(/<[^>]*>.*?I can't see the image upload.*?<\/[^>]*>/gi, ""); 
+        contentStr = contentStr.replace(/I can't see the image upload on quill/gi, "");
+        
+        return contentStr;
+    }
 
-    // --- 3. ROBUST TTS MANAGER ---
+    // --- 3. MUSIC PLAYER STYLE TTS ENGINE ---
     window.TTSManager = {
-        init: function(text) {
-            window.speechSynthesis.cancel(); // Reset audio engine
-            currentUtterance = new SpeechSynthesisUtterance(text);
-            currentUtterance.lang = 'en-US';
-            currentUtterance.rate = 1.0;
-            currentUtterance.onend = () => { console.log("Read complete"); };
-            document.getElementById('ttsControls').style.display = 'flex';
+        sentences: [],
+        currentIndex: 0,
+        isPlaying: false,
+        synth: window.speechSynthesis,
+        utterance: null,
+
+        init: function(htmlContent) {
+            this.stop();
+            // Split text by punctuation to create "tracks" (sentences)
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlContent;
+            const text = tempDiv.innerText;
+            // Split by . ! ? but keep the punctuation
+            this.sentences = text.match( /[^\.!\?]+[\.!\?]+/g ) || [text];
+            this.currentIndex = 0;
+            document.getElementById('ttsPlayer').style.display = 'flex';
+            this.updateSlider();
         },
-        play: function() {
-            // Check if paused
-            if (window.speechSynthesis.paused) {
-                window.speechSynthesis.resume();
+
+        speakSentence: function() {
+            this.synth.cancel();
+            if (this.currentIndex >= this.sentences.length) {
+                this.stop();
                 return;
             }
-            // Check if speaking (and not paused), restart if needed
-            if (window.speechSynthesis.speaking) {
-                window.speechSynthesis.cancel();
-            }
-            if(currentUtterance) {
-                window.speechSynthesis.speak(currentUtterance);
+
+            const text = this.sentences[this.currentIndex];
+            this.utterance = new SpeechSynthesisUtterance(text);
+            this.utterance.lang = 'en-US';
+            this.utterance.rate = 1.0;
+
+            this.utterance.onend = () => {
+                this.currentIndex++;
+                if (this.currentIndex < this.sentences.length && this.isPlaying) {
+                    this.speakSentence();
+                    this.updateSlider();
+                } else {
+                    this.isPlaying = false;
+                    this.updateUI();
+                }
+            };
+
+            this.synth.speak(this.utterance);
+            this.updateUI();
+            this.updateSlider();
+        },
+
+        toggle: function() {
+            if (this.isPlaying) {
+                this.pause();
+            } else {
+                this.play();
             }
         },
+
+        play: function() {
+            this.isPlaying = true;
+            if (!this.synth.speaking) {
+                this.speakSentence();
+            } else {
+                this.synth.resume();
+            }
+            this.updateUI();
+        },
+
         pause: function() {
-            if (window.speechSynthesis.speaking) window.speechSynthesis.pause();
+            this.isPlaying = false;
+            this.synth.pause();
+            this.updateUI();
         },
+
+        prev: function() {
+            if (this.currentIndex > 0) {
+                this.currentIndex--;
+                this.speakSentence();
+            }
+        },
+
+        next: function() {
+            if (this.currentIndex < this.sentences.length - 1) {
+                this.currentIndex++;
+                this.speakSentence();
+            }
+        },
+
+        seek: function(val) {
+            // Calculate index based on slider percentage
+            const pct = val / 100;
+            this.currentIndex = Math.floor(pct * this.sentences.length);
+            if(this.isPlaying) this.speakSentence();
+            else this.updateUI();
+        },
+
         stop: function() {
-            window.speechSynthesis.cancel();
+            this.isPlaying = false;
+            this.synth.cancel();
+            this.currentIndex = 0;
+            this.updateUI();
+            this.updateSlider();
+        },
+
+        updateUI: function() {
+            const btn = document.getElementById('ttsPlayPauseBtn');
+            btn.innerHTML = this.isPlaying ? '⏸' : '▶';
+        },
+
+        updateSlider: function() {
+            const slider = document.getElementById('ttsSeekSlider');
+            if(this.sentences.length > 0) {
+                const val = (this.currentIndex / this.sentences.length) * 100;
+                slider.value = val;
+                document.getElementById('ttsCurrentTime').innerText = Math.round(val) + "%";
+            }
         }
     };
 
-    // --- 4. AUTH & INIT ---
+    // --- 4. APP LOGIC ---
     auth.onAuthStateChanged(async (user) => {
         if (user) {
             document.getElementById('studentIdDisplay').innerText = user.uid;
-            
-            const userRef = db.collection("students").doc(user.uid);
-            const userSnap = await userRef.get();
-            if (!userSnap.exists) {
-                await userRef.set({ email: user.email, enrolledCourses: {} });
-            }
             loadModules(user);
         } else {
-            document.getElementById('studentIdDisplay').innerText = "Not Logged In";
             document.getElementById('modules').innerHTML = "<p style='text-align:center'>Please log in.</p>";
         }
     });
 
-    // --- 5. MODULE LOADING SYSTEM ---
     window.loadModules = async function(user) {
-        document.getElementById('certificateSection').style.display = 'none';
         const modulesContainer = document.getElementById('modules');
-        
         const modsSnap = await db.collection("courses").doc(COURSE_ID).collection("modules").where("status", "==", "published").get();
         const userSnap = await db.collection("students").doc(user.uid).get();
         const completedData = userSnap.data()?.enrolledCourses?.[COURSE_ID]?.completedModules || {};
@@ -378,94 +380,63 @@ document.addEventListener('DOMContentLoaded', function() {
         let moduleNumber = 1;
         
         modulesContainer.innerHTML = "";
-        
-        if (modsSnap.empty) {
-            modulesContainer.innerHTML = "<p style='text-align:center;'>No modules found.</p>";
-            return;
-        }
 
         modsSnap.forEach(doc => {
             const mData = doc.data();
             const mId = doc.id;
             const isCompleted = completedData[mId] === true;
             const isLocked = !isPrevModuleDone;
-
             if (isCompleted) doneCount++;
-            
-            // CLEAN THE TEXT (REMOVE "I can't see...")
-            // We use a regex replace to strip that specific sentence if it exists
-            let cleanContent = mData.content || "";
-            cleanContent = cleanContent.replace(/I can't see anything uploaded/gi, "");
+
+            // CLEAN CONTENT HERE
+            const cleanedContent = cleanLessonContent(mData.content || "");
             
             const modDiv = document.createElement("div");
             modDiv.className = `module ${isLocked ? 'locked' : ''} ${isCompleted ? 'completed' : ''}`;
             
-            let actionButton = '';
-            let statusBadge = '';
+            let actionBtn = isLocked 
+                ? `<p>🔒 Locked</p>` 
+                : `<button class="btn-outline" onclick="openReader('${mId}', '${encodeURIComponent(mData.title)}', '${encodeURIComponent(cleanedContent)}', ${isCompleted})">📖 Read & Quiz</button>`;
 
-            if (isLocked) {
-                actionButton = `<p>🔒 Complete previous module to unlock.</p>`;
-            } else {
-                // Encode content to safely pass to function
-                const safeTitle = encodeURIComponent(mData.title);
-                const safeContent = encodeURIComponent(cleanContent);
-                actionButton = `<button class="btn-primary" style="width:100%" onclick="openReader('${mId}', '${safeTitle}', '${safeContent}', ${isCompleted})">📖 Read Full Lesson & Take Quiz</button>`;
-            }
-
-            if (isCompleted) statusBadge = `<span class="status-badge" style="display:inline-block">✅ Completed</span>`;
+            let badge = isCompleted ? `<span class="status-badge" style="display:inline-block">✅ Done</span>` : '';
 
             modDiv.innerHTML = `
-                <div class="module-header">
-                    <h3>Module ${moduleNumber}: ${mData.title}</h3>
-                    ${statusBadge}
-                </div>
-                <div class="lesson-preview">${cleanContent}</div>
-                <div class="module-footer">${actionButton}</div>
+                <div class="module-header"><h3>Module ${moduleNumber}: ${mData.title}</h3>${badge}</div>
+                <div class="lesson-preview">${cleanedContent}</div>
+                <div class="module-footer">${actionBtn}</div>
             `;
             modulesContainer.appendChild(modDiv);
-            
             isPrevModuleDone = isCompleted;
             moduleNumber++;
         });
 
         const percent = Math.round((doneCount / modsSnap.size) * 100) || 0;
         document.getElementById('progressFill').style.width = percent + "%";
-        document.getElementById('progressText').innerText = percent + "% COMPLETED";
-
         if (doneCount === modsSnap.size && modsSnap.size > 0) showCertificateInput();
     };
 
-    // --- 6. READER MODAL & QUIZ LOADER ---
     window.openReader = async function(mId, title, content, isCompleted) {
-        // Decode
-        const decodedTitle = decodeURIComponent(title);
-        const decodedContent = decodeURIComponent(content);
-
-        document.getElementById('readerTitle').innerText = decodedTitle;
-        document.getElementById('readerBody').innerHTML = decodedContent;
+        document.getElementById('readerTitle').innerText = decodeURIComponent(title);
+        document.getElementById('readerBody').innerHTML = decodeURIComponent(content);
         document.getElementById('readerModal').style.display = 'block';
         document.body.style.overflow = 'hidden';
 
-        // Init TTS
-        TTSManager.init(document.getElementById('readerBody').innerText);
+        // Init Player
+        TTSManager.init(document.getElementById('readerBody').innerHTML);
 
-        // Load Quiz
+        // Load Quiz Section
         const quizArea = document.getElementById('readerQuizArea');
         if (isCompleted) {
-            quizArea.innerHTML = `<h3 style="text-align:center; color:green;">✅ Module Completed</h3><p style="text-align:center">You have already passed this quiz.</p>`;
+            quizArea.innerHTML = `<h3 style="color:green">✅ Module Completed</h3>`;
         } else {
-            quizArea.innerHTML = `<h3 style="text-align:center;">Loading Quiz...</h3>`;
-            // Fetch Quiz Data
-            try {
-                const modDoc = await db.collection("courses").doc(COURSE_ID).collection("modules").doc(mId).get();
-                if (modDoc.exists && modDoc.data().quizzes) {
-                    startQuiz(mId, modDoc.data().quizzes);
-                } else {
-                    quizArea.innerHTML = `<p style="text-align:center">No quiz available for this module.</p>`;
-                }
-            } catch (e) {
-                console.error(e);
-                quizArea.innerHTML = `<p style="text-align:center; color:red">Error loading quiz.</p>`;
+            // Load Quiz Data but don't start yet
+            quizArea.innerHTML = `<h3>Loading Quiz...</h3>`;
+            const modDoc = await db.collection("courses").doc(COURSE_ID).collection("modules").doc(mId).get();
+            if (modDoc.exists && modDoc.data().quizzes) {
+                // Show Start Button Screen
+                showQuizStartScreen(mId, modDoc.data().quizzes);
+            } else {
+                quizArea.innerHTML = `<p>No quiz available.</p>`;
             }
         }
     };
@@ -474,16 +445,26 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('readerModal').style.display = 'none';
         document.body.style.overflow = 'auto';
         TTSManager.stop();
-        document.getElementById('ttsControls').style.display = 'none';
+        document.getElementById('ttsPlayer').style.display = 'none';
     };
 
-    // --- 7. QUIZ LOGIC ---
-    function startQuiz(moduleId, data) {
+    // --- 5. QUIZ WITH START BUTTON ---
+    function showQuizStartScreen(moduleId, data) {
         currentQuizData = data;
+        const container = document.getElementById('readerQuizArea');
+        container.innerHTML = `
+            <h3>Ready for the Quiz?</h3>
+            <p>This quiz contains ${data.length} questions.</p>
+            <p>You need 60% to pass.</p>
+            <button class="btn-primary" onclick="startActualQuiz('${moduleId}')">Start Quiz Now</button>
+        `;
+    }
+
+    window.startActualQuiz = function(moduleId) {
         currentQIndex = 0;
         currentScore = 0;
         renderQuestion(moduleId);
-    }
+    };
 
     function renderQuestion(moduleId) {
         const container = document.getElementById('readerQuizArea');
@@ -498,15 +479,15 @@ document.addEventListener('DOMContentLoaded', function() {
         let time = 30;
 
         container.innerHTML = `
-            <div style="text-align:center; margin-bottom:20px;">
-                <span style="background:#eee; padding:5px 10px; border-radius:10px;">Question ${currentQIndex + 1} of ${currentQuizData.length}</span>
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <span>Question ${currentQIndex + 1}/${currentQuizData.length}</span>
+                <span style="color:red; font-weight:bold;" id="timerDisplay">⏱ ${time}s</span>
             </div>
-            <span class="timer" id="timerDisplay">⏱ ${time}s</span>
-            <p style="font-weight:bold; font-size:1.1rem; margin-bottom:20px;">${q.question}</p>
+            <p style="font-weight:bold; font-size:1.1rem; text-align:left;">${q.question}</p>
             <div class="options-group">
                 ${q.options.map(opt => `<label><input type="radio" name="ans" value="${opt}"> ${opt}</label>`).join('')}
             </div>
-            <button class="btn-primary" style="width:100%; margin-top:20px;" onclick="submitAnswer('${moduleId}')">Next Question</button>
+            <button class="btn-primary" style="width:100%" onclick="submitAnswer('${moduleId}')">Submit Answer</button>
         `;
 
         const timerDisplay = container.querySelector('#timerDisplay');
@@ -524,10 +505,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById('readerQuizArea');
         const selected = container.querySelector('input[name="ans"]:checked');
         const correct = currentQuizData[currentQIndex].answer;
-        
-        if (selected && selected.value.trim() === correct.trim()) {
-            currentScore++;
-        }
+        if (selected && selected.value.trim() === correct.trim()) currentScore++;
         currentQIndex++;
         renderQuestion(moduleId);
     };
@@ -538,40 +516,32 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (passed && auth.currentUser) {
             await db.collection("students").doc(auth.currentUser.uid).set({
-                enrolledCourses: {
-                    [COURSE_ID]: { completedModules: { [moduleId]: true } }
-                }
+                enrolledCourses: { [COURSE_ID]: { completedModules: { [moduleId]: true } } }
             }, { merge: true });
         }
 
         container.innerHTML = `
-            <div style="text-align:center; padding:20px;">
-                <h3>Quiz Results</h3>
-                <p style="font-size:1.2rem;">Score: ${currentScore}/${currentQuizData.length} (${Math.round(percentage)}%)</p>
-                ${passed ? '<p class="pass-msg">🎉 PASSED! Module Unlocked.</p>' : '<p class="fail-msg">❌ FAILED. Please review and try again.</p>'}
-                <button class="btn-primary" onclick="location.reload()">Refresh to Continue</button>
-            </div>
+            <h3>Quiz Results</h3>
+            <p>Score: ${Math.round(percentage)}%</p>
+            ${passed ? '<p style="color:green; font-weight:bold;">PASSED! ✅</p>' : '<p style="color:red; font-weight:bold;">FAILED ❌</p>'}
+            <button class="btn-primary" onclick="location.reload()">Return to Dashboard</button>
         `;
     }
 
-    // --- 8. THEME & CERTIFICATE ---
+    // --- 6. CERTIFICATE & THEME ---
     function showCertificateInput() {
-        document.getElementById('modules').style.display = 'none';
         document.getElementById('certificateSection').style.display = 'block';
-        
         document.getElementById('nameForm').onsubmit = (e) => {
             e.preventDefault();
-            const fn = document.getElementById('firstNameInput').value;
-            const ln = document.getElementById('lastNameInput').value;
-            document.getElementById('certStudentName').innerText = (fn + " " + ln).toUpperCase();
+            document.getElementById('certStudentName').innerText = (document.getElementById('firstNameInput').value + " " + document.getElementById('lastNameInput').value).toUpperCase();
             document.getElementById('certDate').innerText = new Date().toLocaleDateString();
             document.getElementById('nameInput').style.display = 'none';
             document.getElementById('certificatePreviewWrapper').style.display = 'block';
         };
     }
-
     window.toggleTheme = function() {
-        document.body.getAttribute('data-theme') === 'dark' ? document.body.removeAttribute('data-theme') : document.body.setAttribute('data-theme', 'dark');
+        const b = document.body;
+        b.getAttribute('data-theme') === 'dark' ? b.removeAttribute('data-theme') : b.setAttribute('data-theme', 'dark');
     };
 });
 </script>
