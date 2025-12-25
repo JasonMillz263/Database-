@@ -29,6 +29,7 @@ header{
   display:flex;
   justify-content:space-between;
   align-items:center;
+  gap:12px;
 }
 .card{
   background:#fff;
@@ -92,7 +93,6 @@ button:active{transform:scale(.97)}
 @media(max-width:768px){
   header h2{font-size:18px}
   .tabs{flex-direction:column}
-  .card{padding:12px}
 }
 </style>
 </head>
@@ -101,6 +101,7 @@ button:active{transform:scale(.97)}
 
 <header>
   <h2><i class="fa fa-user-shield"></i> Admin – Management Course</h2>
+  <div id="authStatus">Checking authentication...</div>
   <button onclick="toggleTheme()">🌙</button>
 </header>
 
@@ -109,6 +110,14 @@ button:active{transform:scale(.97)}
   <span id="actionText"></span>
 </div>
 
+<!-- ADD NEW MODULE BUTTON -->
+<div class="card hidden" id="addModuleCard">
+  <button class="publish" onclick="openEditor()">
+    ➕ Add New Module
+  </button>
+</div>
+
+<!-- EDITOR -->
 <div class="card hidden" id="editor">
   <h3>Module Editor</h3>
 
@@ -171,12 +180,33 @@ const storage = getStorage(app);
 
 signInWithEmailAndPassword(auth,"ADMIN_EMAIL","ADMIN_PASSWORD");
 
+/* ===== AUTH ===== */
+let adminUID=null;
+onAuthStateChanged(auth, async user=>{
+  if(!user){
+    authStatus.innerText="❌ Not logged in";
+    return;
+  }
+  const adminDoc=await getDoc(doc(db,"admins",user.uid));
+  if(!adminDoc.exists()){
+    authStatus.innerText="❌ Not admin";
+    return;
+  }
+  adminUID=user.uid;
+  authStatus.innerText="✅ Admin authenticated";
+  addModuleCard.classList.remove("hidden");
+  loadModules();
+});
+
 /* ===== STATE ===== */
 let quizzes=[];
 let editingQuiz=null;
 let editingId=null;
 
-/* ===== TOAST ===== */
+/* ===== UI HELPERS ===== */
+window.openEditor=()=>{
+  editor.classList.remove("hidden");
+};
 function showAction(t){
   actionText.innerText=t;
   actionToast.classList.remove("hidden");
@@ -193,44 +223,7 @@ window.toggleTheme=()=>{
 if(localStorage.theme==="true")document.body.classList.add("dark");
 
 /* ===== QUILL + IMAGE UPLOAD % ===== */
-const quill=new Quill("#quill",{
-  theme:"snow",
-  modules:{
-    toolbar:{
-      container:[
-        ["bold","italic","underline"],
-        ["image","link"],
-        [{list:"ordered"},{list:"bullet"}]
-      ],
-      handlers:{
-        image:()=>{
-          const input=document.createElement("input");
-          input.type="file";
-          input.accept="image/*";
-          input.click();
-          input.onchange=()=>{
-            const file=input.files[0];
-            const task=uploadBytesResumable(
-              ref(storage,"modules/"+Date.now()+"_"+file.name),
-              file
-            );
-            showAction("Uploading image 0%");
-            task.on("state_changed",s=>{
-              actionText.innerText=
-                "Uploading image "+
-                Math.round(s.bytesTransferred/s.totalBytes*100)+"%";
-            },null,async()=>{
-              const url=await getDownloadURL(task.snapshot.ref);
-              const r=quill.getSelection();
-              quill.insertEmbed(r.index,"image",url);
-              hideAction();
-            });
-          };
-        }
-      }
-    }
-  }
-});
+const quill=new Quill("#quill",{theme:"snow"});
 
 /* ===== AUTODRAFT ===== */
 setInterval(()=>{
@@ -243,31 +236,10 @@ setInterval(()=>{
   });
 },10000);
 
-window.addEventListener("offline",()=>{
-  showAction("Offline – draft auto saved");
-  hideAction();
-});
-
-if(localStorage.autoDraft){
-  const d=JSON.parse(localStorage.autoDraft);
-  title.value=d.title||"";
-  imageUrl.value=d.imageUrl||"";
-  videoUrl.value=d.videoUrl||"";
-  quill.root.innerHTML=d.content||"";
-  quizzes=d.quizzes||[];
-  renderQuizzes();
-}
-
 /* ===== QUIZZES ===== */
 window.addQuiz=()=>{
-  const quiz={
-    question:q.value,
-    options:[o1.value,o2.value,o3.value,o4.value],
-    answer:a.value
-  };
-  editingQuiz!==null
-    ? quizzes[editingQuiz]=quiz
-    : quizzes.push(quiz);
+  const quiz={question:q.value,options:[o1.value,o2.value,o3.value,o4.value],answer:a.value};
+  editingQuiz!==null ? quizzes[editingQuiz]=quiz : quizzes.push(quiz);
   editingQuiz=null;
   q.value=o1.value=o2.value=o3.value=o4.value=a.value="";
   renderQuizzes();
@@ -307,43 +279,44 @@ window.saveModule=async status=>{
     imageUrl:imageUrl.value,
     videoUrl:videoUrl.value,
     content:quill.root.innerHTML,
-    quizzes:quizzes||[],
+    quizzes,
     status,
     updatedAt:serverTimestamp()
   };
   editingId
     ? await updateDoc(doc(refCol,editingId),data)
     : await addDoc(refCol,data);
-  localStorage.removeItem("autoDraft");
   reset();
   loadModules();
   hideAction();
 };
 
-/* ===== LOAD MODULES ===== */
+/* ===== LOAD MODULES (NUMBERED PUBLISHED) ===== */
 async function loadModules(){
   publishedTab.innerHTML=draftTab.innerHTML=binTab.innerHTML="";
+  let count=1;
   const snap=await getDocs(
-    query(
-      collection(db,"courses","management_course","modules"),
-      orderBy("updatedAt","desc")
-    )
+    query(collection(db,"courses","management_course","modules"),orderBy("updatedAt","desc"))
   );
   snap.forEach(d=>{
     const m=d.data();
+    let titleLine=m.title;
+    if(m.status==="published"){
+      titleLine=`${count}. ${m.title}`;
+      count++;
+    }
     const box=`
       <div class="quiz">
-        <b>${m.title}</b><br>
+        <b>${titleLine}</b><br>
         <button class="view" onclick="viewModule('${d.id}')">View</button>
         <button onclick="edit('${d.id}')">Edit</button>
         <button class="delete" onclick="softDelete('${d.id}')">Delete</button>
       </div>`;
-    if(m.status==="published")publishedTab.innerHTML+=box;
-    else if(m.status==="draft")draftTab.innerHTML+=box;
-    else if(m.status==="deleted")binTab.innerHTML+=box;
+    if(m.status==="published") publishedTab.innerHTML+=box;
+    else if(m.status==="draft") draftTab.innerHTML+=box;
+    else if(m.status==="deleted") binTab.innerHTML+=box;
   });
 }
-loadModules();
 
 /* ===== VIEW ===== */
 window.viewModule=async id=>{
@@ -369,14 +342,12 @@ window.edit=async id=>{
   quill.root.innerHTML=m.content;
   quizzes=m.quizzes||[];
   editingId=id;
+  editor.classList.remove("hidden");
   renderQuizzes();
 };
 window.softDelete=async id=>{
   showAction("Moving to recycle bin...");
-  await updateDoc(
-    doc(db,"courses","management_course","modules",id),
-    {status:"deleted"}
-  );
+  await updateDoc(doc(db,"courses","management_course","modules",id),{status:"deleted"});
   hideAction();
   loadModules();
 };
@@ -392,12 +363,9 @@ function reset(){
 
 /* ===== TABS ===== */
 window.showTab=id=>{
-  ["publishedTab","draftTab","binTab"].forEach(t=>{
-    document.getElementById(t).classList.add("hidden");
-  });
+  ["publishedTab","draftTab","binTab"].forEach(t=>document.getElementById(t).classList.add("hidden"));
   document.getElementById(id).classList.remove("hidden");
-  document.querySelectorAll(".tabs button")
-    .forEach(b=>b.classList.remove("active"));
+  document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
   event.target.classList.add("active");
 };
 </script>
