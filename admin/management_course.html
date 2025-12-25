@@ -10,178 +10,635 @@
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 
 <style>
-body{margin:0;padding:12px;font-family:Segoe UI;background:#f1f5f9}
+body{
+  font-family:Segoe UI;
+  background:#f1f5f9;
+  padding:12px;
+  margin:0;
+  transition:.25s;
+}
 body.dark{background:#0f172a;color:#e5e7eb}
-header{background:#4f46e5;color:#fff;padding:16px;border-radius:12px;display:flex;justify-content:space-between;align-items:center}
-.card{background:#fff;padding:16px;border-radius:12px;margin-top:12px}
+
+header{
+  background:#4f46e5;
+  color:#fff;
+  padding:16px;
+  border-radius:12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+header .rightControls{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+
+.card{
+  background:#fff;
+  padding:16px;
+  border-radius:12px;
+  margin-top:12px;
+  animation:fadeSlide .2s ease;
+}
 body.dark .card{background:#020617}
-input,button{width:100%;padding:10px;margin:6px 0}
-button{border:none;border-radius:6px;font-weight:bold;cursor:pointer}
+
+@keyframes fadeSlide{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:none}
+}
+
+input,button{
+  width:100%;
+  padding:10px;
+  margin:6px 0;
+  box-sizing:border-box;
+}
+button{
+  border:none;
+  border-radius:6px;
+  font-weight:bold;
+  cursor:pointer;
+}
 .publish{background:#16a34a;color:#fff}
 .draft{background:#f59e0b}
 .delete{background:#dc2626;color:#fff}
+.view{background:#0ea5e9;color:#fff}
 .neutral{background:#e5e7eb}
-.hidden{display:none}
+body.dark .neutral{background:#334155;color:#e5e7eb}
+
 .quiz{background:#eef2ff;padding:10px;border-radius:8px;margin:8px 0}
-.notice{background:#e0f2fe;padding:8px;border-radius:6px}
-.tabs{display:flex;gap:8px;margin-top:12px}
+body.dark .quiz{background:#111827}
+
+.hidden{display:none}
+
+.tabs{
+  display:flex;
+  gap:8px;
+  margin-top:12px;
+}
+.tabs button{flex:1;background:#e5e7eb}
 .tabs button.active{background:#4f46e5;color:#fff}
+
+#statusOverlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.55);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+}
+#statusOverlay.hidden{display:none}
+.statusBox{
+  background:#fff;
+  padding:22px;
+  border-radius:12px;
+  text-align:center;
+  min-width:220px;
+}
+body.dark .statusBox{background:#020617}
+
+.notice{
+  padding:10px;
+  border-radius:8px;
+  background:#e0f2fe;
+  margin:8px 0;
+  font-size:14px;
+}
+body.dark .notice{background:#0b1220}
+
+@media(max-width:768px){
+  .tabs{flex-direction:column}
+}
 </style>
 </head>
 
 <body>
 
 <header>
-  <div style="display:flex;gap:10px;align-items:center">
-    <button id="backBtn" class="neutral hidden">⬅ Back</button>
-    <h3>Admin – Management Course</h3>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <button id="backBtn" class="neutral hidden" onclick="goBack()">
+      <i class="fa fa-arrow-left"></i> Back
+    </button>
+    <h2 style="margin:0;"><i class="fa fa-user-shield"></i> Admin – Management Course</h2>
   </div>
-  <span id="authStatus">Checking authentication...</span>
+
+  <div class="rightControls">
+    <button class="neutral" onclick="toggleTheme()" title="Dark/Light">
+      <i class="fa fa-moon"></i>
+    </button>
+    <span id="authStatus">Checking authentication...</span>
+  </div>
 </header>
 
-<div id="editor" class="card hidden">
+<!-- Editor -->
+<div class="card hidden" id="editor">
   <h3>Module Editor</h3>
-  <input id="title" placeholder="Module title">
 
-  <div id="uploadNotice" class="notice hidden"></div>
-  <div id="quill" style="height:240px"></div>
+  <input id="title" placeholder="Module title">
+  <input id="imageUrl" placeholder="Cover Image URL (optional)">
+  <input id="videoUrl" placeholder="Video URL (optional)">
+
+  <div id="quillUploadNotice" class="notice hidden"></div>
+  <div id="quill" style="height:200px"></div>
+
+  <h4>Quizzes</h4>
+  <input id="q" placeholder="Question">
+  <input id="o1" placeholder="Option 1">
+  <input id="o2" placeholder="Option 2">
+  <input id="o3" placeholder="Option 3">
+  <input id="o4" placeholder="Option 4">
+  <input id="a" placeholder="Correct answer (Must match one option exactly)">
+  <button class="neutral" onclick="addQuiz()">Add / Update Quiz</button>
+
+  <div id="quizList"></div>
 
   <button class="draft" onclick="saveModule('draft')">Save Draft</button>
-  <button class="publish" onclick="publish()">Publish</button>
+  <button class="publish" onclick="saveModule('published')">Publish</button>
 </div>
 
+<!-- Tabs -->
 <div id="tabsWrap" class="tabs hidden">
-  <button id="pubBtn" class="active" onclick="showTab('published')">Published</button>
-  <button onclick="showTab('draft')">Drafts</button>
+  <button id="btnPublished" class="active" onclick="showTab('publishedTab', this)">Published</button>
+  <button id="btnDraft" onclick="showTab('draftTab', this)">Drafts</button>
+  <button id="btnBin" onclick="showTab('binTab', this)">Recycle Bin</button>
 </div>
 
-<div id="published" class="card"></div>
-<div id="draft" class="card hidden"></div>
+<div class="card hidden" id="publishedTab"></div>
+<div class="card hidden" id="draftTab"></div>
+<div class="card hidden" id="binTab"></div>
+
+<div class="card hidden" id="viewer"></div>
+
+<div id="statusOverlay" class="hidden">
+  <div class="statusBox">
+    <i id="statusIcon" class="fa fa-spinner fa-spin"></i>
+    <p id="statusText" style="margin:10px 0 0;"></p>
+  </div>
+</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
+import {
+  getFirestore, collection, doc, addDoc, getDocs,
+  updateDoc, getDoc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import {
+  getAuth, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import {
+  getStorage, ref, uploadBytesResumable, getDownloadURL
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
+/* ===== FIREBASE ===== */
 const app = initializeApp({
-  apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
-  authDomain:"students-login-29409.firebaseapp.com",
-  projectId:"students-login-29409"
+  apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+  authDomain: "students-login-29409.firebaseapp.com",
+  projectId: "students-login-29409"
 });
-
 const db = getFirestore(app);
 const auth = getAuth(app);
 const storage = getStorage(app);
 
-signInWithEmailAndPassword(auth,"ADMIN_EMAIL","ADMIN_PASSWORD");
+// (removed auto login)
 
-let editingId=null;
-let uploading=false;
-let dirty=false;
+/* ===== STATE ===== */
+let quizzes = [];
+let editingQuiz = null;
+let editingId = null;
+let uploadInProgress = false;
 
-/* QUILL */
-const quill = new Quill("#quill",{
-  theme:"snow",
-  modules:{toolbar:[["bold","italic","underline"],["image","link"]]}
+const navStack = [];
+
+function pushView(viewName){
+  const snapshot = {
+    view: viewName,
+    activeTab: getActiveTabId(),
+    scrollY: window.scrollY
+  };
+  navStack.push(snapshot);
+  updateBackButton();
+}
+
+function goToView(viewName, opts = {}){
+  viewer.classList.add("hidden");
+  editor.classList.add("hidden");
+  publishedTab.classList.add("hidden");
+  draftTab.classList.add("hidden");
+  binTab.classList.add("hidden");
+  tabsWrap.classList.add("hidden");
+
+  if(viewName === "list"){
+    tabsWrap.classList.remove("hidden");
+    const tab = opts.tabId || getActiveTabId() || "publishedTab";
+    const btn =
+      tab==="publishedTab" ? btnPublished :
+      tab==="draftTab" ? btnDraft :
+      btnBin;
+    showTab(tab, btn, false);
+  }
+
+  if(viewName === "editor"){
+    editor.classList.remove("hidden");
+    tabsWrap.classList.remove("hidden");
+  }
+
+  if(viewName === "viewer"){
+    viewer.classList.remove("hidden");
+  }
+
+  if(opts.scrollTop) window.scrollTo({top:0, behavior:"smooth"});
+  updateBackButton();
+}
+
+window.goBack = () => {
+  navStack.pop();
+  const prev = navStack[navStack.length - 1];
+  if(!prev){
+    goToView("list", {tabId:"publishedTab", scrollTop:true});
+    updateBackButton();
+    return;
+  }
+  goToView(prev.view, {tabId: prev.activeTab});
+  window.scrollTo({top: prev.scrollY || 0, behavior:"instant"});
+  updateBackButton();
+};
+
+function updateBackButton(){
+  if(navStack.length > 1) backBtn.classList.remove("hidden");
+  else backBtn.classList.add("hidden");
+}
+
+function getActiveTabId(){
+  if(!publishedTab.classList.contains("hidden")) return "publishedTab";
+  if(!draftTab.classList.contains("hidden")) return "draftTab";
+  if(!binTab.classList.contains("hidden")) return "binTab";
+  if(btnPublished.classList.contains("active")) return "publishedTab";
+  if(btnDraft.classList.contains("active")) return "draftTab";
+  if(btnBin.classList.contains("active")) return "binTab";
+  return "publishedTab";
+}
+
+/* ===== AUTH ===== */
+onAuthStateChanged(auth, async user=>{
+  if(!user){
+    authStatus.innerText="❌ Not logged in";
+    return;
+  }
+
+  authStatus.innerText="✅ Admin authenticated";
+
+  tabsWrap.classList.remove("hidden");
+  pushView("list");
+  goToView("list", {tabId:"publishedTab"});
+
+  await loadModules();
 });
 
-quill.on("text-change",()=>dirty=true);
-title.oninput=()=>dirty=true;
+/* ===== QUILL ===== */
+const quill = new Quill("#quill",{
+  theme:"snow",
+  modules:{
+    toolbar:[
+      ["bold","italic","underline"],
+      ["image","link"],
+      [{list:"ordered"},{list:"bullet"}]
+    ]
+  }
+});
 
-/* IMAGE UPLOAD */
-quill.getModule("toolbar").addHandler("image",()=>{
-  const input=document.createElement("input");
-  input.type="file";input.accept="image/*";input.click();
-  input.onchange=()=>{
-    const file=input.files[0];
+const toolbar = quill.getModule("toolbar");
+
+toolbar.addHandler("image", () => {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
+  input.click();
+
+  input.onchange = () => {
+    const file = input.files?.[0];
     if(!file) return;
-    uploading=true;
-    uploadNotice.classList.remove("hidden");
-    const task=uploadBytesResumable(ref(storage,"quill/"+Date.now()+"_"+file.name),file);
-    task.on("state_changed",s=>{
-      uploadNotice.innerText=`Uploading image ${Math.round(s.bytesTransferred/s.totalBytes*100)}%`;
-    },()=>{
-      alert("Upload failed");
-      uploading=false;
-    },async()=>{
-      const url=await getDownloadURL(task.snapshot.ref);
-      quill.insertEmbed(quill.getSelection().index,"image",url);
-      uploading=false;
-      uploadNotice.classList.add("hidden");
+
+    uploadInProgress = true;
+    quillUploadNotice.classList.remove("hidden");
+    quillUploadNotice.innerText = "Uploading image: 0%";
+
+    const storageRef = ref(storage, "quill_images/" + Date.now() + "_" + file.name);
+    const task = uploadBytesResumable(storageRef, file);
+
+    task.on("state_changed", snap => {
+      const p = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+      quillUploadNotice.innerText = `Uploading image: ${p}%`;
+    }, () => {
+      uploadInProgress = false;
+      quillUploadNotice.innerText = "Upload failed ❌";
+      setTimeout(()=>quillUploadNotice.classList.add("hidden"), 1500);
+    }, async () => {
+      const url = await getDownloadURL(task.snapshot.ref);
+      const range = quill.getSelection(true);
+      const index = range ? range.index : quill.getLength();
+      quill.insertEmbed(index, "image", url, "user");
+      quill.setSelection(index + 1);
+
+      uploadInProgress = false;
+      quillUploadNotice.innerText = "Image inserted ✅";
+      setTimeout(()=>quillUploadNotice.classList.add("hidden"), 900);
     });
   };
 });
 
-/* AUTO DRAFT (BLOGGER STYLE) */
-function autoDraft(){
-  if(!dirty) return;
-  if(!title.value && !quill.getText().trim()) return;
-  saveModule("draft",true);
-}
-window.addEventListener("beforeunload",autoDraft);
-window.addEventListener("offline",autoDraft);
+/* ===== SMART LOCAL DRAFT (BLOGGER STYLE) ===== */
+const DRAFT_KEY = "management_course_draft";
 
-backBtn.onclick=()=>{
-  autoDraft();
-  editor.classList.add("hidden");
-  tabsWrap.classList.remove("hidden");
-};
-
-/* SAVE */
-window.saveModule = async (status,silent=false)=>{
-  if(status==="published"){
-    if(!title.value.trim()) return alert("Module title is required");
-    if(!quill.getText().trim()) return alert("Module content is required");
-    if(uploading) return alert("Please wait for image upload to finish");
-  }
-  const data={
-    title:title.value,
-    content:quill.root.innerHTML,
-    status,
-    updatedAt:serverTimestamp()
+function saveLocalDraft() {
+  const draft = {
+    title: title.value,
+    imageUrl: imageUrl.value,
+    videoUrl: videoUrl.value,
+    content: quill.root.innerHTML,
+    quizzes,
+    editingId
   };
-  if(editingId){
-    await updateDoc(doc(db,"courses/management_course/modules",editingId),data);
-  }else{
-    await addDoc(collection(db,"courses/management_course/modules"),{...data,createdAt:serverTimestamp()});
+  localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+}
+
+function loadLocalDraft() {
+  const d = localStorage.getItem(DRAFT_KEY);
+  if(!d) return;
+
+  const draft = JSON.parse(d);
+  title.value = draft.title || "";
+  imageUrl.value = draft.imageUrl || "";
+  videoUrl.value = draft.videoUrl || "";
+  quill.root.innerHTML = draft.content || "";
+  quizzes = draft.quizzes || [];
+  editingId = draft.editingId || null;
+  renderQuizzes();
+}
+
+window.addEventListener("beforeunload", saveLocalDraft);
+window.addEventListener("offline", saveLocalDraft);
+backBtn?.addEventListener("click", saveLocalDraft);
+
+loadLocalDraft();
+
+/* ===== STATUS ===== */
+function showStatus(text, icon="spinner"){
+  statusText.innerText=text;
+  statusIcon.className =
+    icon==="success" ? "fa fa-check-circle" :
+    icon==="trash" ? "fa fa-trash" :
+    "fa fa-spinner fa-spin";
+  statusOverlay.classList.remove("hidden");
+}
+function hideStatus(){ statusOverlay.classList.add("hidden"); }
+
+/* ===== QUIZZES ===== */
+window.addQuiz = () => {
+  const quiz = {
+    question: q.value,
+    options: [o1.value, o2.value, o3.value, o4.value],
+    answer: a.value
+  };
+
+  if(editingQuiz !== null){
+    quizzes[editingQuiz] = quiz;
+    editingQuiz = null;
+  } else {
+    quizzes.push(quiz);
   }
-  dirty=false;
-  if(!silent) alert(status==="published"?"Published successfully":"Draft saved");
-  loadModules();
+
+  q.value=o1.value=o2.value=o3.value=o4.value=a.value="";
+  renderQuizzes();
 };
 
-/* PUBLISH WRAPPER */
-window.publish=()=>saveModule("published");
-
-/* LOAD MODULES */
-async function loadModules(){
-  published.innerHTML=draft.innerHTML="";
-  const snap=await getDocs(collection(db,"courses/management_course/modules"));
-  snap.forEach(d=>{
-    const m=d.data();
-    const box=`<div class="quiz"><b>${m.title||"(Untitled)"}</b></div>`;
-    if(m.status==="published") published.innerHTML+=box;
-    if(m.status==="draft") draft.innerHTML+=box;
+function renderQuizzes(){
+  quizList.innerHTML="";
+  quizzes.forEach((x,i)=>{
+    quizList.innerHTML += `
+      <div class="quiz">
+        <b>${i+1}.</b> ${x.question}
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="neutral" onclick="editQuiz(${i})">Edit</button>
+          <button class="delete" onclick="deleteQuiz(${i})">Delete</button>
+        </div>
+      </div>`;
   });
 }
 
-/* TABS */
-window.showTab=id=>{
-  published.classList.toggle("hidden",id!=="published");
-  draft.classList.toggle("hidden",id!=="draft");
-  document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
-  event.target.classList.add("active");
+window.editQuiz = i => {
+  const x=quizzes[i];
+  q.value=x.question;
+  o1.value=x.options[0] || "";
+  o2.value=x.options[1] || "";
+  o3.value=x.options[2] || "";
+  o4.value=x.options[3] || "";
+  a.value=x.answer || "";
+  editingQuiz=i;
 };
 
-/* AUTH */
-onAuthStateChanged(auth,u=>{
-  if(!u){authStatus.innerText="❌ Not logged in";return;}
-  authStatus.innerText="✅ Admin authenticated";
-  tabsWrap.classList.remove("hidden");
-  editor.classList.remove("hidden");
-  loadModules();
-});
+window.deleteQuiz = i => {
+  quizzes.splice(i,1);
+  renderQuizzes();
+};
+
+/* ===== SAVE / PUBLISH ===== */
+window.saveModule = async status => {
+
+  const hasTitle = title.value.trim().length > 0;
+  const hasContent = quill.getText().trim().length > 0;
+
+  if(status === "published") {
+
+    if(uploadInProgress){
+      alert("⏳ Image upload is still in progress. Please wait.");
+      return;
+    }
+
+    if(!hasTitle){
+      alert("⚠️ Please enter a module title before publishing.");
+      return;
+    }
+
+    if(!hasContent){
+      alert("⚠️ Please write some content before publishing.");
+      return;
+    }
+  }
+
+  try{
+    showStatus(status==="published" ? "Publishing..." : "Saving draft...");
+
+    const refCol = collection(db,"courses","management_course","modules");
+    const data = {
+      title: title.value,
+      imageUrl: imageUrl.value,
+      videoUrl: videoUrl.value,
+      content: quill.root.innerHTML,
+      quizzes: quizzes || [],
+      status,
+      updatedAt: serverTimestamp()
+    };
+
+    if(editingId){
+      await updateDoc(doc(refCol, editingId), data);
+    } else {
+      await addDoc(refCol, { ...data, createdAt: serverTimestamp() });
+    }
+
+    showStatus("Done ✅","success");
+    setTimeout(hideStatus, 600);
+
+    localStorage.removeItem(DRAFT_KEY);
+    reset();
+    await loadModules();
+
+    pushView("list");
+    goToView("list", {
+      tabId: status==="published" ? "publishedTab" : "draftTab",
+      scrollTop:true
+    });
+
+  }catch(e){
+    console.error(e);
+    showStatus("Error ❌");
+    setTimeout(hideStatus, 900);
+  }
+};
+
+/* ===== LOAD MODULES ===== */
+async function loadModules(){
+  publishedTab.innerHTML = "";
+  draftTab.innerHTML = "";
+  binTab.innerHTML = "";
+
+  const snap = await getDocs(collection(db,"courses","management_course","modules"));
+
+  const modules = [];
+  snap.forEach(d => modules.push({ id:d.id, ...d.data() }));
+
+  modules.sort((a,b)=>{
+    const as = a.updatedAt?.seconds || 0;
+    const bs = b.updatedAt?.seconds || 0;
+    return bs - as;
+  });
+
+  modules.forEach(m=>{
+    const box = `
+      <div class="quiz">
+        <b>${m.title || "(No title)"}</b>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+          <button class="neutral" onclick="edit('${m.id}')">Edit</button>
+          ${m.status==="published" ? `<button class="view" onclick="viewModule('${m.id}')">View</button>` : ""}
+          <button class="delete" onclick="softDelete('${m.id}')">Delete</button>
+        </div>
+      </div>
+    `;
+
+    if(m.status==="published") publishedTab.innerHTML += box;
+    else if(m.status==="draft") draftTab.innerHTML += box;
+    else if(m.status==="deleted") binTab.innerHTML += box;
+  });
+}
+
+/* ===== SOFT DELETE ===== */
+window.softDelete = async id => {
+  const ok = confirm("Move this module to recycle bin?");
+  if(!ok) return;
+
+  showStatus("Deleting...","trash");
+  await updateDoc(doc(db,"courses","management_course","modules",id),{
+    status:"deleted",
+    updatedAt: serverTimestamp()
+  });
+  hideStatus();
+  await loadModules();
+};
+
+/* ===== EDIT ===== */
+window.edit = async id => {
+  pushView("list");
+  pushView("editor");
+
+  const s = await getDoc(doc(db,"courses","management_course","modules",id));
+  const m = s.data();
+
+  title.value = m.title || "";
+  imageUrl.value = m.imageUrl || "";
+  videoUrl.value = m.videoUrl || "";
+  quill.root.innerHTML = m.content || "";
+  quizzes = m.quizzes || [];
+  editingId = id;
+  renderQuizzes();
+
+  goToView("editor", {scrollTop:true});
+};
+
+/* ===== VIEW ===== */
+window.viewModule = async id => {
+  pushView("list");
+  pushView("viewer");
+
+  const s = await getDoc(doc(db,"courses","management_course","modules",id));
+  const m = s.data();
+
+  const cover = m.imageUrl ? `<img src="${m.imageUrl}" style="max-width:100%;border-radius:10px;margin:10px 0;">` : "";
+  const vid = m.videoUrl ? `<a href="${m.videoUrl}" target="_blank">Video link</a>` : "";
+
+  viewer.innerHTML = `
+    <h2 style="margin-top:0;">${m.title || "Untitled"}</h2>
+    ${cover}
+    ${vid ? `<p>${vid}</p>` : ""}
+    <div>${m.content || ""}</div>
+  `;
+
+  goToView("viewer", {scrollTop:true});
+};
+
+/* ===== RESET ===== */
+function reset(){
+  title.value = "";
+  imageUrl.value = "";
+  videoUrl.value = "";
+  quill.root.innerHTML = "";
+  quizzes = [];
+  editingId = null;
+  editingQuiz = null;
+  renderQuizzes();
+}
+
+/* ===== TABS ===== */
+window.showTab = (id, btn, push=true) => {
+  if(push){
+    pushView("list");
+  }
+
+  ["publishedTab","draftTab","binTab"].forEach(t =>
+    document.getElementById(t).classList.add("hidden")
+  );
+
+  document.getElementById(id).classList.remove("hidden");
+
+  document.querySelectorAll(".tabs button").forEach(b =>
+    b.classList.remove("active")
+  );
+
+  if(btn) btn.classList.add("active");
+};
+
+/* ===== THEME ===== */
+window.toggleTheme = () => {
+  document.body.classList.toggle("dark");
+  localStorage.theme = document.body.classList.contains("dark") ? "dark" : "light";
+};
+if(localStorage.theme === "dark") document.body.classList.add("dark");
+</script>
+
+<script>
+// expose goBack fallback
+window.goBack = window.goBack || function(){};
 </script>
 
 </body>
