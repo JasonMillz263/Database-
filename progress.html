@@ -10,91 +10,110 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
 body {
-    margin: 0;
-    font-family: 'Segoe UI', sans-serif;
-    background: linear-gradient(135deg, #eef2f7, #f9fbff);
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: #f4f6f9;
 }
 
 .container {
-    max-width: 1200px;
-    margin: auto;
-    padding: 20px;
+  max-width: 1200px;
+  margin: auto;
+  padding: 20px;
 }
 
-h2 {
-    text-align: center;
-    margin-bottom: 30px;
-}
+h2 { text-align: center; margin-bottom: 30px; }
 
 .course-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
 }
 
 .course-card {
-    background: white;
-    border-radius: 14px;
-    padding: 20px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-    transition: transform .3s ease;
-}
-
-.course-card:hover {
-    transform: translateY(-4px);
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.08);
 }
 
 .course-title {
-    font-size: 17px;
-    font-weight: 700;
-    margin-bottom: 12px;
+  font-weight: 700;
+  margin-bottom: 10px;
 }
 
 .progress-bar {
-    background: #e5e9f0;
-    height: 12px;
-    border-radius: 8px;
-    overflow: hidden;
+  height: 12px;
+  background: #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .progress-fill {
-    height: 100%;
-    width: 0%;
-    background: linear-gradient(90deg, #667eea, #764ba2);
-    transition: width 0.8s ease;
+  height: 100%;
+  background: linear-gradient(90deg, #667eea, #764ba2);
 }
 
 .progress-text {
-    font-size: 13px;
-    margin-top: 8px;
-    color: #555;
+  font-size: 13px;
+  margin-top: 8px;
 }
 
-.module-info {
-    margin-top: 10px;
-    font-size: 13px;
-    color: #444;
+.actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
+
+button {
+  border: none;
+  padding: 7px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.resume { background: #4caf50; color: #fff; }
+.details { background: #2196f3; color: #fff; }
 
 .badge {
-    display: inline-block;
-    margin-top: 12px;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: bold;
+  margin-top: 10px;
+  display: inline-block;
+  background: #ff9800;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 12px;
 }
 
-.completed {
-    background: #4CAF50;
-    color: white;
+/* MODAL */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 99;
 }
 
-.certificate {
-    background: #ff9800;
-    color: white;
+.modal-content {
+  background: white;
+  width: 90%;
+  max-width: 600px;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.close {
+  float: right;
+  cursor: pointer;
+  font-weight: bold;
 }
 </style>
 </head>
@@ -102,80 +121,123 @@ h2 {
 <body>
 
 <div class="container">
-    <h2>📊 My Learning Progress</h2>
-    <div id="courseGrid" class="course-grid"></div>
+  <h2>📊 My Learning Dashboard</h2>
+  <div id="courseGrid" class="course-grid"></div>
+</div>
+
+<!-- MODAL -->
+<div id="courseModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal()">✖</span>
+    <h3 id="modalTitle"></h3>
+    <canvas id="quizChart"></canvas>
+  </div>
 </div>
 
 <script>
-/* ------------ FIREBASE CONFIG ------------ */
 const firebaseConfig = {
-    apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
-    authDomain: "students-login-29409.firebaseapp.com",
-    projectId: "students-login-29409"
+  apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+  authDomain: "students-login-29409.firebaseapp.com",
+  projectId: "students-login-29409"
 };
 
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* ------------ LOAD PROGRESS ------------ */
-auth.onAuthStateChanged(async (user) => {
-    if (!user) {
-        window.location.href = "login.html";
-        return;
-    }
+let chart;
 
-    const studentSnap = await db.collection("students").doc(user.uid).get();
-    if (!studentSnap.exists) return;
+auth.onAuthStateChanged(async user => {
+  if (!user) return location.href = "login.html";
 
-    const student = studentSnap.data();
-    const paid = student.paidCourses || {};
-    const approved = student.approvedCourses || {};
-    const progress = student.moduleProgress || {};
-    const certificates = student.certificates || {};
+  const studentSnap = await db.collection("students").doc(user.uid).get();
+  if (!studentSnap.exists) return;
 
-    const coursesSnap = await db.collection("courses").get();
-    const grid = document.getElementById("courseGrid");
-    grid.innerHTML = "";
+  const enrolled = studentSnap.data().enrolledCourses || {};
+  const grid = document.getElementById("courseGrid");
+  grid.innerHTML = "";
 
-    coursesSnap.forEach(doc => {
-        const courseId = doc.id;
-        const course = doc.data();
+  for (const courseId of Object.keys(enrolled)) {
+    const courseSnap = await db.collection("courses").doc(courseId).get();
+    if (!courseSnap.exists) continue;
 
-        if (!paid[courseId] || !approved[courseId]) return;
+    const modulesSnap = await db
+      .collection("courses")
+      .doc(courseId)
+      .collection("modules")
+      .get();
 
-        const modules = course.modules || [];
-        const completedModules = progress[courseId] || {};
+    const total = modulesSnap.size;
+    const completed = Object.keys(enrolled[courseId].completedModules || {}).length;
+    const percent = total ? Math.round((completed / total) * 100) : 0;
 
-        const completedCount = Object.keys(completedModules).length;
-        const totalModules = modules.length;
-        const percent = totalModules > 0 ? Math.round((completedCount / totalModules) * 100) : 0;
+    const card = document.createElement("div");
+    card.className = "course-card";
 
-        const card = document.createElement("div");
-        card.className = "course-card";
+    card.innerHTML = `
+      <div class="course-title">${courseSnap.data().title}</div>
 
-        card.innerHTML = `
-            <div class="course-title">${course.title}</div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width:${percent}%"></div>
+      </div>
 
-            <div class="progress-bar">
-                <div class="progress-fill" style="width:${percent}%"></div>
-            </div>
+      <div class="progress-text">
+        ${completed} / ${total} modules completed (${percent}%)
+      </div>
 
-            <div class="progress-text">
-                ${completedCount} of ${totalModules} modules completed (${percent}%)
-            </div>
+      <div class="actions">
+        <button class="resume" onclick="resumeCourse('${courseId}')">
+          ▶ Resume
+        </button>
+        <button class="details" onclick='openModal("${courseId}", ${JSON.stringify(enrolled[courseId].quizResults || {})})'>
+          📈 Progress
+        </button>
+      </div>
 
-            <div class="module-info">
-                📦 Modules: ${totalModules}
-            </div>
+      ${percent === 100 ? `<div class="badge">✔ Course Completed</div>` : ""}
+    `;
 
-            ${percent === 100 ? `<span class="badge completed">✔ Course Completed</span>` : ""}
-            ${certificates[courseId] ? `<span class="badge certificate">🎓 Certificate Available</span>` : ""}
-        `;
-
-        grid.appendChild(card);
-    });
+    grid.appendChild(card);
+  }
 });
+
+function resumeCourse(courseId) {
+  // lastSaved = moduleId
+  window.location.href = `course.html?course=${courseId}`;
+}
+
+function openModal(courseId, quizResults) {
+  document.getElementById("courseModal").style.display = "flex";
+  document.getElementById("modalTitle").innerText = "Quiz Performance";
+
+  const labels = Object.keys(quizResults);
+  const scores = Object.values(quizResults);
+
+  const ctx = document.getElementById("quizChart");
+
+  if (chart) chart.destroy();
+
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Quiz Score (%)',
+        data: scores
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true, max: 100 }
+      }
+    }
+  });
+}
+
+function closeModal() {
+  document.getElementById("courseModal").style.display = "none";
+}
 </script>
 
 </body>
