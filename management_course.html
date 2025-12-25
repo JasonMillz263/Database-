@@ -82,7 +82,6 @@
         
         .reader-content { font-size: 1.15rem; line-height: 1.8; color: var(--text-main); margin-bottom: 40px; }
         .reader-content img { max-width: 100%; border-radius: 12px; margin: 20px 0; display: block; }
-        .highlight-sentence { background-color: rgba(255, 183, 0, 0.3); border-radius: 4px; transition: background 0.3s; }
 
         /* MUSIC PLAYER STYLE TTS CONTROLS */
         .tts-player {
@@ -94,8 +93,6 @@
         .tts-controls-row { display: flex; align-items: center; justify-content: center; gap: 20px; }
         .tts-btn { background: transparent; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; }
         .tts-btn:hover { color: var(--accent-yellow); }
-        
-        /* Seek Slider */
         .tts-seek-container { width: 100%; display: flex; align-items: center; gap: 10px; color: #9ca3af; font-size: 0.8rem; }
         .tts-slider { -webkit-appearance: none; width: 100%; height: 5px; background: #475569; border-radius: 5px; outline: none; }
         .tts-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 15px; height: 15px; background: var(--accent-yellow); border-radius: 50%; cursor: pointer; }
@@ -114,8 +111,6 @@
         #certificateSection { display: none; }
         #nameInput { text-align: center; background: var(--bg-card); padding: 40px; border-radius: 20px; border: 2px solid var(--accent-yellow); max-width: 600px; margin: 40px auto; }
         #nameForm input { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 10px; border: 1px solid #ccc; }
-        
-        /* Print Styles */
         @media print {
             body * { visibility: hidden; }
             #certificatePreviewWrapper, #certificatePreviewWrapper * { visibility: visible; }
@@ -185,7 +180,6 @@
         </div>
     </div>
 </div>
-
 <div id="readerModal" class="reader-modal">
     <div class="reader-container">
         <div class="reader-header">
@@ -195,7 +189,7 @@
         
         <div id="readerBody" class="reader-content"></div>
 
-        <div id="readerQuizArea" class="quiz-wrapper"></div>
+        <div id="quizContainer" class="quiz-wrapper"></div>
     </div>
 
     <div class="tts-player" id="ttsPlayer">
@@ -208,10 +202,11 @@
             <button class="tts-btn" onclick="TTSManager.prev()">⏮</button>
             <button class="tts-btn" id="ttsPlayPauseBtn" onclick="TTSManager.toggle()">▶</button>
             <button class="tts-btn" onclick="TTSManager.next()">⏭</button>
-            <button class="tts-btn" onclick="TTSManager.stop()" style="font-size:1rem; margin-left:15px;">⏹ Stop</button>
+            <button class="tts-btn" onclick="TTSManager.stop()">⏹</button>
         </div>
     </div>
 </div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     
@@ -227,136 +222,54 @@ document.addEventListener('DOMContentLoaded', function() {
     const COURSE_ID = "management_course";
     
     // --- 2. ADVANCED TEXT CLEANER ---
-    // Removes "I can't see..." text even if hidden in HTML tags
     function cleanLessonContent(htmlContent) {
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = htmlContent;
-        
-        // Strategy 1: Remove specific string from innerHTML
         let contentStr = tempDiv.innerHTML;
-        // Regex looks for "I can't see" with any surrounding spaces or tags
         contentStr = contentStr.replace(/<[^>]*>.*?I can't see the image upload.*?<\/[^>]*>/gi, ""); 
         contentStr = contentStr.replace(/I can't see the image upload on quill/gi, "");
-        
         return contentStr;
     }
 
-    // --- 3. MUSIC PLAYER STYLE TTS ENGINE ---
+    // --- 3. TTS ENGINE ---
     window.TTSManager = {
-        sentences: [],
-        currentIndex: 0,
-        isPlaying: false,
-        synth: window.speechSynthesis,
-        utterance: null,
-
+        sentences: [], currentIndex: 0, isPlaying: false, synth: window.speechSynthesis, utterance: null,
         init: function(htmlContent) {
             this.stop();
-            // Split text by punctuation to create "tracks" (sentences)
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = htmlContent;
             const text = tempDiv.innerText;
-            // Split by . ! ? but keep the punctuation
             this.sentences = text.match( /[^\.!\?]+[\.!\?]+/g ) || [text];
             this.currentIndex = 0;
             document.getElementById('ttsPlayer').style.display = 'flex';
             this.updateSlider();
         },
-
         speakSentence: function() {
             this.synth.cancel();
-            if (this.currentIndex >= this.sentences.length) {
-                this.stop();
-                return;
-            }
-
+            if (this.currentIndex >= this.sentences.length) { this.stop(); return; }
             const text = this.sentences[this.currentIndex];
             this.utterance = new SpeechSynthesisUtterance(text);
             this.utterance.lang = 'en-US';
-            this.utterance.rate = 1.0;
-
             this.utterance.onend = () => {
                 this.currentIndex++;
                 if (this.currentIndex < this.sentences.length && this.isPlaying) {
-                    this.speakSentence();
-                    this.updateSlider();
+                    this.speakSentence(); this.updateSlider();
                 } else {
-                    this.isPlaying = false;
-                    this.updateUI();
+                    this.isPlaying = false; this.updateUI();
                 }
             };
-
             this.synth.speak(this.utterance);
-            this.updateUI();
-            this.updateSlider();
+            this.updateUI(); this.updateSlider();
         },
-
-        toggle: function() {
-            if (this.isPlaying) {
-                this.pause();
-            } else {
-                this.play();
-            }
-        },
-
-        play: function() {
-            this.isPlaying = true;
-            if (!this.synth.speaking) {
-                this.speakSentence();
-            } else {
-                this.synth.resume();
-            }
-            this.updateUI();
-        },
-
-        pause: function() {
-            this.isPlaying = false;
-            this.synth.pause();
-            this.updateUI();
-        },
-
-        prev: function() {
-            if (this.currentIndex > 0) {
-                this.currentIndex--;
-                this.speakSentence();
-            }
-        },
-
-        next: function() {
-            if (this.currentIndex < this.sentences.length - 1) {
-                this.currentIndex++;
-                this.speakSentence();
-            }
-        },
-
-        seek: function(val) {
-            // Calculate index based on slider percentage
-            const pct = val / 100;
-            this.currentIndex = Math.floor(pct * this.sentences.length);
-            if(this.isPlaying) this.speakSentence();
-            else this.updateUI();
-        },
-
-        stop: function() {
-            this.isPlaying = false;
-            this.synth.cancel();
-            this.currentIndex = 0;
-            this.updateUI();
-            this.updateSlider();
-        },
-
-        updateUI: function() {
-            const btn = document.getElementById('ttsPlayPauseBtn');
-            btn.innerHTML = this.isPlaying ? '⏸' : '▶';
-        },
-
-        updateSlider: function() {
-            const slider = document.getElementById('ttsSeekSlider');
-            if(this.sentences.length > 0) {
-                const val = (this.currentIndex / this.sentences.length) * 100;
-                slider.value = val;
-                document.getElementById('ttsCurrentTime').innerText = Math.round(val) + "%";
-            }
-        }
+        toggle: function() { this.isPlaying ? this.pause() : this.play(); },
+        play: function() { this.isPlaying = true; !this.synth.speaking ? this.speakSentence() : this.synth.resume(); this.updateUI(); },
+        pause: function() { this.isPlaying = false; this.synth.pause(); this.updateUI(); },
+        prev: function() { if (this.currentIndex > 0) { this.currentIndex--; this.speakSentence(); } },
+        next: function() { if (this.currentIndex < this.sentences.length - 1) { this.currentIndex++; this.speakSentence(); } },
+        seek: function(val) { const pct = val / 100; this.currentIndex = Math.floor(pct * this.sentences.length); if(this.isPlaying) this.speakSentence(); else this.updateUI(); },
+        stop: function() { this.isPlaying = false; this.synth.cancel(); this.currentIndex = 0; this.updateUI(); this.updateSlider(); },
+        updateUI: function() { document.getElementById('ttsPlayPauseBtn').innerHTML = this.isPlaying ? '⏸' : '▶'; },
+        updateSlider: function() { const slider = document.getElementById('ttsSeekSlider'); if(this.sentences.length > 0) { const val = (this.currentIndex / this.sentences.length) * 100; slider.value = val; document.getElementById('ttsCurrentTime').innerText = Math.round(val) + "%"; } }
     };
 
     // --- 4. APP LOGIC ---
@@ -387,16 +300,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const isCompleted = completedData[mId] === true;
             const isLocked = !isPrevModuleDone;
             if (isCompleted) doneCount++;
-
-            // CLEAN CONTENT HERE
             const cleanedContent = cleanLessonContent(mData.content || "");
-            
             const modDiv = document.createElement("div");
             modDiv.className = `module ${isLocked ? 'locked' : ''} ${isCompleted ? 'completed' : ''}`;
             
             let actionBtn = isLocked 
                 ? `<p>🔒 Locked</p>` 
-                : `<button class="btn-outline" onclick="openReader('${mId}', '${encodeURIComponent(mData.title)}', '${encodeURIComponent(cleanedContent)}', ${isCompleted})">📖 Read & Quiz</button>`;
+                : `<button class="btn-outline" onclick="openReader('${mId}', '${encodeURIComponent(mData.title)}', '${encodeURIComponent(cleanedContent)}')">📖 Read & Quiz</button>`;
 
             let badge = isCompleted ? `<span class="status-badge" style="display:inline-block">✅ Done</span>` : '';
 
@@ -414,31 +324,18 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('progressFill').style.width = percent + "%";
         if (doneCount === modsSnap.size && modsSnap.size > 0) showCertificateInput();
     };
-
-    window.openReader = async function(mId, title, content, isCompleted) {
+    // --- 5. READER & QUIZ INTEGRATION ---
+    window.openReader = function(mId, title, content) {
         document.getElementById('readerTitle').innerText = decodeURIComponent(title);
         document.getElementById('readerBody').innerHTML = decodeURIComponent(content);
         document.getElementById('readerModal').style.display = 'block';
         document.body.style.overflow = 'hidden';
 
-        // Init Player
+        // Init TTS
         TTSManager.init(document.getElementById('readerBody').innerHTML);
 
-        // Load Quiz Section
-        const quizArea = document.getElementById('readerQuizArea');
-        if (isCompleted) {
-            quizArea.innerHTML = `<h3 style="color:green">✅ Module Completed</h3>`;
-        } else {
-            // Load Quiz Data but don't start yet
-            quizArea.innerHTML = `<h3>Loading Quiz...</h3>`;
-            const modDoc = await db.collection("courses").doc(COURSE_ID).collection("modules").doc(mId).get();
-            if (modDoc.exists && modDoc.data().quizzes) {
-                // Show Start Button Screen
-                showQuizStartScreen(mId, modDoc.data().quizzes);
-            } else {
-                quizArea.innerHTML = `<p>No quiz available.</p>`;
-            }
-        }
+        // START NEW QUIZ LOGIC
+        prepareQuiz(mId);
     };
 
     window.closeReader = function() {
@@ -446,89 +343,143 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.style.overflow = 'auto';
         TTSManager.stop();
         document.getElementById('ttsPlayer').style.display = 'none';
+        clearInterval(quizTimerInterval); // Stop any running quiz timer
     };
 
-    // --- 5. QUIZ WITH START BUTTON ---
-    function showQuizStartScreen(moduleId, data) {
-        currentQuizData = data;
-        const container = document.getElementById('readerQuizArea');
-        container.innerHTML = `
-            <h3>Ready for the Quiz?</h3>
-            <p>This quiz contains ${data.length} questions.</p>
-            <p>You need 60% to pass.</p>
-            <button class="btn-primary" onclick="startActualQuiz('${moduleId}')">Start Quiz Now</button>
-        `;
-    }
+    // --- 6. NEW GLOBAL QUIZ STATE (FIXED) ---
+    let currentQuizData = [];
+    let currentQIndex = 0;
+    let currentScore = 0;
+    let quizTimerInterval = null;
+    let activeModuleId = "";
 
-    window.startActualQuiz = function(moduleId) {
+    window.prepareQuiz = async function(mId) {
+        activeModuleId = mId;
+        const quizArea = document.getElementById('quizContainer');
+        quizArea.innerHTML = "<h3>Loading Quiz...</h3>";
+
+        try {
+            const modDoc = await db.collection("courses").doc(COURSE_ID).collection("modules").doc(mId).get();
+            if (modDoc.exists && modDoc.data().quizzes) {
+                currentQuizData = modDoc.data().quizzes;
+                showStartScreen();
+            } else {
+                quizArea.innerHTML = "<p>No quiz available for this lesson.</p>";
+            }
+        } catch (e) {
+            console.error(e);
+            quizArea.innerHTML = "<p>Error connecting to quiz system.</p>";
+        }
+    };
+
+    window.showStartScreen = function() {
+        const quizArea = document.getElementById('quizContainer');
+        quizArea.innerHTML = `
+            <div style="padding: 20px; border: 2px solid var(--primary-solid); border-radius: 12px;">
+                <h3>Assess Your Knowledge</h3>
+                <p>Module Quiz: ${currentQuizData.length} Questions</p>
+                <p>Passing Grade: 60%</p>
+                <button class="btn-primary" onclick="startQuizEngine()">Start Quiz Now</button>
+            </div>
+        `;
+    };
+
+    window.startQuizEngine = function() {
         currentQIndex = 0;
         currentScore = 0;
-        renderQuestion(moduleId);
+        renderQuestion();
     };
 
-    function renderQuestion(moduleId) {
-        const container = document.getElementById('readerQuizArea');
-        if(quizTimerInterval) clearInterval(quizTimerInterval);
-        
+    window.renderQuestion = function() {
+        const quizArea = document.getElementById('quizContainer');
+        clearInterval(quizTimerInterval);
+
         if (currentQIndex >= currentQuizData.length) {
-            finishQuiz(moduleId, container);
+            processFinalResults();
             return;
         }
 
         const q = currentQuizData[currentQIndex];
-        let time = 30;
+        let timeLeft = 30;
 
-        container.innerHTML = `
-            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                <span>Question ${currentQIndex + 1}/${currentQuizData.length}</span>
-                <span style="color:red; font-weight:bold;" id="timerDisplay">⏱ ${time}s</span>
+        quizArea.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <span style="font-weight:bold;">Question ${currentQIndex + 1} of ${currentQuizData.length}</span>
+                <span id="qTimer" style="color:var(--accent-red); font-weight:800; font-size:1.2rem;">⏱ 30s</span>
             </div>
-            <p style="font-weight:bold; font-size:1.1rem; text-align:left;">${q.question}</p>
+            <p style="text-align:left; font-size:1.1rem; margin-bottom:20px;">${q.question}</p>
             <div class="options-group">
-                ${q.options.map(opt => `<label><input type="radio" name="ans" value="${opt}"> ${opt}</label>`).join('')}
+                ${q.options.map((opt) => `
+                    <label>
+                        <input type="radio" name="quizOpt" value="${opt}">
+                        ${opt}
+                    </label>
+                `).join('')}
             </div>
-            <button class="btn-primary" style="width:100%" onclick="submitAnswer('${moduleId}')">Submit Answer</button>
+            <button class="btn-primary" style="width:100%; margin-top:20px;" onclick="validateAndNext()">Submit Answer</button>
         `;
 
-        const timerDisplay = container.querySelector('#timerDisplay');
         quizTimerInterval = setInterval(() => {
-            time--;
-            timerDisplay.innerText = `⏱ ${time}s`;
-            if (time <= 0) {
+            timeLeft--;
+            const timerEl = document.getElementById('qTimer');
+            if(timerEl) timerEl.innerText = `⏱ ${timeLeft}s`;
+            if (timeLeft <= 0) {
                 clearInterval(quizTimerInterval);
-                submitAnswer(moduleId);
+                validateAndNext(); // Auto-submit on timeout
             }
         }, 1000);
-    }
-
-    window.submitAnswer = function(moduleId) {
-        const container = document.getElementById('readerQuizArea');
-        const selected = container.querySelector('input[name="ans"]:checked');
-        const correct = currentQuizData[currentQIndex].answer;
-        if (selected && selected.value.trim() === correct.trim()) currentScore++;
-        currentQIndex++;
-        renderQuestion(moduleId);
     };
 
-    async function finishQuiz(moduleId, container) {
-        const percentage = (currentScore / currentQuizData.length) * 100;
-        const passed = percentage >= 60;
-        
-        if (passed && auth.currentUser) {
-            await db.collection("students").doc(auth.currentUser.uid).set({
-                enrolledCourses: { [COURSE_ID]: { completedModules: { [moduleId]: true } } }
-            }, { merge: true });
+    window.validateAndNext = function() {
+        const selected = document.querySelector('input[name="quizOpt"]:checked');
+        const correctAnswer = currentQuizData[currentQIndex].answer;
+
+        if (selected && selected.value.trim() === correctAnswer.trim()) {
+            currentScore++;
         }
 
-        container.innerHTML = `
-            <h3>Quiz Results</h3>
-            <p>Score: ${Math.round(percentage)}%</p>
-            ${passed ? '<p style="color:green; font-weight:bold;">PASSED! ✅</p>' : '<p style="color:red; font-weight:bold;">FAILED ❌</p>'}
-            <button class="btn-primary" onclick="location.reload()">Return to Dashboard</button>
-        `;
-    }
+        currentQIndex++;
+        renderQuestion();
+    };
 
-    // --- 6. CERTIFICATE & THEME ---
+    window.processFinalResults = async function() {
+        const quizArea = document.getElementById('quizContainer');
+        const percentage = (currentScore / currentQuizData.length) * 100;
+        const isPass = percentage >= 60;
+
+        if (isPass) {
+            // Mark module as completed in Firebase
+            if (auth.currentUser) {
+                await db.collection("students").doc(auth.currentUser.uid).set({
+                    enrolledCourses: {
+                        [COURSE_ID]: { 
+                            completedModules: { [activeModuleId]: true } 
+                        }
+                    }
+                }, { merge: true });
+            }
+
+            quizArea.innerHTML = `
+                <div style="text-align:center;">
+                    <h2 style="color:var(--success-green);">🎉 Passed!</h2>
+                    <p style="font-size:1.5rem; font-weight:bold;">Score: ${Math.round(percentage)}%</p>
+                    <p>Well done! This module is now complete.</p>
+                    <button class="btn-primary" onclick="location.reload()">Return & Unlock Next</button>
+                </div>
+            `;
+        } else {
+            quizArea.innerHTML = `
+                <div style="text-align:center;">
+                    <h2 style="color:var(--accent-red);">❌ Try Again</h2>
+                    <p style="font-size:1.5rem; font-weight:bold;">Score: ${Math.round(percentage)}%</p>
+                    <p>You need at least 60% to pass.</p>
+                    <button class="btn-primary" style="background:#6b7280;" onclick="startQuizEngine()">Retry Quiz</button>
+                </div>
+            `;
+        }
+    };
+
+    // --- 7. UTILS ---
     function showCertificateInput() {
         document.getElementById('certificateSection').style.display = 'block';
         document.getElementById('nameForm').onsubmit = (e) => {
