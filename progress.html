@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>My Paid Courses Progress</title>
+<title>My Course Progress</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <!-- Firebase -->
@@ -13,85 +13,88 @@
 <style>
 body {
     margin: 0;
-    font-family: Arial, sans-serif;
-    background: #f4f6f8;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #eef2f7, #f9fbff);
 }
 
 .container {
-    max-width: 1100px;
+    max-width: 1200px;
     margin: auto;
     padding: 20px;
 }
 
 h2 {
     text-align: center;
-    margin-bottom: 25px;
+    margin-bottom: 30px;
 }
 
 .course-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 20px;
 }
 
 .course-card {
-    background: #fff;
+    background: white;
     border-radius: 14px;
     padding: 20px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    transition: transform .3s ease;
+}
+
+.course-card:hover {
+    transform: translateY(-4px);
 }
 
 .course-title {
-    font-size: 16px;
-    font-weight: bold;
+    font-size: 17px;
+    font-weight: 700;
     margin-bottom: 12px;
 }
 
 .progress-bar {
-    background: #e0e0e0;
-    height: 10px;
-    border-radius: 6px;
+    background: #e5e9f0;
+    height: 12px;
+    border-radius: 8px;
     overflow: hidden;
 }
 
 .progress-fill {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, #4facfe, #00f2fe);
-    transition: width 0.5s ease;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    transition: width 0.8s ease;
 }
 
 .progress-text {
     font-size: 13px;
     margin-top: 8px;
+    color: #555;
+}
+
+.module-info {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #444;
 }
 
 .badge {
     display: inline-block;
-    margin-top: 10px;
+    margin-top: 12px;
     padding: 6px 12px;
-    font-size: 12px;
     border-radius: 20px;
-    color: #fff;
+    font-size: 12px;
+    font-weight: bold;
 }
 
 .completed {
     background: #4CAF50;
+    color: white;
 }
 
-.in-progress {
+.certificate {
     background: #ff9800;
-}
-
-.certificate-btn {
-    display: inline-block;
-    margin-top: 12px;
-    padding: 8px 14px;
-    background: #673ab7;
-    color: #fff;
-    border-radius: 8px;
-    font-size: 13px;
-    text-decoration: none;
+    color: white;
 }
 </style>
 </head>
@@ -99,7 +102,7 @@ h2 {
 <body>
 
 <div class="container">
-    <h2>🎓 My Paid Courses Progress</h2>
+    <h2>📊 My Learning Progress</h2>
     <div id="courseGrid" class="course-grid"></div>
 </div>
 
@@ -115,68 +118,64 @@ if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* ------------ AUTH + LOAD COURSES ------------ */
+/* ------------ LOAD PROGRESS ------------ */
 auth.onAuthStateChanged(async (user) => {
     if (!user) {
         window.location.href = "login.html";
         return;
     }
 
-    const doc = await db.collection("students").doc(user.uid).get();
-    if (!doc.exists) return;
+    const studentSnap = await db.collection("students").doc(user.uid).get();
+    if (!studentSnap.exists) return;
 
-    const paidCourses = doc.data().paidCourses || {};
+    const student = studentSnap.data();
+    const paid = student.paidCourses || {};
+    const approved = student.approvedCourses || {};
+    const progress = student.moduleProgress || {};
+    const certificates = student.certificates || {};
+
+    const coursesSnap = await db.collection("courses").get();
     const grid = document.getElementById("courseGrid");
     grid.innerHTML = "";
 
-    Object.entries(paidCourses).forEach(([courseId, course]) => {
-        if (!course.approved) return; // 🔒 only admin-approved courses
+    coursesSnap.forEach(doc => {
+        const courseId = doc.id;
+        const course = doc.data();
 
-        const hasCertificate = !!course.certificateUrl;
-        const completedLessons = course.completedLessons || 0;
-        const totalLessons = course.totalLessons || 0;
+        if (!paid[courseId] || !approved[courseId]) return;
 
-        const percent = hasCertificate
-            ? 100
-            : totalLessons > 0
-                ? Math.round((completedLessons / totalLessons) * 100)
-                : 0;
+        const modules = course.modules || [];
+        const completedModules = progress[courseId] || {};
+
+        const completedCount = Object.keys(completedModules).length;
+        const totalModules = modules.length;
+        const percent = totalModules > 0 ? Math.round((completedCount / totalModules) * 100) : 0;
 
         const card = document.createElement("div");
         card.className = "course-card";
 
         card.innerHTML = `
-            <div class="course-title">${formatTitle(courseId)}</div>
+            <div class="course-title">${course.title}</div>
 
             <div class="progress-bar">
                 <div class="progress-fill" style="width:${percent}%"></div>
             </div>
 
             <div class="progress-text">
-                ${hasCertificate
-                    ? "Course completed"
-                    : `${completedLessons} of ${totalLessons} lessons completed (${percent}%)`}
+                ${completedCount} of ${totalModules} modules completed (${percent}%)
             </div>
 
-            <div class="badge ${hasCertificate ? "completed" : "in-progress"}">
-                ${hasCertificate ? "✔ Completed" : "⏳ In Progress"}
+            <div class="module-info">
+                📦 Modules: ${totalModules}
             </div>
 
-            ${hasCertificate
-                ? `<a class="certificate-btn" href="${course.certificateUrl}" target="_blank">
-                    📄 View Certificate
-                  </a>`
-                : ""}
+            ${percent === 100 ? `<span class="badge completed">✔ Course Completed</span>` : ""}
+            ${certificates[courseId] ? `<span class="badge certificate">🎓 Certificate Available</span>` : ""}
         `;
 
         grid.appendChild(card);
     });
 });
-
-/* ------------ HELPER ------------ */
-function formatTitle(id) {
-    return id.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-}
 </script>
 
 </body>
