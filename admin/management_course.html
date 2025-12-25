@@ -10,274 +10,179 @@
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 
 <style>
-body{
-  font-family:Segoe UI;
-  background:#f1f5f9;
-  margin:0;
-  padding:12px;
-  transition:.25s;
-}
+body{margin:0;padding:12px;font-family:Segoe UI;background:#f1f5f9}
 body.dark{background:#0f172a;color:#e5e7eb}
-header{
-  background:#4f46e5;
-  color:#fff;
-  padding:16px;
-  border-radius:12px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-.card{
-  background:#fff;
-  padding:16px;
-  border-radius:12px;
-  margin-top:12px;
-}
+header{background:#4f46e5;color:#fff;padding:16px;border-radius:12px;display:flex;justify-content:space-between;align-items:center}
+.card{background:#fff;padding:16px;border-radius:12px;margin-top:12px}
 body.dark .card{background:#020617}
-input,button{
-  width:100%;
-  padding:10px;
-  margin:6px 0;
-}
+input,button{width:100%;padding:10px;margin:6px 0}
 button{border:none;border-radius:6px;font-weight:bold;cursor:pointer}
 .publish{background:#16a34a;color:#fff}
 .draft{background:#f59e0b}
 .delete{background:#dc2626;color:#fff}
-.view{background:#0ea5e9;color:#fff}
 .neutral{background:#e5e7eb}
-body.dark .neutral{background:#334155;color:#e5e7eb}
-.quiz{background:#eef2ff;padding:10px;border-radius:8px;margin:8px 0}
-body.dark .quiz{background:#111827}
 .hidden{display:none}
-
-/* Tabs */
+.quiz{background:#eef2ff;padding:10px;border-radius:8px;margin:8px 0}
+.notice{background:#e0f2fe;padding:8px;border-radius:6px}
 .tabs{display:flex;gap:8px;margin-top:12px}
-.tabs button{flex:1;background:#e5e7eb}
 .tabs button.active{background:#4f46e5;color:#fff}
-
-/* Quill upload notice */
-.notice{
-  background:#e0f2fe;
-  padding:10px;
-  border-radius:8px;
-  margin:8px 0;
-  font-size:14px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-body.dark .notice{background:#0b1220}
 </style>
 </head>
 
 <body>
 
 <header>
-  <h2><i class="fa fa-user-shield"></i> Admin – Management Course</h2>
-  <div>
-    <button class="neutral" onclick="toggleTheme()">
-      <i class="fa fa-moon"></i>
-    </button>
-    <span id="authStatus"></span>
+  <div style="display:flex;gap:10px;align-items:center">
+    <button id="backBtn" class="neutral hidden">⬅ Back</button>
+    <h3>Admin – Management Course</h3>
   </div>
+  <span id="authStatus">Checking authentication...</span>
 </header>
 
-<!-- EDITOR (VISIBLE BY DEFAULT) -->
-<div class="card hidden" id="editor">
+<div id="editor" class="card hidden">
   <h3>Module Editor</h3>
-
   <input id="title" placeholder="Module title">
-  <input id="imageUrl" placeholder="Cover image URL (optional)">
-  <input id="videoUrl" placeholder="Video URL (optional)">
 
-  <div id="quillUploadNotice" class="notice hidden">
-    <span id="uploadText"></span>
-    <button class="delete" onclick="cancelImageUpload()">Cancel</button>
-  </div>
-
-  <div id="quill" style="height:220px"></div>
-
-  <h4>Quizzes</h4>
-  <input id="q" placeholder="Question">
-  <input id="o1" placeholder="Option 1">
-  <input id="o2" placeholder="Option 2">
-  <input id="o3" placeholder="Option 3">
-  <input id="o4" placeholder="Option 4">
-  <input id="a" placeholder="Correct answer">
-
-  <button class="neutral" onclick="addQuiz()">Add / Update Quiz</button>
-  <div id="quizList"></div>
+  <div id="uploadNotice" class="notice hidden"></div>
+  <div id="quill" style="height:240px"></div>
 
   <button class="draft" onclick="saveModule('draft')">Save Draft</button>
-  <button class="publish" onclick="saveModule('published')">Publish</button>
+  <button class="publish" onclick="publish()">Publish</button>
 </div>
 
-<!-- TABS -->
-<div class="tabs hidden" id="tabsWrap">
-  <button class="active" onclick="showTab('publishedTab',this)">Published</button>
-  <button onclick="showTab('draftTab',this)">Drafts</button>
-  <button onclick="showTab('binTab',this)">Recycle Bin</button>
+<div id="tabsWrap" class="tabs hidden">
+  <button id="pubBtn" class="active" onclick="showTab('published')">Published</button>
+  <button onclick="showTab('draft')">Drafts</button>
 </div>
 
-<div class="card hidden" id="publishedTab"></div>
-<div class="card hidden" id="draftTab"></div>
-<div class="card hidden" id="binTab"></div>
+<div id="published" class="card"></div>
+<div id="draft" class="card hidden"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, doc, addDoc, getDocs, updateDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
-/* Firebase */
 const app = initializeApp({
   apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain:"students-login-29409.firebaseapp.com",
   projectId:"students-login-29409"
 });
-const db=getFirestore(app);
-const auth=getAuth(app);
-const storage=getStorage(app);
+
+const db = getFirestore(app);
+const auth = getAuth(app);
+const storage = getStorage(app);
 
 signInWithEmailAndPassword(auth,"ADMIN_EMAIL","ADMIN_PASSWORD");
 
-/* State */
-let quizzes=[], editingId=null, editingQuiz=null;
-let hasUnsavedChanges=false;
-let currentUploadTask=null;
+let editingId=null;
+let uploading=false;
+let dirty=false;
 
-/* Auth */
-onAuthStateChanged(auth,user=>{
-  if(!user){authStatus.innerText="❌ Not logged in";return;}
-  authStatus.innerText="✅ Admin authenticated";
-  editor.classList.remove("hidden");
-  tabsWrap.classList.remove("hidden");
-  loadModules();
-});
-
-/* Quill */
-const quill=new Quill("#quill",{
+/* QUILL */
+const quill = new Quill("#quill",{
   theme:"snow",
-  modules:{ toolbar:[["bold","italic","underline"],["image","link"],[{list:"ordered"},{list:"bullet"}]] }
+  modules:{toolbar:[["bold","italic","underline"],["image","link"]]}
 });
 
-quill.on("text-change",()=>hasUnsavedChanges=true);
-title.oninput=()=>hasUnsavedChanges=true;
+quill.on("text-change",()=>dirty=true);
+title.oninput=()=>dirty=true;
 
-/* Quill image upload with cancel */
-const toolbar=quill.getModule("toolbar");
-toolbar.addHandler("image",()=>{
+/* IMAGE UPLOAD */
+quill.getModule("toolbar").addHandler("image",()=>{
   const input=document.createElement("input");
-  input.type="file";
-  input.accept="image/*";
-  input.click();
-
+  input.type="file";input.accept="image/*";input.click();
   input.onchange=()=>{
     const file=input.files[0];
     if(!file) return;
-
-    quillUploadNotice.classList.remove("hidden");
-    uploadText.innerText="Uploading 0%";
-
-    const r=ref(storage,"quill_images/"+Date.now()+"_"+file.name);
-    const task=uploadBytesResumable(r,file);
-    currentUploadTask=task;
-
+    uploading=true;
+    uploadNotice.classList.remove("hidden");
+    const task=uploadBytesResumable(ref(storage,"quill/"+Date.now()+"_"+file.name),file);
     task.on("state_changed",s=>{
-      uploadText.innerText=`Uploading ${Math.round((s.bytesTransferred/s.totalBytes)*100)}%`;
-    },()=>{},async()=>{
+      uploadNotice.innerText=`Uploading image ${Math.round(s.bytesTransferred/s.totalBytes*100)}%`;
+    },()=>{
+      alert("Upload failed");
+      uploading=false;
+    },async()=>{
       const url=await getDownloadURL(task.snapshot.ref);
-      quill.insertEmbed(quill.getSelection(true).index,"image",url);
-      quillUploadNotice.classList.add("hidden");
-      currentUploadTask=null;
+      quill.insertEmbed(quill.getSelection().index,"image",url);
+      uploading=false;
+      uploadNotice.classList.add("hidden");
     });
   };
 });
 
-window.cancelImageUpload=()=>{
-  if(currentUploadTask){
-    currentUploadTask.cancel();
-    currentUploadTask=null;
-    quillUploadNotice.classList.add("hidden");
-  }
+/* AUTO DRAFT (BLOGGER STYLE) */
+function autoDraft(){
+  if(!dirty) return;
+  if(!title.value && !quill.getText().trim()) return;
+  saveModule("draft",true);
+}
+window.addEventListener("beforeunload",autoDraft);
+window.addEventListener("offline",autoDraft);
+
+backBtn.onclick=()=>{
+  autoDraft();
+  editor.classList.add("hidden");
+  tabsWrap.classList.remove("hidden");
 };
 
-/* Auto draft on risk */
-async function autoDraftIfNeeded(){
-  if(!hasUnsavedChanges) return;
+/* SAVE */
+window.saveModule = async (status,silent=false)=>{
+  if(status==="published"){
+    if(!title.value.trim()) return alert("Module title is required");
+    if(!quill.getText().trim()) return alert("Module content is required");
+    if(uploading) return alert("Please wait for image upload to finish");
+  }
   const data={
     title:title.value,
-    imageUrl:imageUrl.value,
-    videoUrl:videoUrl.value,
     content:quill.root.innerHTML,
-    quizzes,
-    status:"draft",
+    status,
     updatedAt:serverTimestamp()
   };
   if(editingId){
-    await updateDoc(doc(collection(db,"courses","management_course","modules"),editingId),data);
+    await updateDoc(doc(db,"courses/management_course/modules",editingId),data);
   }else{
-    await addDoc(collection(db,"courses","management_course","modules"),{...data,createdAt:serverTimestamp()});
+    await addDoc(collection(db,"courses/management_course/modules"),{...data,createdAt:serverTimestamp()});
   }
-  hasUnsavedChanges=false;
-}
-
-/* Back / refresh / offline */
-window.addEventListener("beforeunload",e=>{
-  if(hasUnsavedChanges){
-    autoDraftIfNeeded();
-    e.preventDefault();
-    e.returnValue="";
-  }
-});
-window.addEventListener("offline",()=>autoDraftIfNeeded());
-
-/* Save */
-window.saveModule=async status=>{
-  const refCol=collection(db,"courses","management_course","modules");
-  const data={title:title.value,imageUrl:imageUrl.value,videoUrl:videoUrl.value,content:quill.root.innerHTML,quizzes,status,updatedAt:serverTimestamp()};
-  editingId?await updateDoc(doc(refCol,editingId),data):await addDoc(refCol,{...data,createdAt:serverTimestamp()});
-  hasUnsavedChanges=false;
-  reset();
+  dirty=false;
+  if(!silent) alert(status==="published"?"Published successfully":"Draft saved");
   loadModules();
 };
 
-/* Load modules */
+/* PUBLISH WRAPPER */
+window.publish=()=>saveModule("published");
+
+/* LOAD MODULES */
 async function loadModules(){
-  publishedTab.innerHTML=draftTab.innerHTML=binTab.innerHTML="";
-  const snap=await getDocs(collection(db,"courses","management_course","modules"));
+  published.innerHTML=draft.innerHTML="";
+  const snap=await getDocs(collection(db,"courses/management_course/modules"));
   snap.forEach(d=>{
     const m=d.data();
-    const box=`<div class="quiz"><b>${m.title}</b></div>`;
-    if(m.status==="published")publishedTab.innerHTML+=box;
-    else if(m.status==="draft")draftTab.innerHTML+=box;
-    else binTab.innerHTML+=box;
+    const box=`<div class="quiz"><b>${m.title||"(Untitled)"}</b></div>`;
+    if(m.status==="published") published.innerHTML+=box;
+    if(m.status==="draft") draft.innerHTML+=box;
   });
 }
 
-/* Reset */
-function reset(){
-  title.value=imageUrl.value=videoUrl.value="";
-  quill.root.innerHTML="";
-  quizzes=[];
-  editingId=null;
-}
-
-/* Tabs */
-window.showTab=(id,btn)=>{
-  [publishedTab,draftTab,binTab].forEach(x=>x.classList.add("hidden"));
-  document.getElementById(id).classList.remove("hidden");
+/* TABS */
+window.showTab=id=>{
+  published.classList.toggle("hidden",id!=="published");
+  draft.classList.toggle("hidden",id!=="draft");
   document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
-  btn.classList.add("active");
+  event.target.classList.add("active");
 };
 
-/* Theme */
-window.toggleTheme=()=>{
-  document.body.classList.toggle("dark");
-  localStorage.theme=document.body.classList.contains("dark")?"dark":"light";
-};
-if(localStorage.theme==="dark")document.body.classList.add("dark");
+/* AUTH */
+onAuthStateChanged(auth,u=>{
+  if(!u){authStatus.innerText="❌ Not logged in";return;}
+  authStatus.innerText="✅ Admin authenticated";
+  tabsWrap.classList.remove("hidden");
+  editor.classList.remove("hidden");
+  loadModules();
+});
 </script>
 
 </body>
-</html>
+  </html>
