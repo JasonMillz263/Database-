@@ -2,624 +2,564 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Management Course - Luxury Edition</title>
+    <title>Management Course - Student Portal</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 
     <style>
-        /* --- THEME VARIABLES --- */
+        /* --- COLOR & THEME VARIABLES --- */
         :root {
-            --bg-color: #f9f9f9;
-            --card-bg: #ffffff;
-            --text-main: #1a1a1a;
-            --text-muted: #666666;
-            --accent-gold: #D4AF37; /* Luxury Gold */
-            --accent-blue: #0f172a; /* Deep Navy */
-            --border-color: #e5e5e5;
-            --success: #10b981;
-            --danger: #ef4444;
-            --shadow: 0 4px 20px rgba(0,0,0,0.05);
-            --font-heading: 'Playfair Display', serif;
-            --font-body: 'Inter', sans-serif;
+            /* Light Mode Defaults */
+            --bg-body: #f4f6fb;
+            --bg-card: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border-color: #e5e7eb;
+            
+            /* The Requested Vibrant Colors */
+            --primary-gradient: linear-gradient(135deg, #5b5fff, #7a7eff); /* Purple Blue */
+            --primary-solid: #5b5fff;
+            --accent-yellow: #ffb700; /* Gold/Yellow */
+            --accent-red: #dc2626;    /* Red */
+            --success-green: #16a34a;
+            
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
+        /* Dark Mode Overrides */
         [data-theme="dark"] {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent-gold: #fbbf24;
-            --accent-blue: #334155;
+            --bg-body: #0f172a;      /* Deep Dark Blue */
+            --bg-card: #1e293b;      /* Dark Slate */
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
             --border-color: #334155;
-            --shadow: 0 4px 20px rgba(0,0,0,0.3);
+            --shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
 
-        /* --- BASE STYLES --- */
-        * { box-sizing: border-box; transition: background 0.3s, color 0.3s; }
-        html, body { margin: 0; padding: 0; width: 100%; overflow-x: hidden; }
-        body { background: var(--bg-color); font-family: var(--font-body); color: var(--text-main); }
+        /* --- BASE RESET --- */
+        * { box-sizing: border-box; transition: background 0.3s, color 0.3s, border 0.3s; }
+        body { margin: 0; padding: 0; width: 100%; font-family: 'Inter', sans-serif; background: var(--bg-body); color: var(--text-main); }
         
-        .container { 
-            max-width: 1000px; 
-            margin: 0 auto; 
-            padding: 20px; 
-            min-height: 100vh;
-        }
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; min-height: 100vh; }
 
-        /* --- HEADER LUXURY STYLE --- */
+        /* --- MODERN HEADER --- */
         .header {
-            background: var(--card-bg);
-            padding: 24px 0;
-            margin-bottom: 40px;
-            border-bottom: 2px solid var(--accent-gold);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
+            background: var(--primary-gradient);
+            color: #fff;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(91, 95, 255, 0.3);
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
         }
 
-        .header h2 {
-            font-family: var(--font-heading);
-            font-size: 2.5rem;
-            color: var(--text-main);
-            margin: 0 0 10px 0;
-            letter-spacing: -0.5px;
-        }
-
-        .header p { color: var(--text-muted); font-size: 0.9rem; margin: 4px 0; }
-
-        /* Controls Row */
-        .controls-row {
+        .header h2 { margin: 0; font-family: 'Playfair Display', serif; font-size: 2.5rem; letter-spacing: 1px; }
+        .header p { opacity: 0.9; margin-top: 5px; font-weight: 500; }
+        
+        .top-nav-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            width: 100%;
             margin-top: 20px;
-            padding: 0 10px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
-        .nav-buttons { display: flex; gap: 12px; }
+        .nav-buttons { display: flex; gap: 10px; }
         
-        /* Modern Buttons */
-        .btn-nav, .theme-toggle {
-            background: transparent;
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
+        .nav-btn {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.3);
             padding: 8px 16px;
             border-radius: 50px;
-            font-size: 0.85rem;
             cursor: pointer;
+            backdrop-filter: blur(5px);
             font-weight: 600;
         }
-        .btn-nav:hover, .theme-toggle:hover {
-            border-color: var(--accent-gold);
-            color: var(--accent-gold);
+        .nav-btn:hover { background: #fff; color: var(--primary-solid); }
+
+        /* Theme Toggle Switch */
+        .theme-switch {
+            background: var(--accent-yellow);
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 800;
+            box-shadow: 0 2px 10px rgba(255, 183, 0, 0.4);
         }
 
         /* Progress Bar */
-        .progress-container { width: 100%; margin-top: 20px; text-align: center; }
-        .progress-bar { height: 6px; background: var(--border-color); border-radius: 3px; overflow: hidden; margin-top: 8px; }
-        .progress-fill { height: 100%; background: var(--accent-gold); width: 0; transition: width 0.5s ease; }
-        #progressText { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-top: 8px;}
+        .progress-wrapper { margin-top: 20px; }
+        .progress-bar { height: 8px; background: rgba(255,255,255,0.3); border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--accent-yellow); width: 0%; transition: width 0.5s ease; }
+        .progress-text { margin-top: 8px; font-size: 0.85rem; font-weight: 700; text-align: right; color: #fff; }
 
-        /* --- MODULES (Full Width Luxury) --- */
-        .modules { display: flex; flex-direction: column; gap: 0; }
+        /* --- MODULES (Full Width Modern) --- */
+        .modules { display: flex; flex-direction: column; gap: 20px; }
 
         .module {
-            background: var(--card-bg);
-            border-bottom: 1px solid var(--border-color);
-            padding: 30px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 0;
+            overflow: hidden;
+            box-shadow: var(--shadow);
             position: relative;
         }
-        
-        .module:first-child { border-top-left-radius: 12px; border-top-right-radius: 12px; }
-        .module:last-child { border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; border-bottom: none; }
-        
-        .module.locked { opacity: 0.6; filter: grayscale(1); pointer-events: none; }
 
-        .module h3 {
-            font-family: var(--font-heading);
-            font-size: 1.5rem;
-            margin: 0 0 15px 0;
-            color: var(--text-main);
+        .module.locked { opacity: 0.6; pointer-events: none; filter: grayscale(1); }
+
+        .module-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .score-tag {
-            background: var(--success);
-            color: white;
-            padding: 4px 12px;
-            border-radius: 50px;
-            font-size: 0.75rem;
-            font-family: var(--font-body);
-        }
+        .module-header h3 { margin: 0; font-size: 1.2rem; color: var(--text-main); }
+        .status-badge { background: var(--success-green); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; display: none; }
+        .module.completed .status-badge { display: inline-block; }
 
-        .lesson-content {
-            font-size: 1.05rem;
-            line-height: 1.8;
-            color: var(--text-muted);
-            margin-bottom: 25px;
-        }
+        .lesson-content { padding: 25px; line-height: 1.7; color: var(--text-muted); font-size: 1.05rem; }
+        .lesson-content img { max-width: 100%; border-radius: 12px; margin: 15px 0; display: block; }
 
-        .lesson-content img { border-radius: 8px; margin: 20px auto; display: block; max-width: 100%; box-shadow: var(--shadow); }
-
-        /* --- QUIZ & BUTTONS --- */
-        .quiz-box {
+        /* --- QUIZ & ACTIONS --- */
+        .module-footer {
             background: rgba(0,0,0,0.02);
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 3px solid var(--accent-gold);
+            padding: 15px 25px;
+            border-top: 1px solid var(--border-color);
         }
 
-        .action-row {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-            flex-wrap: wrap;
-        }
-
-        button.primary-btn {
-            background: var(--text-main);
-            color: var(--bg-color);
-            border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            flex: 1;
-        }
-        button.primary-btn:hover { background: var(--accent-gold); color: #fff; }
-        button.primary-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        button.secondary-btn {
-            background: transparent;
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
+        .quiz-box { padding: 10px 0; }
+        
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        
+        button {
             padding: 12px 20px;
-            border-radius: 6px;
+            border: none;
+            border-radius: 10px;
             font-weight: 600;
             cursor: pointer;
+            font-size: 0.95rem;
         }
-        button.secondary-btn:hover { border-color: var(--accent-gold); }
 
+        .btn-primary { background: var(--primary-solid); color: #fff; flex: 2; }
+        .btn-primary:hover { opacity: 0.9; }
+        
+        .btn-yellow { background: var(--accent-yellow); color: #000; flex: 1; }
+        
+        .btn-outline { background: transparent; border: 2px solid var(--border-color); color: var(--text-main); flex: 1; }
+        .btn-outline:hover { border-color: var(--primary-solid); color: var(--primary-solid); }
+
+        /* Quiz Specifics */
+        .timer { color: var(--accent-red); font-weight: 800; font-size: 1.2rem; margin-bottom: 15px; display: block; }
         .options-group label {
             display: block;
-            background: var(--bg-color);
-            border: 1px solid var(--border-color);
-            padding: 12px;
-            margin-bottom: 8px;
-            border-radius: 6px;
+            padding: 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            margin-bottom: 10px;
             cursor: pointer;
-            color: var(--text-main);
+            font-weight: 500;
         }
-        .options-group label:hover { border-color: var(--accent-gold); }
+        .options-group label:hover { border-color: var(--primary-solid); background: rgba(91, 95, 255, 0.05); }
+        .options-group input { margin-right: 10px; }
 
-        .pass { color: var(--success); font-weight: bold; }
-        .fail { color: var(--danger); font-weight: bold; }
-        .timer { color: var(--accent-gold); font-weight: bold; font-family: monospace; font-size: 1.2rem; }
+        .pass-msg { color: var(--success-green); font-weight: bold; font-size: 1.2rem; }
+        .fail-msg { color: var(--accent-red); font-weight: bold; font-size: 1.2rem; }
 
-        /* --- CERTIFICATE STYLES (Provided & Scoped) --- */
-        #certificateSection { display: none; text-align: center; margin-top: 40px; }
-        #nameInput { background: var(--card-bg); padding: 40px; border-radius: 12px; box-shadow: var(--shadow); max-width: 600px; margin: 0 auto; }
-        #nameInput h3 { font-family: var(--font-heading); color: var(--accent-gold); font-size: 2rem; }
-        #nameForm input { width: 100%; padding: 14px; margin-bottom: 15px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-main); }
+        /* --- CERTIFICATE (Hidden by default) --- */
+        #certificateSection { display: none; animation: fadeIn 1s; }
         
-        /* The Actual Certificate Paper CSS */
-        #certificatePreviewWrapper {
-            overflow-x: auto; /* Allow scroll on mobile */
-            padding: 20px 0;
-            display: none;
+        /* Certificate Input Form */
+        #nameInput {
+            background: var(--bg-card);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            max-width: 600px;
+            margin: 40px auto;
+            border: 2px solid var(--accent-yellow);
         }
-
-        .certificate {
-            width: 794px; /* A4 Width */
-            height: 1123px; /* A4 Height */
-            margin: auto;
-            background: #ffffff;
-            border: 14px solid #f7931e;
-            position: relative;
-            box-sizing: border-box;
-            color: #000; /* Force black text for print */
-            text-align: left;
-        }
+        #nameInput h3 { color: var(--primary-solid); font-family: 'Playfair Display'; font-size: 2rem; }
+        #nameForm input { width: 100%; padding: 15px; border: 2px solid var(--border-color); border-radius: 10px; margin-bottom: 15px; font-size: 1rem; }
         
-        .top-band {
-            height: 190px;
-            background: linear-gradient(135deg, #f7931e 60%, #cfcfcf 60%);
-            padding: 30px 40px;
-            box-sizing: border-box;
-            display: flex;
-            align-items: center;
-        }
-        .logos {
-            background: #ffffff;
-            padding: 18px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-radius: 6px;
-            width: 100%;
-            max-width: 560px;
-        }
-        .logos img { height: 65px; max-width: 240px; object-fit: contain; }
-        .content { padding: 90px 90px 60px; text-align: center; }
-        .title { font-size: 46px; font-weight: 700; margin-bottom: 18px; font-family: "Segoe UI", Arial, sans-serif; color: #000;}
-        .subtitle { font-size: 18px; color: #555; margin-bottom: 30px; font-family: "Segoe UI", Arial, sans-serif;}
-        .name { font-size: 38px; font-weight: 700; letter-spacing: 1px; margin-bottom: 8px; text-transform: uppercase; font-family: "Segoe UI", Arial, sans-serif; color: #000;}
-        .divider { width: 60%; height: 2px; background: #000; margin: 16px auto 40px; }
-        .description { font-size: 20px; margin-bottom: 18px; color: #333; font-family: "Segoe UI", Arial, sans-serif;}
-        .course { font-size: 32px; font-weight: 700; color: #f7931e; margin-bottom: 40px; font-family: "Segoe UI", Arial, sans-serif;}
-        .award { font-size: 19px; color: #444; line-height: 1.7; max-width: 650px; margin: auto; font-family: "Segoe UI", Arial, sans-serif;}
-        .award strong { color: #000; }
-        .footer { position: absolute; bottom: 60px; width: 100%; padding: 0 90px; box-sizing: border-box; display: flex; justify-content: space-between; align-items: flex-end; font-size: 15px; color: #444; font-family: "Segoe UI", Arial, sans-serif;}
-        .footer strong { color: #000; }
-        .signature { text-align: center; }
-        .signature img { width: 180px; height: auto; display: block; margin: 0 auto 6px; opacity: 0.6; }
-        .signature-name { font-weight: 600; font-size: 14px; color: #000;}
-        .signature-title { font-size: 13px; color: #555; }
-
+        /* Certificate Print CSS */
         @media print {
             body * { visibility: hidden; }
             #certificatePreviewWrapper, #certificatePreviewWrapper * { visibility: visible; }
-            #certificatePreviewWrapper { position: absolute; left: 0; top: 0; margin: 0; padding: 0; overflow: visible;}
-            .certificate { border: none; width: 100%; height: 100%; page-break-after: always; }
+            #certificatePreviewWrapper { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; }
+            .certificate { border: none !important; margin: 0 !important; width: 100% !important; height: 100vh !important; }
         }
+        
+        /* Certificate Visuals (Scoped) */
+        .certificate {
+            width: 794px; height: 1123px; margin: 20px auto; background: #fff; border: 15px solid var(--accent-yellow); position: relative; color: #000; text-align: left;
+        }
+        .cert-header-band { height: 180px; background: linear-gradient(135deg, #f7931e, #cfcfcf); padding: 30px; display: flex; align-items: center; }
+        .cert-logos { background: #fff; padding: 10px 20px; border-radius: 8px; display: flex; gap: 20px; }
+        .cert-logos img { height: 60px; }
+        .cert-body { padding: 80px; text-align: center; }
+        .cert-title { font-size: 40px; font-weight: bold; font-family: 'Playfair Display'; margin-bottom: 20px; }
+        .cert-name { font-size: 32px; font-weight: bold; border-bottom: 2px solid #000; display: inline-block; padding: 10px 40px; margin: 20px 0; text-transform: uppercase; }
+        .cert-course { font-size: 28px; color: #f7931e; font-weight: bold; margin: 30px 0; }
+        .cert-footer { position: absolute; bottom: 50px; width: 100%; padding: 0 80px; display: flex; justify-content: space-between; font-size: 14px; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
     </style>
 </head>
 <body>
 
 <div class="container">
+    
     <div class="header">
         <h2>Management Course</h2>
-        <p>ID: <span id="studentId">Loading...</span></p>
+        <p>Student ID: <span id="studentIdDisplay">Connecting...</span></p>
         
-        <div class="progress-container">
-            <p id="progressText">0% COMPLETED</p>
+        <div class="top-nav-row">
+            <div class="nav-buttons">
+                <button class="nav-btn" onclick="location.href='https://jasonmillz263.github.io/Database-/student.html'">⬅ Courses</button>
+                <button class="nav-btn" onclick="location.href='https://jasonmillz263.github.io/Database-/student.html'">🏠 Dashboard</button>
+            </div>
+            <button class="theme-switch" onclick="toggleTheme()">🌗 Light/Dark</button>
+        </div>
+
+        <div class="progress-wrapper">
             <div class="progress-bar">
                 <div class="progress-fill" id="progressFill"></div>
             </div>
-        </div>
-
-        <div class="controls-row">
-            <div class="nav-buttons">
-                <button class="btn-nav" onclick="location.href='https://jasonmillz263.github.io/Database-/student.html'">⬅ Courses</button>
-                <button class="btn-nav" onclick="location.href='https://jasonmillz263.github.io/Database-/student.html'">🏠 Dashboard</button>
-            </div>
-            <button class="theme-toggle" onclick="toggleTheme()">🌙 / ☀️</button>
+            <div class="progress-text" id="progressText">0% COMPLETED</div>
         </div>
     </div>
 
-    <div class="modules" id="modules"></div>
+    <div id="modules" class="modules">
+        <p style="text-align:center;">Loading course content...</p>
+    </div>
 
     <div id="certificateSection">
         
         <div id="nameInput">
-            <h3>Course Completed!</h3>
-            <p>Enter your full name as you want it to appear on your certificate.</p>
+            <h3>🎉 Course Completed!</h3>
+            <p>Please enter your name exactly as you want it on your certificate.</p>
             <form id="nameForm">
                 <input type="text" id="firstNameInput" placeholder="First Name" required>
                 <input type="text" id="lastNameInput" placeholder="Last Name" required>
-                <button type="submit" class="primary-btn">Generate Certificate</button>
+                <button type="submit" class="btn-primary">Generate Certificate</button>
             </form>
             <br>
-            <button class="secondary-btn" onclick="location.href='https://jasonmillz263.github.io/Database-/student.html'">Back to Dashboard</button>
+            <button class="btn-outline" onclick="location.href='https://jasonmillz263.github.io/Database-/student.html'">Return to Dashboard</button>
         </div>
 
-        <div id="certificatePreviewWrapper">
+        <div id="certificatePreviewWrapper" style="display:none;">
             <div class="certificate">
-                <div class="top-band">
-                    <div class="logos">
-                        <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhnNFRpSiba0ztBBehfuW2MWV7LjXfqoVWvjiHT_gLRNgmSSOQv74I5h9gVCyAF4RBjpeMbAYKSfmhpyE2v2ihNRlt4rC63vA0KIdHH0ZEkidtlm37CLrNV0Ty_vBfvQgRnfCmsGycBGwCE_sNedqdNStWhLbntzKfIVx6RFkNU6YIyRBplI0S-NODhKRNa/s1600/IMG-20251223-WA0001.jpg" alt="FoodPreneur Logo">
-                        <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhIuGx_Tl93TWp5OZYxIn7iCPb3FhwXGTZTr_xVjfUAOy4dt2YzXq0c7H4VizrvCBNkCO12IlSymo4R-7Nq9mSffdpB9w6Yge3O2i0UovqE45XIW1jEyvZJg6sOjDfUUhdRJs2x_Bqui6goNnXmcV8hguXwcIUqsvMv5-kY-yNeo-Onr9TVspl88fBfiEsV/s1600/IMG-20251223-WA0001.png" alt="RHAC Logo">
+                <div class="cert-header-band">
+                    <div class="cert-logos">
+                        <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhnNFRpSiba0ztBBehfuW2MWV7LjXfqoVWvjiHT_gLRNgmSSOQv74I5h9gVCyAF4RBjpeMbAYKSfmhpyE2v2ihNRlt4rC63vA0KIdHH0ZEkidtlm37CLrNV0Ty_vBfvQgRnfCmsGycBGwCE_sNedqdNStWhLbntzKfIVx6RFkNU6YIyRBplI0S-NODhKRNa/s1600/IMG-20251223-WA0001.jpg" alt="Logo 1">
+                        <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhIuGx_Tl93TWp5OZYxIn7iCPb3FhwXGTZTr_xVjfUAOy4dt2YzXq0c7H4VizrvCBNkCO12IlSymo4R-7Nq9mSffdpB9w6Yge3O2i0UovqE45XIW1jEyvZJg6sOjDfUUhdRJs2x_Bqui6goNnXmcV8hguXwcIUqsvMv5-kY-yNeo-Onr9TVspl88fBfiEsV/s1600/IMG-20251223-WA0001.png" alt="Logo 2">
                     </div>
                 </div>
-
-                <div class="content">
-                    <div class="title">Certificate of Completion</div>
-                    <div class="subtitle">This is to certify that</div>
-                    
-                    <div class="name" id="certStudentName">PARTICIPANT NAME</div>
-                    
-                    <div class="divider"></div>
-                    
-                    <div class="description">
-                        has successfully completed the course entitled
-                    </div>
-                    
-                    <div class="course" id="certCourseName">
-                        MANAGEMENT COURSE
-                    </div>
-                    
-                    <div class="award">
-                        This certificate is hereby <strong>awarded by the FoodPreneur Business Academy</strong>,
-                        in partnership with <strong>RHAC</strong>, in recognition of commitment,
-                        competence, and successful completion of all course requirements.
-                    </div>
+                <div class="cert-body">
+                    <div class="cert-title">Certificate of Completion</div>
+                    <p>This is to certify that</p>
+                    <div class="cert-name" id="certStudentName">STUDENT NAME</div>
+                    <p>Has successfully completed the course entitled</p>
+                    <div class="cert-course" id="certCourseName">MANAGEMENT COURSE</div>
+                    <p>Awarded by <strong>FoodPreneur Business Academy</strong> in partnership with <strong>RHAC</strong>.</p>
                 </div>
-
-                <div class="footer">
+                <div class="cert-footer">
                     <div>
-                        <strong>Certificate No:</strong> FPBA-2025-001<br>
-                        <strong>Date of Completion:</strong> <span id="certDate">01 January 2025</span>
+                        <strong>Date:</strong> <span id="certDate"></span><br>
+                        <strong>ID:</strong> FPBA-2025
                     </div>
-                    <div class="signature">
-                        <img src="" alt="Signature" style="opacity: 0;"> 
-                        <div class="signature-name">Academy Director</div>
-                        <div class="signature-title">FoodPreneur Business Academy</div>
+                    <div style="text-align:center;">
+                        <div style="border-bottom:1px solid #000; width:200px; margin-bottom:5px;"></div>
+                        Academy Director
                     </div>
                 </div>
             </div>
-            
             <div style="text-align:center; margin-top:20px;">
-                <button class="primary-btn" onclick="window.print()">Print / Save PDF</button>
+                <button class="btn-primary" onclick="window.print()">Print / Save PDF</button>
             </div>
         </div>
+
     </div>
 
 </div>
 <script>
-    // --- Firebase Init ---
-    firebase.initializeApp({
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // --- 1. CONFIGURATION ---
+    const firebaseConfig = {
         apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
         authDomain: "students-login-29409.firebaseapp.com",
         projectId: "students-login-29409"
-    });
-
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    
     const auth = firebase.auth();
     const db = firebase.firestore();
-
     const COURSE_ID = "management_course";
-    const PASS_MARK = 60;
-    const QUESTION_TIME = 20;
-
-    let activeModuleId = null;
-    let currentQuiz = [];
-    let currentQuestionIndex = 0;
+    
+    // --- 2. GLOBAL VARIABLES ---
+    let currentUtterance = null; // Holds the speech object
+    let quizTimerInterval = null;
+    let currentQuizData = [];
+    let currentQIndex = 0;
     let currentScore = 0;
-    let quizBox = null;
-    let quizTimer = null;
-    let timeLeft = QUESTION_TIME;
-    let totalModuleCount = 0;
-
-    // --- TTS Variables ---
-    let ttsUtterance = null; // Store the utterance object
-
-    // --- Authentication & Setup ---
-    auth.onAuthStateChanged(async user => {
-        if (!user) return alert("Login required");
-        
-        document.getElementById('studentId').innerText = user.uid;
-        
-        const ref = db.collection("students").doc(user.uid);
-        const doc = await ref.get();
-        if (!doc.exists) {
-            await ref.set({ email: user.email, enrolledCourses: {} });
+    
+    // --- 3. AUTH & INIT ---
+    auth.onAuthStateChanged(async (user) => {
+        if (user) {
+            // Update UI with User Info
+            document.getElementById('studentIdDisplay').innerText = user.uid;
+            
+            // Check Database Entry
+            const userRef = db.collection("students").doc(user.uid);
+            const userSnap = await userRef.get();
+            
+            if (!userSnap.exists) {
+                await userRef.set({ email: user.email, enrolledCourses: {} });
+            }
+            
+            // Load Content
+            loadModules(user);
+        } else {
+            document.getElementById('studentIdDisplay').innerText = "Not Logged In";
+            document.getElementById('modules').innerHTML = "<p>Please log in to view modules.</p>";
         }
-        loadModules(user);
     });
 
-    // --- Theme Toggle ---
-    function toggleTheme() {
+    // --- 4. MODULE LOADING SYSTEM ---
+    window.loadModules = async function(user) {
+        document.getElementById('certificateSection').style.display = 'none';
+        const modulesContainer = document.getElementById('modules');
+        
+        // Fetch Modules
+        const modsSnap = await db.collection("courses")
+            .doc(COURSE_ID)
+            .collection("modules")
+            .where("status", "==", "published")
+            .get();
+            
+        // Fetch User Progress
+        const userSnap = await db.collection("students").doc(user.uid).get();
+        const completedData = userSnap.data()?.enrolledCourses?.[COURSE_ID]?.completedModules || {};
+        
+        let doneCount = 0;
+        let isPrevModuleDone = true; // First module is always unlocked
+        let moduleNumber = 1;
+        
+        modulesContainer.innerHTML = ""; // Clear loading text
+
+        modsSnap.forEach(doc => {
+            const mData = doc.data();
+            const mId = doc.id;
+            const isCompleted = completedData[mId] === true;
+            const isLocked = !isPrevModuleDone;
+
+            if (isCompleted) doneCount++;
+            
+            // Create Module HTML
+            const modDiv = document.createElement("div");
+            modDiv.className = `module ${isLocked ? 'locked' : ''} ${isCompleted ? 'completed' : ''}`;
+            
+            let footerContent = '';
+            
+            if (isLocked) {
+                footerContent = `<div class="module-footer"><p>🔒 Complete previous module to unlock.</p></div>`;
+            } else if (isCompleted) {
+                footerContent = `<div class="module-footer"><p class="pass-msg">✅ Module Completed</p></div>`;
+            } else {
+                footerContent = `
+                    <div class="module-footer">
+                        <div class="quiz-box" id="quiz-area-${mId}">
+                            <div class="btn-group">
+                                <button class="btn-primary" onclick="initQuiz('${mId}', this)">Start Quiz</button>
+                                <button class="btn-yellow" onclick="playText(this)">🔊 Listen</button>
+                                <button class="btn-yellow" onclick="pauseText()">⏸ Pause</button>
+                            </div>
+                        </div>
+                    </div>`;
+            }
+
+            modDiv.innerHTML = `
+                <div class="module-header">
+                    <h3>Module ${moduleNumber}: ${mData.title}</h3>
+                    <span class="status-badge">Completed</span>
+                </div>
+                <div class="lesson-content">${mData.content}</div>
+                ${footerContent}
+            `;
+            
+            modulesContainer.appendChild(modDiv);
+            
+            isPrevModuleDone = isCompleted;
+            moduleNumber++;
+        });
+
+        // Update Progress Bar
+        const percent = Math.round((doneCount / modsSnap.size) * 100) || 0;
+        document.getElementById('progressFill').style.width = percent + "%";
+        document.getElementById('progressText').innerText = percent + "% COMPLETED";
+
+        // Check for Certificate Eligibility
+        if (doneCount === modsSnap.size && modsSnap.size > 0) {
+            showCertificateInput();
+        }
+    };
+
+    // --- 5. QUIZ SYSTEM ---
+    window.initQuiz = async function(moduleId, btn) {
+        // Find the quiz area container
+        const quizArea = document.getElementById(`quiz-area-${moduleId}`);
+        const moduleDiv = quizArea.closest('.module');
+        
+        // Hide Lesson Content to focus on quiz
+        moduleDiv.querySelector('.lesson-content').style.display = 'none';
+        
+        // Fetch Quiz Data
+        const modDoc = await db.collection("courses").doc(COURSE_ID).collection("modules").doc(moduleId).get();
+        currentQuizData = modDoc.data().quizzes;
+        currentQIndex = 0;
+        currentScore = 0;
+        
+        renderQuestion(moduleId, quizArea);
+    };
+
+    function renderQuestion(moduleId, container) {
+        // Clear previous timer
+        if(quizTimerInterval) clearInterval(quizTimerInterval);
+        
+        if (currentQIndex >= currentQuizData.length) {
+            finishQuiz(moduleId, container);
+            return;
+        }
+
+        const q = currentQuizData[currentQIndex];
+        let time = 20; // 20 seconds per question
+
+        container.innerHTML = `
+            <span class="timer" id="timerDisplay">⏱ ${time}s</span>
+            <p style="font-weight:bold; font-size:1.1rem;">${q.question}</p>
+            <div class="options-group">
+                ${q.options.map(opt => `<label><input type="radio" name="ans" value="${opt}"> ${opt}</label>`).join('')}
+            </div>
+            <button class="btn-primary" onclick="submitAnswer('${moduleId}', '${container.id}')">Next Question</button>
+        `;
+
+        // Start Timer
+        const timerDisplay = container.querySelector('#timerDisplay');
+        quizTimerInterval = setInterval(() => {
+            time--;
+            timerDisplay.innerText = `⏱ ${time}s`;
+            if (time <= 0) {
+                clearInterval(quizTimerInterval);
+                submitAnswer(moduleId, container.id); // Auto submit
+            }
+        }, 1000);
+    }
+
+    window.submitAnswer = function(moduleId, containerId) {
+        const container = document.getElementById(containerId);
+        const selected = container.querySelector('input[name="ans"]:checked');
+        const correct = currentQuizData[currentQIndex].answer;
+        
+        // Logic: Check answer
+        if (selected && selected.value.trim() === correct.trim()) {
+            currentScore++;
+        }
+        
+        currentQIndex++;
+        renderQuestion(moduleId, container);
+    };
+
+    async function finishQuiz(moduleId, container) {
+        const percentage = (currentScore / currentQuizData.length) * 100;
+        const passed = percentage >= 60;
+        
+        // Save to Firebase
+        if (auth.currentUser) {
+            await db.collection("students").doc(auth.currentUser.uid).set({
+                enrolledCourses: {
+                    [COURSE_ID]: { completedModules: { [moduleId]: passed } }
+                }
+            }, { merge: true });
+        }
+
+        container.innerHTML = `
+            <h3>Quiz Results</h3>
+            <p>Score: ${currentScore}/${currentQuizData.length} (${percentage}%)</p>
+            ${passed ? '<p class="pass-msg">PASSED</p>' : '<p class="fail-msg">FAILED</p>'}
+            <button class="btn-primary" onclick="location.reload()">Continue / Retry</button>
+        `;
+    }
+
+    // --- 6. TTS (TEXT TO SPEECH) FIX ---
+    window.playText = function(btn) {
+        // Stop any current speech
+        speechSynthesis.cancel();
+        
+        const text = btn.closest('.module').querySelector('.lesson-content').innerText;
+        currentUtterance = new SpeechSynthesisUtterance(text);
+        
+        // Optional: Pick a nice voice
+        const voices = speechSynthesis.getVoices();
+        currentUtterance.voice = voices.find(v => v.lang.includes('en')) || null;
+        
+        speechSynthesis.speak(currentUtterance);
+    };
+
+    window.pauseText = function() {
+        if (speechSynthesis.speaking && !speechSynthesis.paused) {
+            speechSynthesis.pause();
+        } else if (speechSynthesis.paused) {
+            speechSynthesis.resume();
+        }
+    };
+
+    // --- 7. CERTIFICATE ---
+    function showCertificateInput() {
+        document.getElementById('modules').style.display = 'none';
+        document.getElementById('certificateSection').style.display = 'block';
+        
+        document.getElementById('nameForm').onsubmit = (e) => {
+            e.preventDefault();
+            const fn = document.getElementById('firstNameInput').value;
+            const ln = document.getElementById('lastNameInput').value;
+            
+            // Fill Certificate
+            document.getElementById('certStudentName').innerText = (fn + " " + ln).toUpperCase();
+            document.getElementById('certDate').innerText = new Date().toLocaleDateString();
+            
+            // Show Preview
+            document.getElementById('nameInput').style.display = 'none';
+            document.getElementById('certificatePreviewWrapper').style.display = 'block';
+        };
+    }
+
+    // --- 8. THEME TOGGLE ---
+    window.toggleTheme = function() {
         const body = document.body;
         if (body.getAttribute('data-theme') === 'dark') {
             body.removeAttribute('data-theme');
         } else {
             body.setAttribute('data-theme', 'dark');
         }
-    }
+    };
 
-    // --- TTS Functions (Fixed with Memory) ---
-    function readAloud(btn) {
-        // Find content
-        const content = btn.closest(".module").querySelector(".lesson-content").innerText;
-        
-        // Cancel any previous speech completely
-        speechSynthesis.cancel();
-
-        // Create new utterance
-        ttsUtterance = new SpeechSynthesisUtterance(content);
-        
-        // Optional: Select voice
-        const voices = speechSynthesis.getVoices();
-        const voice = voices.find(v => v.lang.startsWith("en")) || voices[0];
-        if(voice) ttsUtterance.voice = voice;
-        
-        ttsUtterance.rate = 1.0;
-
-        // Speak
-        speechSynthesis.speak(ttsUtterance);
-    }
-
-    function togglePauseResume() {
-        // If nothing is loaded, do nothing
-        if (!ttsUtterance) return; 
-
-        if (speechSynthesis.paused) {
-            // If paused, resume from where it stopped
-            speechSynthesis.resume();
-        } else if (speechSynthesis.speaking) {
-            // If speaking, pause it (browser holds memory)
-            speechSynthesis.pause();
-        }
-    }
-
-    // --- Module Logic ---
-    async function loadModules(user) {
-        document.getElementById('certificateSection').style.display = 'none';
-        const modulesDiv = document.getElementById('modules');
-        modulesDiv.style.display = 'flex';
-
-        const modsSnap = await db.collection("courses")
-            .doc(COURSE_ID)
-            .collection("modules")
-            .where("status", "==", "published")
-            .get();
-
-        totalModuleCount = modsSnap.size;
-
-        const snap = await db.collection("students").doc(user.uid).get();
-        const completed = snap.data()?.enrolledCourses?.[COURSE_ID]?.completedModules || {};
-
-        modulesDiv.innerHTML = "";
-        let done = 0, prev = true, index = 1;
-
-        modsSnap.forEach(doc => {
-            const m = doc.data(), id = doc.id;
-            const passed = completed[id] === true;
-            const locked = index > 1 && !prev;
-            if (passed) done++;
-            prev = passed;
-
-            const div = document.createElement("div");
-            div.className = "module" + (locked ? " locked" : "");
-            
-            // Generate Buttons HTML
-            let actionButtons = '';
-            if (locked) {
-                actionButtons = `<p>🔒 Complete previous module</p>`;
-            } else if (passed) {
-                actionButtons = `<div class="quiz-box"><span class='pass'>✅ Module Completed</span></div>`;
-            } else {
-                actionButtons = `
-                    <div class="quiz-box">
-                        <div class="action-row">
-                            <button class="primary-btn" onclick="startQuiz('${id}',this)">Start Quiz</button>
-                            <button class="secondary-btn" onclick="readAloud(this)">🔊 Listen</button>
-                            <button class="secondary-btn" onclick="togglePauseResume()">⏸ Pause/Resume</button>
-                        </div>
-                    </div>`;
-            }
-
-            div.innerHTML = `
-                <h3>
-                    <span>Module ${index}: ${m.title}</span> 
-                    ${passed ? '<span class="score-tag">✓ Done</span>' : ''}
-                </h3>
-                <div class="lesson-content">${m.content}</div>
-                ${actionButtons}
-            `;
-            modulesDiv.appendChild(div);
-            index++;
-        });
-
-        updateProgress(done, modsSnap.size);
-
-        if (done === totalModuleCount && totalModuleCount > 0) {
-            initCertificateSequence();
-        }
-    }
-
-    function updateProgress(done, total) {
-        const p = total ? Math.round(done / total * 100) : 0;
-        document.getElementById('progressFill').style.width = p + "%";
-        document.getElementById('progressText').innerText = p + "% COMPLETED";
-    }
-
-    // --- Quiz Logic ---
-    async function startQuiz(moduleId, btn) {
-        btn.disabled = true;
-        activeModuleId = moduleId;
-        currentQuestionIndex = 0;
-        currentScore = 0;
-
-        const snap = await db.collection("courses")
-            .doc(COURSE_ID).collection("modules")
-            .doc(moduleId).get();
-
-        currentQuiz = snap.data().quizzes;
-        quizBox = btn.closest(".quiz-box");
-        
-        // Hide content during quiz
-        quizBox.closest(".module").querySelector(".lesson-content").style.display = "none";
-
-        clearInterval(quizTimer);
-        timeLeft = QUESTION_TIME;
-
-        quizTimer = setInterval(() => {
-            timeLeft--;
-            const t = document.getElementById("timeLeft");
-            if (t) t.innerText = timeLeft;
-            if (timeLeft <= 0) {
-                clearInterval(quizTimer);
-                finishQuiz();
-            }
-        }, 1000);
-
-        renderQuestion();
-    }
-
-    function renderQuestion() {
-        const q = currentQuiz[currentQuestionIndex];
-        const isLast = currentQuestionIndex === currentQuiz.length - 1;
-
-        quizBox.innerHTML = `
-            <div class="timer">⏱ <span id="timeLeft">${timeLeft}</span>s</div>
-            <p style="font-size:1.1rem; font-weight:bold;">${q.question}</p>
-            <div class="options-group">
-                ${q.options.map(o => `<label><input type="radio" name="ans" value="${o}"> ${o}</label>`).join("")}
-            </div>
-            <button class="primary-btn" onclick="processSubmission()">${isLast ? "Finish Quiz" : "Next Question"}</button>
-        `;
-    }
-
-    function processSubmission() {
-        const sel = quizBox.querySelector("input[name='ans']:checked");
-        if (!sel) return alert("Select an answer");
-
-        const clean = s => String(s).replace(/\s+/g, " ").trim();
-        if (clean(sel.value) === clean(currentQuiz[currentQuestionIndex].answer)) {
-            currentScore++;
-        }
-
-        currentQuestionIndex++;
-
-        if (currentQuestionIndex < currentQuiz.length) {
-            renderQuestion();
-        } else {
-            finishQuiz();
-        }
-    }
-
-    async function finishQuiz() {
-        clearInterval(quizTimer);
-        const percent = Math.round((currentScore / currentQuiz.length) * 100);
-        const passed = percent >= PASS_MARK;
-
-        if (auth.currentUser) {
-            const ref = db.collection("students").doc(auth.currentUser.uid);
-            try {
-                await ref.set({
-                    enrolledCourses: {
-                        [COURSE_ID]: { completedModules: { [activeModuleId]: passed } }
-                    }
-                }, { merge: true });
-            } catch (e) { console.error(e); }
-        }
-
-        quizBox.innerHTML = `
-            <h3>Results</h3>
-            <p>Score: <strong>${currentScore}/${currentQuiz.length}</strong> (${percent}%)</p>
-            ${passed ? '<p class="pass">✅ PASSED</p>' : '<p class="fail">❌ FAILED - Try Again</p>'}
-            <button class="primary-btn" onclick="loadModules(auth.currentUser)">Continue</button>
-        `;
-        
-        // Show content again
-        quizBox.closest(".module").querySelector(".lesson-content").style.display = "block";
-    }
-
-    // --- Certificate Logic ---
-    function initCertificateSequence() {
-        document.getElementById('modules').style.display = 'none';
-        document.getElementById('certificateSection').style.display = 'block';
-        document.getElementById('nameInput').style.display = 'block';
-        document.getElementById('certificatePreviewWrapper').style.display = 'none';
-
-        document.getElementById('nameForm').onsubmit = (e) => {
-            e.preventDefault();
-            const fName = document.getElementById('firstNameInput').value.trim();
-            const lName = document.getElementById('
+});
+</script>
+</body>
+</html>
