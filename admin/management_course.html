@@ -16,7 +16,6 @@ body{
   padding:12px;
   margin:0;
 }
-body.dark{background:#0f172a;color:#f8fafc}
 header{
   background:#4f46e5;
   color:#fff;
@@ -29,7 +28,6 @@ header{
   border-radius:12px;
   margin-top:12px;
 }
-body.dark .card{background:#1e293b}
 input,button{
   width:100%;
   padding:10px;
@@ -44,27 +42,28 @@ button{
 .publish{background:#16a34a;color:#fff}
 .draft{background:#f59e0b}
 .delete{background:#dc2626;color:#fff}
-.view{background:#0ea5e9;color:#fff}
-.quiz{background:#eef2ff;padding:8px;border-radius:6px;margin:6px 0}
+.quiz{background:#eef2ff;padding:8px;border-radius:6px;margin:5px 0}
 .hidden{display:none}
-.tabs{display:flex;gap:8px;margin-top:12px}
-.tabs button{flex:1;background:#e5e7eb}
-.tabs button.active{background:#4f46e5;color:#fff}
-.ql-editor img{max-width:100%;height:auto;margin:8px 0}
-#toast{
-  position:fixed;
-  bottom:20px;
-  right:20px;
-  background:#111827;
-  color:#fff;
-  padding:12px 16px;
-  border-radius:10px;
+
+.tabs{
   display:flex;
-  gap:10px;
-  align-items:center;
-  z-index:9999;
+  gap:8px;
+  margin-top:12px;
 }
-#toast.hidden{display:none}
+.tabs button{
+  flex:1;
+  background:#e5e7eb;
+}
+.tabs button.active{
+  background:#4f46e5;
+  color:#fff;
+}
+
+@media(max-width:768px){
+  header h2{font-size:18px}
+  .tabs{flex-direction:column}
+  .card{padding:12px}
+}
 </style>
 </head>
 
@@ -73,23 +72,16 @@ button{
 <header>
   <h2><i class="fa fa-user-shield"></i> Admin – Management Course</h2>
   <div id="authStatus">Checking authentication...</div>
-  <button onclick="toggleTheme()">🌓</button>
 </header>
-
-<div id="toast" class="hidden">
-  <i class="fa fa-spinner fa-spin"></i>
-  <span id="toastText"></span>
-</div>
-
-<div class="card hidden" id="addModuleCard">
-  <button class="publish" onclick="openEditor()">➕ Add New Module</button>
-</div>
 
 <div class="card hidden" id="editor">
   <h3>Module Editor</h3>
+
   <input id="title" placeholder="Module title">
+  <input id="imageUrl" placeholder="Image URL">
   <input id="videoUrl" placeholder="Video URL">
-  <div id="quill" style="height:220px"></div>
+
+  <div id="quill" style="height:200px"></div>
 
   <h4>Quizzes</h4>
   <input id="q" placeholder="Question">
@@ -98,6 +90,7 @@ button{
   <input id="o3" placeholder="Option 3">
   <input id="o4" placeholder="Option 4">
   <input id="a" placeholder="Correct answer">
+
   <button onclick="addQuiz()">Add / Update Quiz</button>
   <div id="quizList"></div>
 
@@ -114,96 +107,73 @@ button{
 <div class="card" id="publishedTab"></div>
 <div class="card hidden" id="draftTab"></div>
 <div class="card hidden" id="binTab"></div>
-<div class="card hidden" id="viewer"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, doc, addDoc, getDocs, updateDoc, getDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
+import {
+  getFirestore, collection, doc, addDoc, getDocs,
+  updateDoc, getDoc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import {
+  getAuth, signInWithEmailAndPassword, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
+/* ===== FIREBASE ===== */
 const app = initializeApp({
   apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain:"students-login-29409.firebaseapp.com",
-  projectId:"students-login-29409",
-  storageBucket:"students-login-29409.appspot.com"
+  projectId:"students-login-29409"
 });
 
 const db = getFirestore(app);
 const auth = getAuth(app);
-const storage = getStorage(app);
 
 signInWithEmailAndPassword(auth,"ADMIN_EMAIL","ADMIN_PASSWORD");
 
-/* AUTH */
+/* ===== AUTH ===== */
 onAuthStateChanged(auth, async user=>{
   if(!user){
     authStatus.innerText="❌ Not logged in";
     return;
   }
-  const admin = await getDoc(doc(db,"admins",user.uid));
-  if(!admin.exists()){
+
+  const adminDoc = await getDoc(doc(db,"admins",user.uid));
+  if(!adminDoc.exists()){
     authStatus.innerText="❌ Not admin";
     return;
   }
+
   authStatus.innerText="✅ Admin authenticated";
-  addModuleCard.classList.remove("hidden");
+  editor.classList.remove("hidden");
   loadModules();
 });
 
-/* QUILL + IMAGE UPLOAD (FIXED ONLY HERE) */
+/* ===== QUILL (OLD WORKING IMAGE LOGIC) ===== */
 const quill = new Quill("#quill",{
   theme:"snow",
   modules:{
-    toolbar:{
-      container:[
-        [{header:[1,2,3,false]}],
-        ["bold","italic","underline"],
-        [{list:"ordered"},{list:"bullet"}],
-        ["link","image"],
-        ["clean"]
-      ],
-      handlers:{ image:imageHandler }
-    }
+    toolbar:[
+      ["bold","italic","underline"],
+      ["image","link"],
+      [{list:"ordered"},{list:"bullet"}]
+    ]
   }
 });
 
-function imageHandler(){
-  const input=document.createElement("input");
-  input.type="file";
-  input.accept="image/*";
-  input.click();
-
-  input.onchange=()=>{
-    const file=input.files[0];
-    if(!file) return;
-
-    const storageRef=ref(storage,"editorImages/"+Date.now()+"_"+file.name);
-    const task=uploadBytesResumable(storageRef,file);
-
-    toastText.innerText="Uploading image...";
-    toast.classList.remove("hidden");
-
-    task.on("state_changed",null,
-      err=>{
-        console.error(err);
-        toast.classList.add("hidden");
-      },
-      async()=>{
-        const url=await getDownloadURL(task.snapshot.ref);
-        quill.insertEmbed(quill.getSelection(true).index,"image",url);
-        toast.classList.add("hidden");
-      }
-    );
-  };
-}
-
-/* === REST OF YOUR ORIGINAL LOGIC (UNCHANGED) === */
-let quizzes=[],editingId=null,editingQuiz=null;
+/* ===== QUIZZES ===== */
+let quizzes=[], editingQuiz=null, editingId=null;
 
 window.addQuiz=()=>{
-  const quiz={question:q.value,options:[o1.value,o2.value,o3.value,o4.value],answer:a.value};
-  editingQuiz!==null?quizzes[editingQuiz]=quiz:quizzes.push(quiz);
+  const quiz={
+    question:q.value,
+    options:[o1.value,o2.value,o3.value,o4.value],
+    answer:a.value
+  };
+
+  editingQuiz!==null
+    ? quizzes[editingQuiz]=quiz
+    : quizzes.push(quiz);
+
   editingQuiz=null;
   q.value=o1.value=o2.value=o3.value=o4.value=a.value="";
   renderQuizzes();
@@ -213,7 +183,8 @@ function renderQuizzes(){
   quizList.innerHTML="";
   quizzes.forEach((x,i)=>{
     quizList.innerHTML+=`
-      <div class="quiz">${i+1}. ${x.question}
+      <div class="quiz">
+        ${i+1}. ${x.question}
         <button onclick="editQuiz(${i})">Edit</button>
         <button class="delete" onclick="deleteQuiz(${i})">Delete</button>
       </div>`;
@@ -226,7 +197,7 @@ window.editQuiz=i=>{
   o1.value=x.options[0];
   o2.value=x.options[1];
   o3.value=x.options[2];
-  o4.value=x.options[3];
+  o4.value=x.options[3]||"";
   a.value=x.answer;
   editingQuiz=i;
 };
@@ -236,54 +207,58 @@ window.deleteQuiz=i=>{
   renderQuizzes();
 };
 
+/* ===== SAVE ===== */
 window.saveModule=async status=>{
-  const refc=collection(db,"courses","management_course","modules");
+  const ref=collection(db,"courses","management_course","modules");
+
   const data={
     title:title.value,
+    imageUrl:imageUrl.value,
     videoUrl:videoUrl.value,
     content:quill.root.innerHTML,
-    quizzes,
+    quizzes:quizzes||[],
     status,
     updatedAt:serverTimestamp()
   };
+
   editingId
-    ? await updateDoc(doc(refc,editingId),data)
-    : await addDoc(refc,data);
+    ? await updateDoc(doc(ref,editingId),data)
+    : await addDoc(ref,data);
+
   reset();
   loadModules();
 };
 
+/* ===== LOAD ===== */
 async function loadModules(){
   publishedTab.innerHTML=draftTab.innerHTML=binTab.innerHTML="";
-  const s=await getDocs(query(collection(db,"courses","management_course","modules"),orderBy("updatedAt","desc")));
-  s.forEach(d=>{
+  const snap=await getDocs(collection(db,"courses","management_course","modules"));
+  snap.forEach(d=>{
     const m=d.data();
-    const box=`<div class="quiz"><b>${m.title}</b><br>
-      <button class="view" onclick="viewModule('${d.id}')">View</button>
-      <button onclick="edit('${d.id}')">Edit</button>
-      <button class="delete" onclick="softDelete('${d.id}')">Delete</button>
-    </div>`;
-    (m.status==="published"?publishedTab:
-     m.status==="draft"?draftTab:binTab).innerHTML+=box;
+    const box=`
+      <div class="quiz">
+        <b>${m.title}</b>
+        <button onclick="edit('${d.id}')">Edit</button>
+        <button class="delete" onclick="softDelete('${d.id}')">Delete</button>
+      </div>`;
+    m.status==="published"
+      ? publishedTab.innerHTML+=box
+      : m.status==="draft"
+      ? draftTab.innerHTML+=box
+      : binTab.innerHTML+=box;
   });
 }
 
-window.viewModule=async id=>{
-  const s=await getDoc(doc(db,"courses","management_course","modules",id));
-  const m=s.data();
-  viewer.innerHTML=`<h3>${m.title}</h3>${m.content}<button onclick="viewer.classList.add('hidden')">⬅ Back</button>`;
-  viewer.classList.remove("hidden");
-};
-
+/* ===== EDIT / DELETE ===== */
 window.edit=async id=>{
   const s=await getDoc(doc(db,"courses","management_course","modules",id));
   const m=s.data();
   title.value=m.title;
+  imageUrl.value=m.imageUrl;
   videoUrl.value=m.videoUrl;
   quill.root.innerHTML=m.content;
   quizzes=m.quizzes||[];
   editingId=id;
-  editor.classList.remove("hidden");
   renderQuizzes();
 };
 
@@ -292,23 +267,25 @@ window.softDelete=async id=>{
   loadModules();
 };
 
+/* ===== RESET ===== */
 function reset(){
-  title.value=videoUrl.value="";
+  title.value=imageUrl.value=videoUrl.value="";
   quill.root.innerHTML="";
   quizzes=[];
   editingId=null;
   renderQuizzes();
 }
 
-window.openEditor=()=>editor.classList.remove("hidden");
+/* ===== TABS ===== */
 window.showTab=(id,btn)=>{
-  ["publishedTab","draftTab","binTab"].forEach(t=>document.getElementById(t).classList.add("hidden"));
+  ["publishedTab","draftTab","binTab"].forEach(t=>{
+    document.getElementById(t).classList.add("hidden");
+  });
   document.getElementById(id).classList.remove("hidden");
   document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
   btn.classList.add("active");
 };
-window.toggleTheme=()=>document.body.classList.toggle("dark");
 </script>
 
 </body>
-                                                                     </html>
+</html>
