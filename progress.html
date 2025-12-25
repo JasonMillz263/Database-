@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>My Course Progress</title>
+<title>My Paid Courses Progress</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <!-- Firebase -->
@@ -35,8 +35,8 @@ h2 {
 }
 
 .course-card {
-    background: white;
-    border-radius: 12px;
+    background: #fff;
+    border-radius: 14px;
     padding: 20px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.08);
 }
@@ -44,7 +44,7 @@ h2 {
 .course-title {
     font-size: 16px;
     font-weight: bold;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
 }
 
 .progress-bar {
@@ -58,23 +58,40 @@ h2 {
     height: 100%;
     width: 0%;
     background: linear-gradient(90deg, #4facfe, #00f2fe);
-    transition: width 0.6s ease;
+    transition: width 0.5s ease;
 }
 
 .progress-text {
     font-size: 13px;
     margin-top: 8px;
-    color: #444;
 }
 
-.completed-badge {
-    margin-top: 10px;
+.badge {
     display: inline-block;
-    padding: 5px 10px;
-    background: #4CAF50;
-    color: white;
-    border-radius: 20px;
+    margin-top: 10px;
+    padding: 6px 12px;
     font-size: 12px;
+    border-radius: 20px;
+    color: #fff;
+}
+
+.completed {
+    background: #4CAF50;
+}
+
+.in-progress {
+    background: #ff9800;
+}
+
+.certificate-btn {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 8px 14px;
+    background: #673ab7;
+    color: #fff;
+    border-radius: 8px;
+    font-size: 13px;
+    text-decoration: none;
 }
 </style>
 </head>
@@ -82,12 +99,12 @@ h2 {
 <body>
 
 <div class="container">
-    <h2>📚 My Course Progress</h2>
+    <h2>🎓 My Paid Courses Progress</h2>
     <div id="courseGrid" class="course-grid"></div>
 </div>
 
 <script>
-/* ---------------- FIREBASE CONFIG ---------------- */
+/* ------------ FIREBASE CONFIG ------------ */
 const firebaseConfig = {
     apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
     authDomain: "students-login-29409.firebaseapp.com",
@@ -98,49 +115,67 @@ if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* ---------------- LOAD STUDENT PROGRESS ---------------- */
+/* ------------ AUTH + LOAD COURSES ------------ */
 auth.onAuthStateChanged(async (user) => {
     if (!user) {
         window.location.href = "login.html";
         return;
     }
 
-    const studentRef = db.collection("students").doc(user.uid);
-    const doc = await studentRef.get();
-
+    const doc = await db.collection("students").doc(user.uid).get();
     if (!doc.exists) return;
 
-    const courses = doc.data().courses || {};
+    const paidCourses = doc.data().paidCourses || {};
     const grid = document.getElementById("courseGrid");
     grid.innerHTML = "";
 
-    Object.keys(courses).forEach(courseId => {
-        const course = courses[courseId];
-        const completed = course.completedLessons || 0;
-        const total = course.totalLessons || 0;
-        const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+    Object.entries(paidCourses).forEach(([courseId, course]) => {
+        if (!course.approved) return; // 🔒 only admin-approved courses
+
+        const hasCertificate = !!course.certificateUrl;
+        const completedLessons = course.completedLessons || 0;
+        const totalLessons = course.totalLessons || 0;
+
+        const percent = hasCertificate
+            ? 100
+            : totalLessons > 0
+                ? Math.round((completedLessons / totalLessons) * 100)
+                : 0;
 
         const card = document.createElement("div");
         card.className = "course-card";
 
         card.innerHTML = `
             <div class="course-title">${formatTitle(courseId)}</div>
+
             <div class="progress-bar">
                 <div class="progress-fill" style="width:${percent}%"></div>
             </div>
+
             <div class="progress-text">
-                ${completed} of ${total} lessons completed (${percent}%)
+                ${hasCertificate
+                    ? "Course completed"
+                    : `${completedLessons} of ${totalLessons} lessons completed (${percent}%)`}
             </div>
-            ${course.completed ? `<div class="completed-badge">✔ Course Completed</div>` : ""}
+
+            <div class="badge ${hasCertificate ? "completed" : "in-progress"}">
+                ${hasCertificate ? "✔ Completed" : "⏳ In Progress"}
+            </div>
+
+            ${hasCertificate
+                ? `<a class="certificate-btn" href="${course.certificateUrl}" target="_blank">
+                    📄 View Certificate
+                  </a>`
+                : ""}
         `;
 
         grid.appendChild(card);
     });
 });
 
-/* ---------------- HELPER ---------------- */
+/* ------------ HELPER ------------ */
 function formatTitle(id) {
-    return id.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+    return id.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 }
 </script>
 
