@@ -10,34 +10,19 @@
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 
 <style>
-/* ================= ROOT THEME ================= */
-:root{
-  --bg:#f1f5f9;
-  --card:#ffffff;
-  --text:#111827;
-  --muted:#6b7280;
-  --primary:#4f46e5;
-  --success:#16a34a;
-  --warning:#f59e0b;
-  --danger:#dc2626;
-}
-body.dark{
-  --bg:#0f172a;
-  --card:#1e293b;
-  --text:#f8fafc;
-  --muted:#94a3b8;
-}
-
-/* ================= BASE ================= */
+/* ===== BASE ===== */
 body{
   font-family:Segoe UI;
-  background:var(--bg);
-  color:var(--text);
-  margin:0;
+  background:#f1f5f9;
   padding:12px;
+  margin:0;
+}
+body.dark{
+  background:#0f172a;
+  color:#f8fafc;
 }
 header{
-  background:var(--primary);
+  background:#4f46e5;
   color:#fff;
   padding:16px;
   border-radius:12px;
@@ -46,11 +31,12 @@ header{
   align-items:center;
 }
 .card{
-  background:var(--card);
+  background:#fff;
   padding:16px;
   border-radius:12px;
   margin-top:12px;
 }
+body.dark .card{background:#1e293b}
 input,button{
   width:100%;
   padding:10px;
@@ -58,19 +44,20 @@ input,button{
 }
 button{
   border:none;
-  border-radius:8px;
+  border-radius:6px;
   font-weight:bold;
   cursor:pointer;
   transition:.15s;
 }
 button:active{transform:scale(.97)}
-.publish{background:var(--success);color:#fff}
-.draft{background:var(--warning)}
-.delete{background:var(--danger);color:#fff}
+.publish{background:#16a34a;color:#fff}
+.draft{background:#f59e0b}
+.delete{background:#dc2626;color:#fff}
 .view{background:#0ea5e9;color:#fff}
+.quiz{background:#eef2ff;padding:8px;border-radius:6px;margin:5px 0}
 .hidden{display:none}
 
-/* ================= TABS ================= */
+/* ===== TABS ===== */
 .tabs{
   display:flex;
   gap:8px;
@@ -81,56 +68,31 @@ button:active{transform:scale(.97)}
   background:#e5e7eb;
 }
 .tabs button.active{
-  background:var(--primary);
+  background:#4f46e5;
   color:#fff;
 }
 
-/* ================= MODULE CARD ================= */
-.module{
-  border-left:5px solid var(--primary);
-  padding:12px;
-  margin-bottom:10px;
-}
-.module small{color:var(--muted)}
-.badge{
-  font-size:12px;
-  padding:2px 6px;
-  border-radius:6px;
-}
-.badge.published{background:var(--success);color:#fff}
-.badge.draft{background:var(--warning)}
-.badge.deleted{background:var(--danger);color:#fff}
-
-/* ================= STATUS OVERLAY ================= */
-#status{
+/* ===== STATUS TOAST ===== */
+#actionToast{
   position:fixed;
-  top:16px;
-  right:16px;
-  background:var(--card);
+  bottom:20px;
+  right:20px;
+  background:#111827;
+  color:#fff;
   padding:12px 16px;
   border-radius:10px;
-  box-shadow:0 10px 25px rgba(0,0,0,.2);
-  display:none;
-  align-items:center;
+  display:flex;
   gap:10px;
-  z-index:999;
+  align-items:center;
+  z-index:9999;
 }
-.spinner{
-  width:18px;
-  height:18px;
-  border:3px solid #ddd;
-  border-top:3px solid var(--primary);
-  border-radius:50%;
-  animation:spin 1s linear infinite;
-}
-@keyframes spin{to{transform:rotate(360deg)}}
+#actionToast.hidden{display:none}
 
-/* ================= VIEWER ================= */
-#viewer h2{margin-top:0}
-
-/* ================= MOBILE ================= */
+/* ===== MOBILE ===== */
 @media(max-width:768px){
+  header h2{font-size:18px}
   .tabs{flex-direction:column}
+  .card{padding:12px}
 }
 </style>
 </head>
@@ -138,49 +100,56 @@ button:active{transform:scale(.97)}
 <body>
 
 <header>
-  <h3><i class="fa fa-user-shield"></i> Admin – Management Course</h3>
-  <button onclick="toggleTheme()"><i class="fa fa-moon"></i></button>
+  <h2><i class="fa fa-user-shield"></i> Admin – Management Course</h2>
+  <button onclick="toggleTheme()">🌙</button>
 </header>
 
-<div id="status">
-  <div class="spinner"></div>
-  <span id="statusText"></span>
+<div id="actionToast" class="hidden">
+  <i class="fa fa-spinner fa-spin"></i>
+  <span id="actionText"></span>
 </div>
 
-<!-- ================= EDITOR ================= -->
 <div class="card hidden" id="editor">
   <h3>Module Editor</h3>
 
   <input id="title" placeholder="Module title">
-  <input id="imageUrl" placeholder="Cover Image URL">
+  <input id="imageUrl" placeholder="Image URL">
   <input id="videoUrl" placeholder="Video URL">
 
-  <div id="quill" style="height:220px"></div>
+  <div id="quill" style="height:200px"></div>
+
+  <h4>Quizzes</h4>
+  <input id="q" placeholder="Question">
+  <input id="o1" placeholder="Option 1">
+  <input id="o2" placeholder="Option 2">
+  <input id="o3" placeholder="Option 3">
+  <input id="o4" placeholder="Option 4">
+  <input id="a" placeholder="Correct answer">
+  <button onclick="addQuiz()">Add / Update Quiz</button>
+
+  <div id="quizList"></div>
 
   <button class="draft" onclick="saveModule('draft')">Save Draft</button>
   <button class="publish" onclick="saveModule('published')">Publish</button>
 </div>
 
-<!-- ================= VIEWER ================= -->
-<div class="card hidden" id="viewer"></div>
-
-<!-- ================= TABS ================= -->
 <div class="tabs">
-  <button class="active" onclick="switchTab('published')">Published</button>
-  <button onclick="switchTab('draft')">Drafts</button>
-  <button onclick="switchTab('deleted')">Recycle Bin</button>
+  <button class="active" onclick="showTab('publishedTab')">Published</button>
+  <button onclick="showTab('draftTab')">Drafts</button>
+  <button onclick="showTab('binTab')">Recycle Bin</button>
 </div>
 
 <div class="card" id="publishedTab"></div>
 <div class="card hidden" id="draftTab"></div>
-<div class="card hidden" id="deletedTab"></div>
+<div class="card hidden" id="binTab"></div>
+
+<div class="card hidden" id="viewer"></div>
 
 <script type="module">
-/* ================= FIREBASE ================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
-  getFirestore, collection, addDoc, updateDoc,
-  getDocs, getDoc, doc, query, orderBy, serverTimestamp
+  getFirestore, collection, doc, addDoc, getDocs,
+  updateDoc, getDoc, serverTimestamp, query, orderBy
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import {
   getAuth, signInWithEmailAndPassword, onAuthStateChanged
@@ -189,40 +158,41 @@ import {
   getStorage, ref, uploadBytesResumable, getDownloadURL
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
+/* ===== FIREBASE ===== */
 const app = initializeApp({
-  apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
-  authDomain:"students-login-29409.firebaseapp.com",
-  projectId:"students-login-29409",
-  storageBucket:"students-login-29409.appspot.com"
+  apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+  authDomain: "students-login-29409.firebaseapp.com",
+  projectId: "students-login-29409",
+  storageBucket: "students-login-29409.appspot.com"
 });
-
-const db=getFirestore(app);
-const auth=getAuth(app);
-const storage=getStorage(app);
+const db = getFirestore(app);
+const auth = getAuth(app);
+const storage = getStorage(app);
 
 signInWithEmailAndPassword(auth,"ADMIN_EMAIL","ADMIN_PASSWORD");
 
-/* ================= STATE ================= */
+/* ===== STATE ===== */
+let quizzes=[];
+let editingQuiz=null;
 let editingId=null;
-let autosaveTimer=null;
 
-/* ================= STATUS ================= */
-function showStatus(text){
-  statusText.innerText=text;
-  status.style.display="flex";
+/* ===== TOAST ===== */
+function showAction(t){
+  actionText.innerText=t;
+  actionToast.classList.remove("hidden");
 }
-function hideStatus(){
-  setTimeout(()=>status.style.display="none",1200);
+function hideAction(){
+  setTimeout(()=>actionToast.classList.add("hidden"),1200);
 }
 
-/* ================= THEME ================= */
+/* ===== THEME ===== */
 window.toggleTheme=()=>{
   document.body.classList.toggle("dark");
-  localStorage.theme=document.body.classList.contains("dark")?"dark":"light";
+  localStorage.theme=document.body.classList.contains("dark");
 };
-if(localStorage.theme==="dark")document.body.classList.add("dark");
+if(localStorage.theme==="true")document.body.classList.add("dark");
 
-/* ================= QUILL WITH IMAGE UPLOAD ================= */
+/* ===== QUILL + IMAGE UPLOAD % ===== */
 const quill=new Quill("#quill",{
   theme:"snow",
   modules:{
@@ -240,16 +210,20 @@ const quill=new Quill("#quill",{
           input.click();
           input.onchange=()=>{
             const file=input.files[0];
-            const r=ref(storage,"modules/"+Date.now()+"_"+file.name);
-            const task=uploadBytesResumable(r,file);
-            showStatus("Uploading image...");
+            const task=uploadBytesResumable(
+              ref(storage,"modules/"+Date.now()+"_"+file.name),
+              file
+            );
+            showAction("Uploading image 0%");
             task.on("state_changed",s=>{
-              statusText.innerText="Uploading "+Math.round(s.bytesTransferred/s.totalBytes*100)+"%";
+              actionText.innerText=
+                "Uploading image "+
+                Math.round(s.bytesTransferred/s.totalBytes*100)+"%";
             },null,async()=>{
               const url=await getDownloadURL(task.snapshot.ref);
-              const range=quill.getSelection();
-              quill.insertEmbed(range.index,"image",url);
-              hideStatus();
+              const r=quill.getSelection();
+              quill.insertEmbed(r.index,"image",url);
+              hideAction();
             });
           };
         }
@@ -258,90 +232,134 @@ const quill=new Quill("#quill",{
   }
 });
 
-/* ================= AUTOSAVE DRAFT ================= */
-function autoSave(){
-  const data={
+/* ===== AUTODRAFT ===== */
+setInterval(()=>{
+  localStorage.autoDraft=JSON.stringify({
     title:title.value,
     imageUrl:imageUrl.value,
     videoUrl:videoUrl.value,
-    content:quill.root.innerHTML
-  };
-  localStorage.autodraft=JSON.stringify(data);
-}
-autosaveTimer=setInterval(autoSave,10000);
-window.addEventListener("offline",()=>showStatus("Offline – auto-saving draft"));
+    content:quill.root.innerHTML,
+    quizzes
+  });
+},10000);
 
-if(localStorage.autodraft){
-  const d=JSON.parse(localStorage.autodraft);
+window.addEventListener("offline",()=>{
+  showAction("Offline – draft auto saved");
+  hideAction();
+});
+
+if(localStorage.autoDraft){
+  const d=JSON.parse(localStorage.autoDraft);
   title.value=d.title||"";
   imageUrl.value=d.imageUrl||"";
   videoUrl.value=d.videoUrl||"";
   quill.root.innerHTML=d.content||"";
+  quizzes=d.quizzes||[];
+  renderQuizzes();
 }
 
-/* ================= SAVE MODULE ================= */
-window.saveModule=async statusType=>{
-  showStatus(statusType==="published"?"Publishing...":"Saving draft...");
+/* ===== QUIZZES ===== */
+window.addQuiz=()=>{
+  const quiz={
+    question:q.value,
+    options:[o1.value,o2.value,o3.value,o4.value],
+    answer:a.value
+  };
+  editingQuiz!==null
+    ? quizzes[editingQuiz]=quiz
+    : quizzes.push(quiz);
+  editingQuiz=null;
+  q.value=o1.value=o2.value=o3.value=o4.value=a.value="";
+  renderQuizzes();
+};
+function renderQuizzes(){
+  quizList.innerHTML="";
+  quizzes.forEach((x,i)=>{
+    quizList.innerHTML+=`
+      <div class="quiz">
+        ${i+1}. ${x.question}
+        <button onclick="editQuiz(${i})">Edit</button>
+        <button class="delete" onclick="deleteQuiz(${i})">Delete</button>
+      </div>`;
+  });
+}
+window.editQuiz=i=>{
+  const x=quizzes[i];
+  q.value=x.question;
+  o1.value=x.options[0];
+  o2.value=x.options[1];
+  o3.value=x.options[2];
+  o4.value=x.options[3];
+  a.value=x.answer;
+  editingQuiz=i;
+};
+window.deleteQuiz=i=>{
+  quizzes.splice(i,1);
+  renderQuizzes();
+};
+
+/* ===== SAVE MODULE ===== */
+window.saveModule=async status=>{
+  showAction(status==="published"?"Publishing...":"Saving draft...");
   const refCol=collection(db,"courses","management_course","modules");
   const data={
     title:title.value,
     imageUrl:imageUrl.value,
     videoUrl:videoUrl.value,
     content:quill.root.innerHTML,
-    status:statusType,
+    quizzes:quizzes||[],
+    status,
     updatedAt:serverTimestamp()
   };
   editingId
     ? await updateDoc(doc(refCol,editingId),data)
     : await addDoc(refCol,data);
-  localStorage.removeItem("autodraft");
-  editingId=null;
-  hideStatus();
+  localStorage.removeItem("autoDraft");
+  reset();
   loadModules();
+  hideAction();
 };
 
-/* ================= LOAD MODULES ================= */
+/* ===== LOAD MODULES ===== */
 async function loadModules(){
-  publishedTab.innerHTML=draftTab.innerHTML=deletedTab.innerHTML="";
-  const q=query(
-    collection(db,"courses","management_course","modules"),
-    orderBy("updatedAt","desc")
+  publishedTab.innerHTML=draftTab.innerHTML=binTab.innerHTML="";
+  const snap=await getDocs(
+    query(
+      collection(db,"courses","management_course","modules"),
+      orderBy("updatedAt","desc")
+    )
   );
-  const snap=await getDocs(q);
   snap.forEach(d=>{
     const m=d.data();
-    const el=`
-    <div class="module">
-      <b>${m.title}</b>
-      <span class="badge ${m.status}">${m.status}</span><br>
-      <small>${m.updatedAt?.toDate?.().toLocaleString()||""}</small><br>
-      <button onclick="view('${d.id}')">View</button>
-      <button onclick="edit('${d.id}')">Edit</button>
-      <button class="delete" onclick="remove('${d.id}')">Delete</button>
-    </div>`;
-    if(m.status==="published")publishedTab.innerHTML+=el;
-    if(m.status==="draft")draftTab.innerHTML+=el;
-    if(m.status==="deleted")deletedTab.innerHTML+=el;
+    const box=`
+      <div class="quiz">
+        <b>${m.title}</b><br>
+        <button class="view" onclick="viewModule('${d.id}')">View</button>
+        <button onclick="edit('${d.id}')">Edit</button>
+        <button class="delete" onclick="softDelete('${d.id}')">Delete</button>
+      </div>`;
+    if(m.status==="published")publishedTab.innerHTML+=box;
+    else if(m.status==="draft")draftTab.innerHTML+=box;
+    else if(m.status==="deleted")binTab.innerHTML+=box;
   });
 }
 loadModules();
 
-/* ================= VIEW ================= */
-window.view=async id=>{
+/* ===== VIEW ===== */
+window.viewModule=async id=>{
   const s=await getDoc(doc(db,"courses","management_course","modules",id));
   const m=s.data();
   viewer.innerHTML=`
-    <h2>${m.title}</h2>
+    <h3>${m.title}</h3>
     ${m.imageUrl?`<img src="${m.imageUrl}" width="100%">`:""}
     ${m.videoUrl?`<iframe src="${m.videoUrl}" width="100%" height="240"></iframe>`:""}
     <div>${m.content}</div>
-    <button onclick="back()">Back</button>
+    <button onclick="viewer.classList.add('hidden')">Back</button>
   `;
   viewer.classList.remove("hidden");
-  editor.classList.add("hidden");
 };
 
-/* ================= EDIT ================= */
+/* ===== EDIT / DELETE ===== */
 window.edit=async id=>{
   const s=await getDoc(doc(db,"courses","management_course","modules",id));
   const m=s.data();
@@ -349,29 +367,38 @@ window.edit=async id=>{
   imageUrl.value=m.imageUrl;
   videoUrl.value=m.videoUrl;
   quill.root.innerHTML=m.content;
+  quizzes=m.quizzes||[];
   editingId=id;
-  editor.classList.remove("hidden");
+  renderQuizzes();
 };
-
-/* ================= DELETE ================= */
-window.remove=async id=>{
-  showStatus("Moving to recycle bin...");
-  await updateDoc(doc(db,"courses","management_course","modules",id),{status:"deleted"});
-  hideStatus();
+window.softDelete=async id=>{
+  showAction("Moving to recycle bin...");
+  await updateDoc(
+    doc(db,"courses","management_course","modules",id),
+    {status:"deleted"}
+  );
+  hideAction();
   loadModules();
 };
 
-/* ================= NAV ================= */
-window.switchTab=tab=>{
-  ["published","draft","deleted"].forEach(t=>{
-    document.getElementById(t+"Tab").classList.add("hidden");
+/* ===== RESET ===== */
+function reset(){
+  title.value=imageUrl.value=videoUrl.value="";
+  quill.root.innerHTML="";
+  quizzes=[];
+  editingId=null;
+  renderQuizzes();
+}
+
+/* ===== TABS ===== */
+window.showTab=id=>{
+  ["publishedTab","draftTab","binTab"].forEach(t=>{
+    document.getElementById(t).classList.add("hidden");
   });
-  document.getElementById(tab+"Tab").classList.remove("hidden");
-  document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
+  document.getElementById(id).classList.remove("hidden");
+  document.querySelectorAll(".tabs button")
+    .forEach(b=>b.classList.remove("active"));
   event.target.classList.add("active");
-};
-window.back=()=>{
-  viewer.classList.add("hidden");
 };
 </script>
 
