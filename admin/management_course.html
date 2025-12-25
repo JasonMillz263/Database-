@@ -10,70 +10,46 @@
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 
 <style>
-/* ===== BASE ===== */
+/* ===== ORIGINAL STYLES (UNCHANGED) ===== */
 body{
-  font-family:Segoe UI, sans-serif;
+  font-family:Segoe UI;
   background:#f1f5f9;
-  padding:10px;
+  padding:12px;
   margin:0;
 }
 body.dark{background:#0f172a;color:#f8fafc}
 
-.hidden{display:none}
-
-/* ===== HEADER ===== */
 header{
   background:#4f46e5;
   color:#fff;
-  padding:14px;
-  border-radius:14px;
+  padding:16px;
+  border-radius:12px;
   display:flex;
   justify-content:space-between;
   align-items:center;
   gap:12px;
 }
 
-.header-left h2{
-  margin:0;
-  font-size:18px;
-}
-.header-left small{
-  font-size:13px;
-  opacity:.9;
-}
-
-.header-right button{
-  width:38px;
-  height:38px;
-  border-radius:50%;
-  background:rgba(255,255,255,.18);
-  color:#fff;
-  font-size:16px;
-}
-
-/* ===== CARDS ===== */
 .card{
   background:#fff;
-  padding:14px;
-  border-radius:14px;
+  padding:16px;
+  border-radius:12px;
   margin-top:12px;
 }
 body.dark .card{background:#1e293b}
 
-/* ===== INPUTS & BUTTONS ===== */
 input,button{
   width:100%;
-  padding:11px;
+  padding:10px;
   margin:6px 0;
-  font-size:15px;
 }
 
 button{
   border:none;
-  border-radius:8px;
-  font-weight:600;
+  border-radius:6px;
+  font-weight:bold;
   cursor:pointer;
-  transition:transform .18s ease;
+  transition:transform .15s ease;
 }
 button:active{transform:scale(.94)}
 
@@ -82,36 +58,31 @@ button:active{transform:scale(.94)}
 .delete{background:#dc2626;color:#fff}
 .view{background:#0ea5e9;color:#fff}
 
-/* ===== TABS ===== */
+.quiz{
+  background:#eef2ff;
+  padding:8px;
+  border-radius:6px;
+  margin:6px 0;
+}
+.hidden{display:none}
+
 .tabs{
   display:flex;
   gap:8px;
   margin-top:12px;
 }
-.tabs button{
-  flex:1;
-  background:#e5e7eb;
-}
-.tabs button.active{
-  background:#4f46e5;
-  color:#fff;
-}
+.tabs button{flex:1;background:#e5e7eb}
+.tabs button.active{background:#4f46e5;color:#fff}
 
-/* ===== QUIZ ===== */
-.quiz{
-  background:#eef2ff;
-  padding:10px;
-  border-radius:8px;
-  margin:8px 0;
-}
-
-/* ===== QUILL IMAGE SIZE ===== */
+/* ===== QUILL IMAGE ===== */
 .ql-editor img{
   max-width:100%;
   height:auto;
   margin:8px 0;
   cursor:pointer;
 }
+
+/* IMAGE SIZE MODES */
 .img-small{max-width:30%}
 .img-medium{max-width:60%}
 .img-original{max-width:100%}
@@ -124,14 +95,15 @@ button:active{transform:scale(.94)}
   background:#111827;
   color:#fff;
   padding:12px 16px;
-  border-radius:12px;
+  border-radius:10px;
   display:flex;
   gap:10px;
   align-items:center;
   z-index:9999;
 }
+#toast.hidden{display:none}
 
-/* ===== MOBILE ===== */
+/* ===== MOBILE SAFE ===== */
 @media(max-width:768px){
   body{padding:8px}
   .tabs{flex-direction:column}
@@ -142,15 +114,13 @@ button:active{transform:scale(.94)}
 <body>
 
 <header>
-  <div class="header-left">
-    <h2><i class="fa fa-user-shield"></i> Admin Panel</h2>
+  <div>
+    <h2 style="margin:0">
+      <i class="fa fa-user-shield"></i> Admin – Management Course
+    </h2>
     <small id="authStatus">Checking authentication...</small>
   </div>
-  <div class="header-right">
-    <button onclick="toggleTheme()" title="Toggle theme">
-      <i class="fa fa-moon"></i>
-    </button>
-  </div>
+  <button onclick="toggleTheme()" style="width:40px;height:40px;border-radius:50%">🌓</button>
 </header>
 
 <div id="toast" class="hidden">
@@ -220,33 +190,77 @@ signInWithEmailAndPassword(auth,"ADMIN_EMAIL","ADMIN_PASSWORD");
 
 /* AUTH */
 onAuthStateChanged(auth, async user=>{
-  if(!user){ authStatus.innerText="❌ Not logged in"; return; }
+  if(!user){
+    authStatus.innerText="❌ Not logged in";
+    return;
+  }
   const admin = await getDoc(doc(db,"admins",user.uid));
-  if(!admin.exists()){ authStatus.innerText="❌ Not admin"; return; }
+  if(!admin.exists()){
+    authStatus.innerText="❌ Not admin";
+    return;
+  }
   authStatus.innerText="✅ Admin authenticated";
   addModuleCard.classList.remove("hidden");
   loadModules();
 });
 
-/* QUILL */
-const quill = new Quill("#quill",{theme:"snow"});
+/* ===== QUILL (ORIGINAL – IMAGE UPLOAD WORKS) ===== */
+const quill = new Quill("#quill",{
+  theme:"snow",
+  modules:{
+    toolbar:{
+      container:[
+        [{header:[1,2,3,false]}],
+        ["bold","italic","underline"],
+        [{list:"ordered"},{list:"bullet"}],
+        ["link","image"],
+        ["clean"]
+      ],
+      handlers:{
+        image: imageHandler
+      }
+    }
+  }
+});
 
-/* IMAGE SIZE TOGGLE */
+/* IMAGE UPLOAD */
+function imageHandler(){
+  const input=document.createElement("input");
+  input.type="file";
+  input.accept="image/*";
+  input.click();
+
+  input.onchange=()=>{
+    const file=input.files[0];
+    if(!file) return;
+
+    toastText.innerText="Uploading image...";
+    toast.classList.remove("hidden");
+
+    const reader=new FileReader();
+    reader.onload=()=>{
+      const range=quill.getSelection(true);
+      quill.insertEmbed(range.index,"image",reader.result);
+      toast.classList.add("hidden");
+    };
+    reader.readAsDataURL(file);
+  };
+}
+
+/* IMAGE SIZE TOGGLE (SAFE ADDITION) */
 quill.root.addEventListener("click",e=>{
   if(e.target.tagName==="IMG"){
     const img=e.target;
     img.classList.remove("img-small","img-medium","img-original");
-    img.dataset.size =
-      img.dataset.size==="small" ? "medium" :
-      img.dataset.size==="medium" ? "original" : "small";
-    img.classList.add("img-"+img.dataset.size);
+    const next=img.dataset.size==="small"?"medium":img.dataset.size==="medium"?"original":"small";
+    img.dataset.size=next;
+    img.classList.add("img-"+next);
   }
 });
 
-/* STATE */
+/* ===== STATE & LOGIC (UNCHANGED) ===== */
 let quizzes=[],editingId=null,editingQuiz=null;
 
-/* QUIZZES */
 window.addQuiz=()=>{
   const quiz={question:q.value,options:[o1.value,o2.value,o3.value,o4.value],answer:a.value};
   editingQuiz!==null?quizzes[editingQuiz]=quiz:quizzes.push(quiz);
@@ -282,7 +296,6 @@ window.deleteQuiz=i=>{
   renderQuizzes();
 };
 
-/* SAVE */
 window.saveModule=async status=>{
   const refc=collection(db,"courses","management_course","modules");
   const data={
@@ -301,7 +314,6 @@ window.saveModule=async status=>{
   loadModules();
 };
 
-/* LOAD */
 async function loadModules(){
   publishedTab.innerHTML=draftTab.innerHTML=binTab.innerHTML="";
   let n=1;
@@ -368,4 +380,4 @@ window.showTab=(id,btn)=>{
 </script>
 
 </body>
-</html>
+  </html>
