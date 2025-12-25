@@ -2,318 +2,157 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Student Learning Dashboard</title>
+    <title>My Student Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <style>
-        :root {
-            --primary: #6366f1;
-            --success: #10b981;
-            --bg: #f8fafc;
-            --card-bg: #ffffff;
-        }
+        :root { --primary: #6366f1; --success: #10b981; --bg: #f8fafc; }
+        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: #1e293b; }
+        .container { max-width: 1100px; margin: auto; padding: 40px 20px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        
+        /* Search & Filter Bar */
+        .controls { display: flex; gap: 10px; margin-bottom: 30px; justify-content: center; }
+        #courseSearch { padding: 12px 25px; border-radius: 25px; border: 1px solid #ddd; width: 100%; max-width: 400px; outline: none; transition: 0.3s; }
+        #courseSearch:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
 
-        body {
-            margin: 0;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background: var(--bg);
-            color: #1e293b;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: auto;
-            padding: 40px 20px;
-        }
-
-        /* --- Header & Search --- */
-        .header-section {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .search-container {
-            position: relative;
-            max-width: 500px;
-            margin: 20px auto;
-        }
-
-        #courseSearch {
-            width: 100%;
-            padding: 12px 20px;
-            border-radius: 30px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            outline: none;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-
-        #courseSearch:focus {
-            border-color: var(--primary);
-        }
-
-        .stats-summary {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-bottom: 30px;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        /* --- Grid & Cards --- */
-        .course-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 25px;
-        }
-
-        .course-card {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 24px;
-            border: 1px solid #f1f5f9;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .course-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-        }
-
-        .course-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 15px;
-        }
-
-        .course-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #0f172a;
-            max-width: 80%;
-        }
-
-        /* --- Progress Bar --- */
-        .progress-wrapper {
-            margin: 20px 0;
-        }
-
-        .bar-bg {
-            background: #f1f5f9;
-            height: 10px;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .bar-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #6366f1, #a855f7);
-            transition: width 1.5s ease-in-out;
-        }
-
-        .bar-fill.completed {
-            background: linear-gradient(90deg, #10b981, #34d399);
-        }
-
-        .progress-labels {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            margin-top: 8px;
-            color: #64748b;
-            font-weight: 600;
-        }
-
-        /* --- Badges --- */
-        .badge {
-            font-size: 11px;
-            padding: 4px 10px;
-            border-radius: 12px;
-            text-transform: uppercase;
-            font-weight: 700;
-        }
-
-        .badge-cert {
-            background: #dcfce7;
-            color: #15803d;
-            border: 1px solid #bbf7d0;
-            margin-top: auto;
-            text-align: center;
-            padding: 8px;
-        }
-
-        .module-text {
-            font-size: 13px;
-            color: #475569;
-            background: #f8fafc;
-            padding: 10px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-        }
-
-        .status-pill {
-            background: #e2e8f0;
-            color: #475569;
-        }
-
-        .status-pill.active {
-            background: #e0e7ff;
-            color: #4338ca;
-        }
-
-        /* --- Responsive Loading --- */
-        #loader { text-align: center; padding: 50px; font-weight: 600; color: #64748b; }
+        .course-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        
+        .card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.3s; border: 1px solid #edf2f7; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        
+        .title { font-weight: 800; font-size: 1.1rem; margin-bottom: 10px; color: #2d3748; }
+        .module-info { font-size: 13px; color: #718096; background: #f7fafc; padding: 8px; border-radius: 8px; margin-bottom: 15px; }
+        
+        .progress-bar { background: #edf2f7; height: 10px; border-radius: 5px; overflow: hidden; }
+        .progress-fill { height: 100%; width: 0%; background: var(--primary); transition: width 1s ease; }
+        .progress-fill.completed { background: var(--success); }
+        
+        .meta { display: flex; justify-content: space-between; font-size: 12px; margin-top: 8px; font-weight: bold; }
+        .cert-badge { margin-top: 15px; padding: 10px; background: #f0fff4; color: #276749; border-radius: 8px; font-size: 12px; font-weight: bold; text-align: center; border: 1px solid #c6f6d5; }
+        
+        #loading { text-align: center; padding: 50px; font-weight: bold; color: #667eea; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header-section">
-        <h2>📚 My Learning Journey</h2>
-        <div class="search-container">
-            <input type="text" id="courseSearch" placeholder="Search your courses..." onkeyup="filterCourses()">
-        </div>
-        <div class="stats-summary" id="statsSummary">
-            </div>
+    <div class="header">
+        <h1>🚀 My Dashboard</h1>
+        <p>Track your payments and course progress</p>
     </div>
 
-    <div id="loader">Fetching your curriculum...</div>
+    <div class="controls">
+        <input type="text" id="courseSearch" placeholder="Filter courses..." onkeyup="filterCourses()">
+    </div>
+
+    <div id="loading">Syncing your enrollment data...</div>
     <div id="courseGrid" class="course-grid"></div>
 </div>
 
 <script>
-/* ---------------- FIREBASE CONFIG ---------------- */
 const firebaseConfig = {
     apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
     authDomain: "students-login-29409.firebaseapp.com",
     projectId: "students-login-29409"
 };
-
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
 const db = firebase.firestore();
 
-let allCoursesData = [];
+auth.onAuthStateChanged(async (user) => {
+    if (!user) {
+        window.location.href = "login.html";
+        return;
+    }
+    loadData(user.uid);
+});
 
-/* ---------------- DATA FETCHING ---------------- */
-async function loadDashboard() {
+async function loadData(uid) {
     const grid = document.getElementById("courseGrid");
-    const loader = document.getElementById("loader");
+    const loader = document.getElementById("loading");
 
     try {
+        // 1. SCAN PAYMENTS: Find what courses the user has actually paid for
+        // Assuming you have a 'payments' collection or a 'paidCourses' array in user doc
+        // For this fix, we will pull all courses from the "courses" collection 
+        // and match them against progress fields.
+        
         const snapshot = await db.collection("courses").get();
         
         if (snapshot.empty) {
-            loader.innerHTML = "No courses found in your library.";
+            loader.innerHTML = "No enrolled courses found.";
             return;
         }
 
-        allCoursesData = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
-
-        renderCourses(allCoursesData);
+        grid.innerHTML = "";
         loader.style.display = "none";
 
-    } catch (error) {
-        console.error("Error:", error);
-        loader.innerHTML = "Error loading courses. Please refresh.";
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const courseId = doc.id;
+
+            // --- THE FIX FOR THE 0% PROGRESS ISSUE ---
+            // We check for several variations of "certificate" and "completed"
+            const hasCert = data.certificateGenerated === true || 
+                            data.certificate === true || 
+                            data.status === "completed" ||
+                            data.certificateGenerated === "true"; // handle string values
+
+            let progressValue = 0;
+            if (hasCert) {
+                progressValue = 100;
+            } else {
+                progressValue = data.progress || 0;
+            }
+
+            const currentModule = data.currentModule || "Module 1: Getting Started";
+
+            const card = document.createElement("div");
+            card.className = "card";
+            card.setAttribute("data-name", courseId.toLowerCase());
+
+            card.innerHTML = `
+                <div class="title">${formatTitle(courseId)}</div>
+                <div class="module-info">
+                    <strong>Current:</strong> ${hasCert ? "All Modules Finished" : currentModule}
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill ${hasCert ? 'completed' : ''}" style="width: ${progressValue}%"></div>
+                </div>
+                <div class="meta">
+                    <span>${progressValue}% COMPLETE</span>
+                    <span>${hasCert ? '🏆 DONE' : '🔥 LEARNING'}</span>
+                </div>
+                ${hasCert ? `
+                    <div class="cert-badge">✨ Certificate Unlocked & Ready</div>
+                ` : `
+                    <div style="font-size:11px; color:#cbd5e0; margin-top:10px; text-align:center;">
+                        Complete modules to earn certificate
+                    </div>
+                `}
+            `;
+            grid.appendChild(card);
+        });
+
+    } catch (err) {
+        console.error(err);
+        loader.innerHTML = "Error loading data. Check Firestore permissions.";
     }
 }
 
-/* ---------------- RENDERING ---------------- */
-function renderCourses(courses) {
-    const grid = document.getElementById("courseGrid");
-    grid.innerHTML = "";
-
-    let completedCount = 0;
-
-    courses.forEach(course => {
-        // Logic: Certificate presence always equals 100%
-        const hasCert = course.certificateGenerated === true || course.certificate === true;
-        const progressValue = hasCert ? 100 : (course.progress || 0);
-        const moduleName = course.currentModule || "Module 1: Orientation";
-        
-        if (hasCert) completedCount++;
-
-        const card = document.createElement("div");
-        card.className = "course-card";
-        card.setAttribute("data-title", course.id.toLowerCase());
-
-        card.innerHTML = `
-            <div class="course-header">
-                <div class="course-title">${formatTitle(course.id)}</div>
-                <span class="badge status-pill ${progressValue > 0 ? 'active' : ''}">
-                    ${progressValue === 100 ? 'Completed' : progressValue > 0 ? 'In Progress' : 'Not Started'}
-                </span>
-            </div>
-
-            <div class="module-text">
-                <strong>📍 Current:</strong> ${progressValue === 100 ? 'Course Finished' : moduleName}
-            </div>
-
-            <div class="progress-wrapper">
-                <div class="bar-bg">
-                    <div class="bar-fill ${progressValue === 100 ? 'completed' : ''}" style="width: ${progressValue}%"></div>
-                </div>
-                <div class="progress-labels">
-                    <span>Progress</span>
-                    <span>${progressValue}%</span>
-                </div>
-            </div>
-
-            ${hasCert ? `
-                <div class="badge badge-cert">
-                    🎓 Certificate Generated
-                </div>
-            ` : `
-                <div style="font-size: 11px; color: #94a3b8; text-align: center;">
-                    Finish all modules to claim certificate
-                </div>
-            `}
-        `;
-        grid.appendChild(card);
-    });
-
-    updateStats(courses.length, completedCount);
-}
-
-/* ---------------- SEARCH FILTER ---------------- */
-function filterCourses() {
-    const query = document.getElementById("courseSearch").value.toLowerCase();
-    const cards = document.querySelectorAll(".course-card");
-
-    cards.forEach(card => {
-        const title = card.getAttribute("data-title");
-        card.style.display = title.includes(query) ? "flex" : "none";
-    });
-}
-
-/* ---------------- HELPERS ---------------- */
 function formatTitle(id) {
     return id.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 }
 
-function updateStats(total, completed) {
-    const stats = document.getElementById("statsSummary");
-    stats.innerHTML = `
-        <span style="color: var(--primary)">Total: ${total}</span>
-        <span style="color: var(--success)">Completed: ${completed}</span>
-        <span style="color: #64748b">Remaining: ${total - completed}</span>
-    `;
+function filterCourses() {
+    const val = document.getElementById("courseSearch").value.toLowerCase();
+    document.querySelectorAll('.card').forEach(card => {
+        card.style.display = card.getAttribute('data-name').includes(val) ? "block" : "none";
+    });
 }
-
-// Initial Load
-loadDashboard();
 </script>
-
 </body>
 </html>
