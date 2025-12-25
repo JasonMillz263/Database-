@@ -62,38 +62,18 @@
         .header h2 { margin: 0; font-family: 'Playfair Display', serif; font-size: 2.5rem; letter-spacing: 1px; }
         .header p { opacity: 0.9; margin-top: 5px; font-weight: 500; }
         
-        .top-nav-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 20px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
+        .top-nav-row { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; flex-wrap: wrap; gap: 10px; }
         .nav-buttons { display: flex; gap: 10px; }
         
         .nav-btn {
-            background: rgba(255,255,255,0.2);
-            color: #fff;
-            border: 1px solid rgba(255,255,255,0.3);
-            padding: 8px 16px;
-            border-radius: 50px;
-            cursor: pointer;
-            backdrop-filter: blur(5px);
-            font-weight: 600;
+            background: rgba(255,255,255,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.3);
+            padding: 8px 16px; border-radius: 50px; cursor: pointer; backdrop-filter: blur(5px); font-weight: 600;
         }
         .nav-btn:hover { background: #fff; color: var(--primary-solid); }
 
         .theme-switch {
-            background: var(--accent-yellow);
-            color: #000;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 50px;
-            cursor: pointer;
-            font-weight: 800;
-            box-shadow: 0 2px 10px rgba(255, 183, 0, 0.4);
+            background: var(--accent-yellow); color: #000; border: none; padding: 8px 16px;
+            border-radius: 50px; cursor: pointer; font-weight: 800; box-shadow: 0 2px 10px rgba(255, 183, 0, 0.4);
         }
 
         /* Progress Bar */
@@ -106,72 +86,41 @@
         .modules { display: flex; flex-direction: column; gap: 20px; }
 
         .module {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 0;
-            overflow: hidden;
-            box-shadow: var(--shadow);
-            position: relative;
+            background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px;
+            padding: 0; overflow: hidden; box-shadow: var(--shadow); position: relative;
         }
-
         .module.locked { opacity: 0.6; pointer-events: none; filter: grayscale(1); }
 
         .module-header {
-            padding: 20px 25px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            padding: 20px 25px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;
         }
-
         .module-header h3 { margin: 0; font-size: 1.2rem; color: var(--text-main); }
         .status-badge { background: var(--success-green); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; display: none; }
         .module.completed .status-badge { display: inline-block; }
 
-        /* PREVIEW CONTENT (Truncated) */
+        /* PREVIEW CONTENT (Half visible) */
         .lesson-preview { 
-            padding: 25px; 
-            line-height: 1.6; 
-            color: var(--text-muted); 
-            font-size: 1rem;
-            max-height: 150px; /* Force half-way view */
-            overflow: hidden;
-            position: relative;
+            padding: 25px; line-height: 1.6; color: var(--text-muted); font-size: 1rem;
+            max-height: 150px; overflow: hidden; position: relative;
             mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
             -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
         }
-        
-        .lesson-preview img { display: none; /* Hide images in preview to save space */ }
+        .lesson-preview img { display: none; } /* Hide images in preview */
 
-        /* --- ACTION FOOTER --- */
         .module-footer {
-            background: rgba(0,0,0,0.02);
-            padding: 15px 25px;
-            border-top: 1px solid var(--border-color);
-            text-align: center;
+            background: rgba(0,0,0,0.02); padding: 15px 25px; border-top: 1px solid var(--border-color); text-align: center;
         }
         
-        /* --- FULL SCREEN READER MODAL (Dynamic Page) --- */
+        /* --- FULL SCREEN READER MODAL --- */
         .reader-modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-body);
-            z-index: 1000;
-            overflow-y: auto;
-            animation: slideUp 0.3s ease-out;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-body); z-index: 1000; overflow-y: auto; animation: slideUp 0.3s ease-out;
         }
-        
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
         .reader-container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 40px 20px;
-            background: var(--bg-card);
-            min-height: 100vh;
-            box-shadow: 0 0 50px rgba(0,0,0,0.1);
+            max-width: 800px; margin: 0 auto; padding: 40px 20px; background: var(--bg-card);
+            min-height: 100vh; box-shadow: 0 0 50px rgba(0,0,0,0.1); padding-bottom: 100px;
         }
 
         .reader-header {
@@ -183,50 +132,35 @@
         .close-reader {
             background: transparent; border: 2px solid var(--text-muted); color: var(--text-muted);
             width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
         }
-        .close-reader:hover { border-color: var(--accent-red); color: var(--accent-red); }
 
-        .reader-content { 
-            font-size: 1.15rem; line-height: 1.8; color: var(--text-main); margin-bottom: 40px; 
-        }
+        .reader-content { font-size: 1.15rem; line-height: 1.8; color: var(--text-main); margin-bottom: 40px; }
         .reader-content img { max-width: 100%; border-radius: 12px; margin: 20px 0; display: block; }
 
         /* TTS Controls Sticky */
         .tts-controls {
-            position: sticky; bottom: 20px;
-            background: rgba(30, 41, 59, 0.9);
-            backdrop-filter: blur(10px);
-            padding: 15px; border-radius: 50px;
-            display: inline-flex; gap: 10px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-            left: 50%; transform: translateX(-50%);
-            margin-left: 50%; /* Center trick */
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: #1e293b; padding: 10px 20px; border-radius: 50px;
+            display: flex; gap: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); z-index: 2000;
         }
 
-        /* --- BUTTONS --- */
-        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-        
+        /* --- BUTTONS & QUIZ --- */
         button { padding: 12px 20px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 0.95rem; }
-
         .btn-primary { background: var(--primary-solid); color: #fff; }
-        .btn-primary:hover { opacity: 0.9; }
-        
         .btn-yellow { background: var(--accent-yellow); color: #000; }
-        
         .btn-outline { background: transparent; border: 2px solid var(--border-color); color: var(--text-main); width: 100%; }
-        .btn-outline:hover { border-color: var(--primary-solid); color: var(--primary-solid); background: rgba(91, 95, 255, 0.05); }
+        .btn-outline:hover { border-color: var(--primary-solid); color: var(--primary-solid); }
 
-        /* Quiz Specifics */
-        .quiz-wrapper { margin-top: 40px; padding-top: 40px; border-top: 1px dashed var(--border-color); }
+        .quiz-wrapper { 
+            margin-top: 40px; padding: 30px; border: 2px solid var(--border-color); border-radius: 15px; 
+            background: rgba(91, 95, 255, 0.03); 
+        }
         .timer { color: var(--accent-red); font-weight: 800; font-size: 1.2rem; margin-bottom: 15px; display: block; }
         .options-group label {
             display: block; padding: 15px; border: 2px solid var(--border-color);
-            border-radius: 10px; margin-bottom: 10px; cursor: pointer; font-weight: 500;
+            border-radius: 10px; margin-bottom: 10px; cursor: pointer; font-weight: 500; background: var(--bg-card);
         }
-        .options-group label:hover { border-color: var(--primary-solid); background: rgba(91, 95, 255, 0.05); }
-        .options-group input { margin-right: 10px; }
-
+        .options-group label:hover { border-color: var(--primary-solid); }
         .pass-msg { color: var(--success-green); font-weight: bold; font-size: 1.2rem; text-align: center;}
         .fail-msg { color: var(--accent-red); font-weight: bold; font-size: 1.2rem; text-align: center;}
 
@@ -236,13 +170,12 @@
             background: var(--bg-card); padding: 40px; border-radius: 20px; text-align: center;
             box-shadow: var(--shadow); max-width: 600px; margin: 40px auto; border: 2px solid var(--accent-yellow);
         }
-        #nameInput h3 { color: var(--primary-solid); font-family: 'Playfair Display'; font-size: 2rem; }
-        #nameForm input { width: 100%; padding: 15px; border: 2px solid var(--border-color); border-radius: 10px; margin-bottom: 15px; font-size: 1rem; }
+        #nameForm input { width: 100%; padding: 15px; border: 2px solid var(--border-color); border-radius: 10px; margin-bottom: 15px; }
         
         @media print {
             body * { visibility: hidden; }
             #certificatePreviewWrapper, #certificatePreviewWrapper * { visibility: visible; }
-            #certificatePreviewWrapper { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; }
+            #certificatePreviewWrapper { position: absolute; left: 0; top: 0; width: 100%; }
             .certificate { border: none !important; margin: 0 !important; width: 100% !important; height: 100vh !important; transform: scale(0.8); transform-origin: top left; }
         }
         
@@ -344,20 +277,20 @@
     <div class="reader-container">
         <div class="reader-header">
             <h2 id="readerTitle">Module Title</h2>
-            <button class="close-reader" onclick="closeReader()">✕</button>
+            <button class="close-reader" onclick="closeReader()">✕ Close</button>
         </div>
         
-        <div id="readerBody" class="reader-content">
-            </div>
+        <div id="readerBody" class="reader-content"></div>
 
         <div id="readerQuizArea" class="quiz-wrapper">
-            </div>
-
-        <div class="tts-controls">
-            <button class="btn-primary" onclick="TTSManager.play()">🔊 Play</button>
-            <button class="btn-yellow" onclick="TTSManager.pause()">⏸ Pause</button>
-            <button class="btn-yellow" onclick="TTSManager.stop()">⏹ Stop</button>
+            <h3 style="text-align:center;">Loading Quiz...</h3>
         </div>
+    </div>
+
+    <div class="tts-controls" id="ttsControls" style="display:none;">
+        <button class="btn-primary" onclick="TTSManager.play()">🔊 Play</button>
+        <button class="btn-yellow" onclick="TTSManager.pause()">⏸ Pause</button>
+        <button class="btn-yellow" onclick="TTSManager.stop()">⏹ Stop</button>
     </div>
 </div>
 <script>
@@ -375,62 +308,45 @@ document.addEventListener('DOMContentLoaded', function() {
     const db = firebase.firestore();
     const COURSE_ID = "management_course";
     
-    // --- 2. IMPROVED TTS MANAGER (Fixed Pause/Resume) ---
-    window.TTSManager = {
-        synth: window.speechSynthesis,
-        utterance: null,
-        isPaused: false,
-        textToRead: '',
-
-        init: function(text) {
-            this.stop(); // Clear previous
-            this.textToRead = text;
-            this.utterance = new SpeechSynthesisUtterance(text);
-            this.utterance.lang = 'en-US';
-            this.utterance.rate = 1.0;
-            this.utterance.pitch = 1.0;
-            
-            // Fix: Keep utterance in global scope by attaching to this object
-            // to prevent Garbage Collection from stopping playback on pause
-            
-            this.utterance.onend = () => { this.isPaused = false; };
-            this.utterance.onerror = (e) => { console.error("TTS Error:", e); };
-        },
-
-        play: function() {
-            if (this.isPaused && this.synth.paused) {
-                this.synth.resume();
-                this.isPaused = false;
-            } else {
-                if (this.synth.speaking) this.stop();
-                
-                // Re-initialize if text changed or finished
-                if (!this.utterance || this.utterance.text !== this.textToRead) {
-                    this.init(document.getElementById('readerBody').innerText);
-                }
-                this.synth.speak(this.utterance);
-            }
-        },
-
-        pause: function() {
-            if (this.synth.speaking && !this.synth.paused) {
-                this.synth.pause();
-                this.isPaused = true;
-            }
-        },
-
-        stop: function() {
-            this.synth.cancel();
-            this.isPaused = false;
-        }
-    };
-
-    // --- 3. GLOBAL VARIABLES ---
+    // --- 2. GLOBAL VARIABLES ---
     let quizTimerInterval = null;
     let currentQuizData = [];
     let currentQIndex = 0;
     let currentScore = 0;
-    
+    let currentUtterance = null; // Important: Global var for TTS
+
+    // --- 3. ROBUST TTS MANAGER ---
+    window.TTSManager = {
+        init: function(text) {
+            window.speechSynthesis.cancel(); // Reset audio engine
+            currentUtterance = new SpeechSynthesisUtterance(text);
+            currentUtterance.lang = 'en-US';
+            currentUtterance.rate = 1.0;
+            currentUtterance.onend = () => { console.log("Read complete"); };
+            document.getElementById('ttsControls').style.display = 'flex';
+        },
+        play: function() {
+            // Check if paused
+            if (window.speechSynthesis.paused) {
+                window.speechSynthesis.resume();
+                return;
+            }
+            // Check if speaking (and not paused), restart if needed
+            if (window.speechSynthesis.speaking) {
+                window.speechSynthesis.cancel();
+            }
+            if(currentUtterance) {
+                window.speechSynthesis.speak(currentUtterance);
+            }
+        },
+        pause: function() {
+            if (window.speechSynthesis.speaking) window.speechSynthesis.pause();
+        },
+        stop: function() {
+            window.speechSynthesis.cancel();
+        }
+    };
+
     // --- 4. AUTH & INIT ---
     auth.onAuthStateChanged(async (user) => {
         if (user) {
@@ -438,14 +354,13 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const userRef = db.collection("students").doc(user.uid);
             const userSnap = await userRef.get();
-            
             if (!userSnap.exists) {
                 await userRef.set({ email: user.email, enrolledCourses: {} });
             }
             loadModules(user);
         } else {
             document.getElementById('studentIdDisplay').innerText = "Not Logged In";
-            document.getElementById('modules').innerHTML = "<p style='text-align:center'>Please log in to view modules.</p>";
+            document.getElementById('modules').innerHTML = "<p style='text-align:center'>Please log in.</p>";
         }
     });
 
@@ -454,12 +369,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('certificateSection').style.display = 'none';
         const modulesContainer = document.getElementById('modules');
         
-        const modsSnap = await db.collection("courses")
-            .doc(COURSE_ID)
-            .collection("modules")
-            .where("status", "==", "published")
-            .get();
-            
+        const modsSnap = await db.collection("courses").doc(COURSE_ID).collection("modules").where("status", "==", "published").get();
         const userSnap = await db.collection("students").doc(user.uid).get();
         const completedData = userSnap.data()?.enrolledCourses?.[COURSE_ID]?.completedModules || {};
         
@@ -467,10 +377,10 @@ document.addEventListener('DOMContentLoaded', function() {
         let isPrevModuleDone = true;
         let moduleNumber = 1;
         
-        modulesContainer.innerHTML = ""; // Clear loader
+        modulesContainer.innerHTML = "";
         
         if (modsSnap.empty) {
-            modulesContainer.innerHTML = "<p style='text-align:center; color:var(--text-muted);'>No modules found.</p>";
+            modulesContainer.innerHTML = "<p style='text-align:center;'>No modules found.</p>";
             return;
         }
 
@@ -482,6 +392,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (isCompleted) doneCount++;
             
+            // CLEAN THE TEXT (REMOVE "I can't see...")
+            // We use a regex replace to strip that specific sentence if it exists
+            let cleanContent = mData.content || "";
+            cleanContent = cleanContent.replace(/I can't see anything uploaded/gi, "");
+            
             const modDiv = document.createElement("div");
             modDiv.className = `module ${isLocked ? 'locked' : ''} ${isCompleted ? 'completed' : ''}`;
             
@@ -491,29 +406,22 @@ document.addEventListener('DOMContentLoaded', function() {
             if (isLocked) {
                 actionButton = `<p>🔒 Complete previous module to unlock.</p>`;
             } else {
-                // IMPORTANT: Pass data to Modal trigger
-                // We use base64 encoding or just ID reference to avoid string escape issues
-                actionButton = `<button class="btn-outline" onclick="openReader('${mId}', '${escape(mData.title)}', '${escape(mData.content)}', ${isCompleted})">📖 Read Full Lesson & Quiz</button>`;
+                // Encode content to safely pass to function
+                const safeTitle = encodeURIComponent(mData.title);
+                const safeContent = encodeURIComponent(cleanContent);
+                actionButton = `<button class="btn-primary" style="width:100%" onclick="openReader('${mId}', '${safeTitle}', '${safeContent}', ${isCompleted})">📖 Read Full Lesson & Take Quiz</button>`;
             }
 
             if (isCompleted) statusBadge = `<span class="status-badge" style="display:inline-block">✅ Completed</span>`;
 
-            // RENDER CARD (Preview Only)
             modDiv.innerHTML = `
                 <div class="module-header">
                     <h3>Module ${moduleNumber}: ${mData.title}</h3>
                     ${statusBadge}
                 </div>
-                
-                <div class="lesson-preview">
-                    ${mData.content} 
-                </div>
-
-                <div class="module-footer">
-                    ${actionButton}
-                </div>
+                <div class="lesson-preview">${cleanContent}</div>
+                <div class="module-footer">${actionButton}</div>
             `;
-            
             modulesContainer.appendChild(modDiv);
             
             isPrevModuleDone = isCompleted;
@@ -524,40 +432,40 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('progressFill').style.width = percent + "%";
         document.getElementById('progressText').innerText = percent + "% COMPLETED";
 
-        if (doneCount === modsSnap.size && modsSnap.size > 0) {
-            showCertificateInput();
-        }
+        if (doneCount === modsSnap.size && modsSnap.size > 0) showCertificateInput();
     };
 
-    // --- 6. DYNAMIC PAGE / READER MODAL LOGIC ---
+    // --- 6. READER MODAL & QUIZ LOADER ---
     window.openReader = async function(mId, title, content, isCompleted) {
-        const decodedTitle = unescape(title);
-        const decodedContent = unescape(content);
+        // Decode
+        const decodedTitle = decodeURIComponent(title);
+        const decodedContent = decodeURIComponent(content);
 
-        // Populate Modal
         document.getElementById('readerTitle').innerText = decodedTitle;
         document.getElementById('readerBody').innerHTML = decodedContent;
         document.getElementById('readerModal').style.display = 'block';
-        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        document.body.style.overflow = 'hidden';
 
-        // Initialize TTS logic for this content
+        // Init TTS
         TTSManager.init(document.getElementById('readerBody').innerText);
 
-        // Load Quiz Logic inside the modal
+        // Load Quiz
         const quizArea = document.getElementById('readerQuizArea');
-        
         if (isCompleted) {
-            quizArea.innerHTML = `<p class="pass-msg">✅ You have already passed this module.</p>`;
+            quizArea.innerHTML = `<h3 style="text-align:center; color:green;">✅ Module Completed</h3><p style="text-align:center">You have already passed this quiz.</p>`;
         } else {
-            quizArea.innerHTML = `<p>Loading Quiz...</p>`;
-            // Fetch Quiz Data specifically for this module
-            const modDoc = await db.collection("courses").doc(COURSE_ID).collection("modules").doc(mId).get();
-            const quizData = modDoc.data().quizzes;
-            
-            if(quizData && quizData.length > 0) {
-                startQuiz(mId, quizData);
-            } else {
-                quizArea.innerHTML = `<p>No quiz available for this module.</p>`;
+            quizArea.innerHTML = `<h3 style="text-align:center;">Loading Quiz...</h3>`;
+            // Fetch Quiz Data
+            try {
+                const modDoc = await db.collection("courses").doc(COURSE_ID).collection("modules").doc(mId).get();
+                if (modDoc.exists && modDoc.data().quizzes) {
+                    startQuiz(mId, modDoc.data().quizzes);
+                } else {
+                    quizArea.innerHTML = `<p style="text-align:center">No quiz available for this module.</p>`;
+                }
+            } catch (e) {
+                console.error(e);
+                quizArea.innerHTML = `<p style="text-align:center; color:red">Error loading quiz.</p>`;
             }
         }
     };
@@ -565,10 +473,11 @@ document.addEventListener('DOMContentLoaded', function() {
     window.closeReader = function() {
         document.getElementById('readerModal').style.display = 'none';
         document.body.style.overflow = 'auto';
-        TTSManager.stop(); // Stop audio when closing
+        TTSManager.stop();
+        document.getElementById('ttsControls').style.display = 'none';
     };
 
-    // --- 7. QUIZ SYSTEM (Inside Modal) ---
+    // --- 7. QUIZ LOGIC ---
     function startQuiz(moduleId, data) {
         currentQuizData = data;
         currentQIndex = 0;
@@ -586,16 +495,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const q = currentQuizData[currentQIndex];
-        let time = 30; // 30 seconds for reading + answering
+        let time = 30;
 
         container.innerHTML = `
-            <h3>Module Quiz</h3>
+            <div style="text-align:center; margin-bottom:20px;">
+                <span style="background:#eee; padding:5px 10px; border-radius:10px;">Question ${currentQIndex + 1} of ${currentQuizData.length}</span>
+            </div>
             <span class="timer" id="timerDisplay">⏱ ${time}s</span>
-            <p style="font-weight:bold; font-size:1.1rem;">${q.question}</p>
+            <p style="font-weight:bold; font-size:1.1rem; margin-bottom:20px;">${q.question}</p>
             <div class="options-group">
                 ${q.options.map(opt => `<label><input type="radio" name="ans" value="${opt}"> ${opt}</label>`).join('')}
             </div>
-            <button class="btn-primary" onclick="submitAnswer('${moduleId}')">Next Question</button>
+            <button class="btn-primary" style="width:100%; margin-top:20px;" onclick="submitAnswer('${moduleId}')">Next Question</button>
         `;
 
         const timerDisplay = container.querySelector('#timerDisplay');
@@ -634,14 +545,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         container.innerHTML = `
-            <h3>Quiz Results</h3>
-            <p>Score: ${currentScore}/${currentQuizData.length} (${percentage}%)</p>
-            ${passed ? '<p class="pass-msg">PASSED! Module Completed.</p>' : '<p class="fail-msg">FAILED. Please review and try again.</p>'}
-            <button class="btn-primary" onclick="location.reload()">Refresh Dashboard</button>
+            <div style="text-align:center; padding:20px;">
+                <h3>Quiz Results</h3>
+                <p style="font-size:1.2rem;">Score: ${currentScore}/${currentQuizData.length} (${Math.round(percentage)}%)</p>
+                ${passed ? '<p class="pass-msg">🎉 PASSED! Module Unlocked.</p>' : '<p class="fail-msg">❌ FAILED. Please review and try again.</p>'}
+                <button class="btn-primary" onclick="location.reload()">Refresh to Continue</button>
+            </div>
         `;
     }
 
-    // --- 8. CERTIFICATE ---
+    // --- 8. THEME & CERTIFICATE ---
     function showCertificateInput() {
         document.getElementById('modules').style.display = 'none';
         document.getElementById('certificateSection').style.display = 'block';
@@ -650,23 +563,15 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const fn = document.getElementById('firstNameInput').value;
             const ln = document.getElementById('lastNameInput').value;
-            
             document.getElementById('certStudentName').innerText = (fn + " " + ln).toUpperCase();
             document.getElementById('certDate').innerText = new Date().toLocaleDateString();
-            
             document.getElementById('nameInput').style.display = 'none';
             document.getElementById('certificatePreviewWrapper').style.display = 'block';
         };
     }
 
-    // --- 9. THEME TOGGLE ---
     window.toggleTheme = function() {
-        const body = document.body;
-        if (body.getAttribute('data-theme') === 'dark') {
-            body.removeAttribute('data-theme');
-        } else {
-            body.setAttribute('data-theme', 'dark');
-        }
+        document.body.getAttribute('data-theme') === 'dark' ? document.body.removeAttribute('data-theme') : document.body.setAttribute('data-theme', 'dark');
     };
 });
 </script>
