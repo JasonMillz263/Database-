@@ -1,340 +1,617 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
 <title>Student Course</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <style>
-:root{
-  --bg:#f4f6fb;
-  --card:#ffffff;
-  --text:#0f172a;
-  --muted:#64748b;
-  --accent:#5b5fff;
-  --accent2:#ffb700;
-  --border:#e5e7eb;
-}
 
-[data-theme="dark"]{
-  --bg:#0b1020;
-  --card:#11162a;
-  --text:#e5e7eb;
-  --muted:#94a3b8;
-  --accent:#7c7cff;
-  --accent2:#ffcf4d;
-  --border:#1e293b;
-}
+/* ========= RESET & THEME ========= */
+*{box-sizing:border-box;margin:0;padding:0}
 
-*{box-sizing:border-box}
 body{
-  margin:0;
-  font-family:Inter,Segoe UI,sans-serif;
-  background:var(--bg);
-  color:var(--text);
+  font-family: Inter, Segoe UI, sans-serif;
+  background:#f5f5f7;
+  transition: background .3s, color .3s;
 }
 
-.container{padding:14px}
+body.dark{
+  background:#0d1117;
+  color:#e6e6e6;
+}
 
-/* ===== HEADER REDESIGN ===== */
+.container{
+  padding:14px;
+  max-width:1100px;
+  margin:auto;
+}
+
+img{
+  max-width:100%;
+  height:auto;
+  border-radius:14px;
+}
+
+/* ========= HEADER ========= */
+
 .header{
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-}
-
-.header-top{
-  background:linear-gradient(135deg,var(--accent),#8b8fff);
-  color:#fff;
   padding:18px;
+  margin-bottom:14px;
   border-radius:18px;
+  background:#ffffff;
+  box-shadow:0 10px 22px rgba(0,0,0,.08);
 }
 
-.header-top h1{
-  margin:0;
+body.dark .header{
+  background:#161b22;
+}
+
+.header h2{
+  font-size:22px;
+  font-weight:700;
+  color:#111;
+}
+
+body.dark .header h2{
+  color:#fff;
+}
+
+/* COURSE NAME TOP */
+.course-title{
   font-size:24px;
   font-weight:700;
+  margin-bottom:12px;
 }
 
-/* email + id row */
-.header-info{
+/* INFO CARDS */
+.info-row{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:10px;
+  margin:10px 0;
 }
 
 .info-card{
-  padding:12px;
-  border-radius:14px;
-  font-size:14px;
-  font-weight:600;
-}
-
-.info-email{background:#ecf0ff;color:#1e293b}
-.info-id{background:#fff7e0;color:#7a5200}
-
-/* controls row */
-.header-controls{
-  display:grid;
-  grid-template-columns:1fr auto auto;
-  gap:10px;
-}
-
-.control-card{
-  background:var(--card);
-  border-radius:14px;
-  padding:12px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  border:1px solid var(--border);
-}
-
-button{
-  border:none;
-  padding:12px 16px;
+  background:#f0f2ff;
+  padding:10px;
   border-radius:12px;
-  font-weight:600;
+  font-size:14px;
+}
+
+body.dark .info-card{
+  background:#1d2635;
+}
+
+/* ACTION BAR */
+
+.action-row{
+  display:flex;
+  gap:10px;
+  margin-top:6px;
+}
+
+.action-box{
+  flex:1;
+  background:#fff3d9;
+  padding:10px;
+  border-radius:12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:14px;
+}
+
+body.dark .action-box{
+  background:#2a1f00;
+}
+
+.action-box button{
+  background:#5b5fff;
+  color:#fff;
+  padding:8px 14px;
+  border:none;
+  border-radius:10px;
   cursor:pointer;
 }
 
-.primary-btn{
-  background:var(--accent);
+.toggle-theme{
+  background:#000;
   color:#fff;
+  border:none;
+  padding:8px 14px;
+  border-radius:10px;
+  cursor:pointer;
 }
 
-.secondary-btn{
-  background:var(--card);
-  border:1px solid var(--border);
-  color:var(--text);
+body.dark .toggle-theme{
+  background:#fff;
+  color:#000;
 }
 
-/* ===== PROGRESS ===== */
-.progress-wrap{
-  background:var(--card);
-  padding:14px;
-  border-radius:16px;
-  border:1px solid var(--border);
-}
-
+/* Progress */
 .progress-bar{
   height:10px;
-  background:var(--border);
-  border-radius:10px;
-  overflow:hidden;
-}
-.progress-fill{
-  height:100%;
-  background:var(--accent);
-  width:0;
+  background:#dcdcdc;
+  border-radius:12px;
+  margin-top:14px;
 }
 
-/* ===== MODULES — LUXURY FULL WIDTH ===== */
+.progress-fill{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,#f5a623,#ffd700);
+  border-radius:12px;
+}
+
+/* ========= MODULE LUXURY STYLE ========= */
+
 .modules{
-  margin-top:18px;
+  margin-top:14px;
   display:flex;
   flex-direction:column;
-  gap:22px;
+  gap:14px;
 }
 
 .module{
   width:100%;
-  padding:26px;
-  background:linear-gradient(180deg,var(--card),rgba(0,0,0,0.02));
-  border-top:4px solid var(--accent);
+  background:#ffffff;
+  border-radius:18px;
+  padding:16px;
+  box-shadow:0 8px 16px rgba(0,0,0,.08);
+}
+
+body.dark .module{
+  background:#0f172a;
 }
 
 .module h3{
-  margin-top:0;
-  font-size:20px;
+  font-size:18px;
+  margin-bottom:6px;
 }
 
-.lesson-content{
-  line-height:1.7;
-  color:var(--muted);
+.module .preview{
+  margin:10px 0;
 }
 
-.quiz-box{
-  margin-top:18px;
-  padding-top:18px;
-  border-top:1px dashed var(--border);
-}
-
-.locked{opacity:.5}
-
-/* ===== QUIZ ===== */
-.options-group label{
-  display:block;
-  margin-bottom:10px;
+.read-more{
+  background:#f7931e;
+  color:#fff;
   padding:10px;
-  border:1px solid var(--border);
+  border:none;
   border-radius:10px;
   cursor:pointer;
 }
 
-.timer{
-  font-weight:700;
-  color:#dc2626;
-  text-align:center;
+/* FULL MODULE VIEW */
+.full-module{
+  display:none;
 }
 
-/* ===== CERTIFICATE WRAPPER ===== */
-#certificateSection{display:none;margin-top:30px}
+/* ========= CERTIFICATE NEW DESIGN ========= */
+
+#certificateSection{
+  display:none;
+}
+
+#certificateContainer{
+  display:none;
+}
+
+.certificate{
+    width:100%;
+    max-width:794px;
+    margin:auto;
+    background:#ffffff;
+    border:14px solid #f7931e;
+}
+
+@media(max-width:900px){
+  .certificate{border-width:8px}
+}
+
+.top-band{
+  height:160px;
+  background:linear-gradient(135deg,#f7931e 60%,#cfcfcf 60%);
+  padding:20px;
+  display:flex;
+  align-items:center;
+}
+
+.logos{
+  width:100%;
+  background:#fff;
+  padding:14px;
+  display:flex;
+  justify-content:space-between;
+  border-radius:6px;
+}
+
+.content{padding:50px 20px;text-align:center}
+
+/* ========= MOBILE FIX ========= */
+
+.lesson-content img{
+  width:100%;
+  height:auto;
+}
+
+/* ========= QUIZ ========= */
+
+.quiz-box{margin-top:14px}
+
+/* ========= PLAY / PAUSE TTS ========= */
+
+.listen-btn{
+  background:#ffb700;
+  color:#000;
+  margin-top:6px;
+}
+
 </style>
 </head>
 
 <body>
 <div class="container">
 
-<!-- ===== HEADER ===== -->
 <div class="header">
 
-  <div class="header-top">
-    <h1>Management Course</h1>
+  <div class="course-title">Management Course</div>
+
+  <div class="info-row">
+    <div class="info-card">Email: <span id="studentEmail"></span></div>
+    <div class="info-card">ID: <span id="studentId"></span></div>
   </div>
 
-  <div class="header-info">
-    <div class="info-card info-email">📧 <span id="studentEmail"></span></div>
-    <div class="info-card info-id">🆔 <span id="studentId"></span></div>
-  </div>
-
-  <div class="header-controls">
-    <div class="control-card">
-      <strong>Progress</strong>
+  <div class="action-row">
+    <div class="action-box">
+        Dashboard
+        <button onclick="location.href='https://jasonmillz263.github.io/Database-/student.html'">Open</button>
     </div>
 
-    <button class="secondary-btn" onclick="toggleTheme()">🌓 Theme</button>
-    <button class="primary-btn" onclick="location.href='student.html'">🏠 Dashboard</button>
+    <div class="action-box">
+        Theme
+        <button class="toggle-theme" onclick="toggleTheme()">Light / Dark</button>
+    </div>
   </div>
 
-  <div class="progress-wrap">
-    <div class="progress-bar">
-      <div class="progress-fill" id="progressFill"></div>
-    </div>
-    <p id="progressText">0% Completed</p>
+  <div class="progress-bar">
+    <div class="progress-fill" id="progressFill"></div>
   </div>
+
+  <p id="progressText">0% Completed</p>
 
 </div>
 
-<div class="modules" id="modules"></div>
+<div id="modules" class="modules"></div>
 
-<!-- ===== CERTIFICATE SECTION (NEW DESIGN EMBEDDED) ===== -->
 <div id="certificateSection">
+  <!-- FORM will remain, certificate will show when ready -->
+  <div id="nameInput"></div>
+  <div id="certificateContainer"></div>
+</div><script>
 
-<!-- NAME INPUT -->
-<div id="nameInput" class="module">
-  <h2>🎉 Course Completed</h2>
-  <p>Enter your name as it should appear on the certificate</p>
-  <input id="firstNameInput" placeholder="First Name">
-  <input id="lastNameInput" placeholder="Last Name">
-  <button class="primary-btn" onclick="createCertificate()">Generate Certificate</button>
-</div>
-
-<!-- CERTIFICATE -->
-<div id="certificateContainer" style="display:none">
-  <!-- 🔥 YOUR NEW CERTIFICATE CODE EXACTLY EMBEDDED 🔥 -->
-  <!-- (unchanged except IDs for JS injection) -->
-  <!-- CERTIFICATE HTML FROM YOUR MESSAGE IS PLACED HERE -->
-</div>
-
-</div>
-
-<script>
-/* ===== FIREBASE ===== */
 firebase.initializeApp({
   apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain:"students-login-29409.firebaseapp.com",
   projectId:"students-login-29409"
 });
-const auth=firebase.auth();
-const db=firebase.firestore();
 
-/* ===== DARK MODE ===== */
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const COURSE_ID = "management_course";
+const PASS_MARK = 60;
+const QUESTION_TIME = 20;
+
+let activeModuleId=null;
+let currentQuiz=[];
+let currentQuestionIndex=0;
+let currentScore=0;
+let quizBox=null;
+let quizTimer=null;
+let timeLeft=QUESTION_TIME;
+let ttsUtter=null;
+let totalModuleCount=0;
+
+/* ==== THEME ==== */
 function toggleTheme(){
-  const t=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";
-  document.documentElement.setAttribute("data-theme",t);
-  localStorage.setItem("theme",t);
+  document.body.classList.toggle("dark");
+  localStorage.setItem("theme",
+    document.body.classList.contains("dark") ? "dark" : "light");
 }
-document.documentElement.setAttribute("data-theme",localStorage.getItem("theme")||"light");
 
-/* ===== AUTH ===== */
-auth.onAuthStateChanged(user=>{
-  if(!user) return alert("Login required");
-  studentEmail.innerText=user.email;
-  studentId.innerText=user.uid;
-  loadModules(user);
+if(localStorage.getItem("theme")==="dark"){
+  document.body.classList.add("dark");
+}
+
+/* ==== AUTH ==== */
+
+auth.onAuthStateChanged(async user=>{
+if(!user) return;
+
+studentEmail.innerText=user.email;
+studentId.innerText=user.uid;
+
+const ref=db.collection("students").doc(user.uid);
+if(!(await ref.get()).exists){
+await ref.set({email:user.email,enrolledCourses:{}});
+}
+
+loadModules(user);
 });
 
-/* ===== TTS FIX (REAL RESUME) ===== */
-let utterance=null;
-let pausedAt=0;
-let ttsText="";
+/* ==== TTS PLAY / PAUSE (REAL RESUME) ==== */
 
-function readAloud(btn){
-  const text=btn.closest(".module").querySelector(".lesson-content").innerText;
-  if(!utterance){
-    ttsText=text;
-    utterance=new SpeechSynthesisUtterance(text);
-    utterance.rate=0.95;
-    utterance.onboundary=e=>{
-      if(e.name==="word") pausedAt=e.charIndex;
-    };
+function toggleTTS(btn){
+  const content = btn.closest(".module").querySelector(".lesson-content");
+
+  if(!content) return;
+
+  // resume
+  if(speechSynthesis.paused){
+    speechSynthesis.resume();
+    btn.innerText="⏸ Pause";
+    return;
   }
-  speechSynthesis.speak(utterance);
-}
 
-function pauseTTS(){
-  if(speechSynthesis.speaking && !speechSynthesis.paused){
+  // pause while speaking
+  if(speechSynthesis.speaking){
     speechSynthesis.pause();
-  }else if(speechSynthesis.paused){
-    speechSynthesis.cancel();
-    utterance=new SpeechSynthesisUtterance(ttsText.substring(pausedAt));
-    speechSynthesis.speak(utterance);
+    btn.innerText="▶ Play";
+    return;
   }
+
+  // start fresh
+  if(ttsUtter) speechSynthesis.cancel();
+
+  ttsUtter = new SpeechSynthesisUtterance(content.innerText);
+  ttsUtter.rate=.95;
+  ttsUtter.pitch=1;
+  speechSynthesis.speak(ttsUtter);
+  btn.innerText="⏸ Pause";
 }
 
-/* ===== MODULE LOADER (UNCHANGED LOGIC) ===== */
+/* ==== LOAD MODULES (SUMMARY MODE) ==== */
+
 async function loadModules(user){
-  const snap=await db.collection("courses")
-  .doc("management_course")
-  .collection("modules")
-  .where("status","==","published")
-  .get();
 
-  modules.innerHTML="";
-  let done=0;
-  snap.forEach((doc,i)=>{
-    const m=doc.data();
-    const div=document.createElement("div");
-    div.className="module";
-    div.innerHTML=`
-      <h3>Module ${i+1}: ${m.title}</h3>
-      <div class="lesson-content">${m.content}</div>
-      <div class="quiz-box">
-        <button onclick="startQuiz('${doc.id}',this)">Start Quiz</button>
-        <button onclick="readAloud(this)">🔊 Listen</button>
-        <button onclick="pauseTTS()">⏸ Resume</button>
-      </div>`;
-    modules.appendChild(div);
-  });
+document.getElementById('certificateSection').style.display = 'none';
+
+const modsSnap=await db.collection("courses")
+.doc(COURSE_ID)
+.collection("modules")
+.where("status","==","published")
+.get();
+
+totalModuleCount = modsSnap.size;
+
+const snap=await db.collection("students").doc(user.uid).get();
+const completed=snap.data()?.enrolledCourses?.[COURSE_ID]?.completedModules||{};
+
+modules.innerHTML="";
+let done=0,index=1;
+
+modsSnap.forEach(doc=>{
+const m=doc.data(),id=doc.id;
+const passed=completed[id]===true;
+if(passed) done++;
+
+const div=document.createElement("div");
+div.className="module";
+
+div.innerHTML=`
+  <h3>${m.title} ${passed?'<span style="color:green">✓</span>':''}</h3>
+
+  <div class="preview">
+    ${m.image?`<img src="${m.image}">`:''}
+    <p>${(m.content||"").slice(0,120)}...</p>
+  </div>
+
+  <button class="read-more" onclick="openModule('${id}', this)">Read More</button>
+`;
+
+modules.appendChild(div);
+index++;
+});
+
+updateProgress(done,modsSnap.size);
+
+if(done===totalModuleCount && totalModuleCount>0){
+  showCertificateInput();
+}
 }
 
-/* ===== CERTIFICATE ===== */
-function createCertificate(){
-  const name=(firstNameInput.value+" "+lastNameInput.value).toUpperCase();
-  document.querySelector(".name").innerText=name;
-  document.querySelector(".course").innerText="Management Course";
-  document.querySelector(".footer strong:last-child").innerText=
-    new Date().toLocaleDateString();
-  nameInput.style.display="none";
-  certificateContainer.style.display="block";
+/* ==== OPEN FULL MODULE ==== */
+
+async function openModule(moduleId, btn){
+
+const parent = btn.closest(".module");
+
+modules.querySelectorAll(".module").forEach(m=>{
+  if(m!==parent) m.style.display="none";
+});
+
+const snap=await db.collection("courses")
+.doc(COURSE_ID)
+.collection("modules")
+.doc(moduleId).get();
+
+const m=snap.data();
+
+parent.innerHTML=`
+  <h3>${m.title}</h3>
+
+  <div class="lesson-content">${m.content}</div>
+
+  <button class="listen-btn" onclick="toggleTTS(this)">▶ Play</button>
+
+  <div class="quiz-box">
+      <button onclick="startQuiz('${moduleId}', this)">Start Quiz</button>
+  </div>
+
+  <button onclick="loadModules(auth.currentUser)" style="margin-top:10px;background:#555">Back</button>
+`;
 }
-</script>
+
+/* ==== QUIZ ==== */
+
+async function startQuiz(moduleId,btn){
+btn.disabled=true;
+activeModuleId=moduleId;
+currentQuestionIndex=0;
+currentScore=0;
+
+const snap=await db.collection("courses")
+.doc(COURSE_ID).collection("modules")
+.doc(moduleId).get();
+
+currentQuiz=snap.data().quizzes;
+quizBox=btn.closest(".quiz-box");
+
+clearInterval(quizTimer);
+timeLeft=QUESTION_TIME;
+
+quizTimer=setInterval(()=>{
+timeLeft--;
+const t=document.getElementById("timeLeft");
+if(t) t.innerText=timeLeft;
+if(timeLeft<=0){
+clearInterval(quizTimer);
+finishQuiz();
+}
+},1000);
+
+renderQuestion();
+}
+
+function renderQuestion(){
+const q=currentQuiz[currentQuestionIndex];
+const isLast=currentQuestionIndex===currentQuiz.length-1;
+
+quizBox.innerHTML=
+`
+<div class="timer">⏱ <span id="timeLeft">${timeLeft}</span>s</div>
+<p><strong>${q.question}</strong></p>
+
+${q.options.map(o=>`
+<label><input type="radio" name="ans" value="${o}"> ${o}</label>
+`).join("")}
+
+<button onclick="processSubmission()">${isLast?"Finish Quiz":"Next"}</button>
+`;
+}
+
+function processSubmission(){
+const sel=quizBox.querySelector("input[name='ans']:checked");
+if(!sel) return alert("Select an answer");
+
+if(sel.value.trim()==currentQuiz[currentQuestionIndex].answer.trim()){
+currentScore++;
+}
+
+currentQuestionIndex++;
+
+if(currentQuestionIndex<currentQuiz.length){
+renderQuestion();
+}else{
+clearInterval(quizTimer);
+finishQuiz();
+}
+}
+
+async function finishQuiz(){
+clearInterval(quizTimer);
+
+const percent=Math.round((currentScore/currentQuiz.length)*100);
+const passed=percent>=PASS_MARK;
+
+const user=auth.currentUser;
+
+if(user){
+await db.collection("students").doc(user.uid).set({
+enrolledCourses:{
+[COURSE_ID]:{
+completedModules:{[activeModuleId]:passed}
+}
+}
+},{merge:true});
+}
+
+quizBox.innerHTML=
+`
+<h3>Results</h3>
+<p>${currentScore}/${currentQuiz.length} (${percent}%)</p>
+${passed?'<p style="color:green">PASSED</p>':'<p style="color:red">FAILED</p>'}
+<button onclick="loadModules(auth.currentUser)">Continue</button>
+`;
+
+loadModules(user);
+}
+
+/* ==== PROGRESS ==== */
+
+function updateProgress(done,total){
+const p=total?Math.round(done/total*100):0;
+progressFill.style.width=p+"%";
+progressText.innerText=p+"% Completed";
+}
+
+/* ==== CERT ==== */
+
+function showCertificateInput(){
+document.getElementById('modules').style.display='none';
+document.getElementById('certificateSection').style.display='block';
+
+document.getElementById('nameInput').innerHTML=`
+  <h3>Congratulations! Enter your name</h3>
+  <input id="certName" placeholder="Full Name" style="width:100%;padding:10px;margin:10px 0">
+  <button onclick="generateCertificate()">Generate</button>
+`;
+
+}
+
+function generateCertificate(){
+
+const name=document.getElementById("certName").value.toUpperCase();
+
+document.getElementById('certificateContainer').style.display='block';
+
+document.getElementById('certificateContainer').innerHTML=
+`
+<div class="certificate">
+
+<div class="top-band">
+<div class="logos">
+<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhnNFRpSiba0ztBBehfuW2MWV7LjXfqoVWvjiHT_gLRNgmSSOQv74I5h9gVCyAF4RBjpeMbAYKSfmhpyE2v2ihNRlt4rC63vA0KIdHH0ZEkidtlm37CLrNV0Ty_vBfvQgRnfCmsGycBGwCE_sNedqdNStWhLbntzKfIVx6RFkNU6YIyRBplI0S-NODhKRNa/s1600/IMG-20251223-WA0001.jpg">
+<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhIuGx_Tl93TWp5OZYxIn7iCPb3FhwXGTZTr_xVjfUAOy4dt2YzXq0c7H4VizrvCBNkCO12IlSymo4R-7Nq9mSffdpB9w6Yge3O2i0UovqE45XIW1jEyvZJg6sOjDfUUhdRJs2x_Bqui6goNnXmcV8hguXwcIUqsvMv5-kY-yNeo-Onr9TVspl88fBfiEsV/s1600/IMG-20251223-WA0001.png">
+</div>
+</div>
+
+<div class="content">
+<div class="title">Certificate of Completion</div>
+<div class="subtitle">This is to certify that</div>
+<div class="name">${name}</div>
+<div class="divider"></div>
+<div class="description">has successfully completed</div>
+<div class="course">Management Course</div>
+</div>
+
+</div>
+
+<button onclick="window.print()">Print / Save PDF</button>
+`;
+}
+
+</script></div>
 </body>
-</html>
-
+  </html>
