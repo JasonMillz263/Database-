@@ -10,105 +10,125 @@
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 
 <style>
+/* ================= ROOT THEME ================= */
+:root{
+  --bg:#f1f5f9;
+  --card:#ffffff;
+  --text:#111827;
+  --muted:#6b7280;
+  --primary:#4f46e5;
+  --success:#16a34a;
+  --warning:#f59e0b;
+  --danger:#dc2626;
+}
+body.dark{
+  --bg:#0f172a;
+  --card:#1e293b;
+  --text:#f8fafc;
+  --muted:#94a3b8;
+}
+
+/* ================= BASE ================= */
 body{
   font-family:Segoe UI;
-  background:#f1f5f9;
-  padding:12px;
+  background:var(--bg);
+  color:var(--text);
   margin:0;
-  transition:.25s;
+  padding:12px;
 }
-body.dark{background:#0f172a;color:#e5e7eb}
-
 header{
-  background:#4f46e5;
+  background:var(--primary);
   color:#fff;
   padding:16px;
   border-radius:12px;
   display:flex;
   justify-content:space-between;
   align-items:center;
-  gap:10px;
 }
-header .rightControls{
-  display:flex;
-  gap:8px;
-  align-items:center;
-}
-
 .card{
-  background:#fff;
+  background:var(--card);
   padding:16px;
   border-radius:12px;
   margin-top:12px;
-  animation:fadeSlide .2s ease;
 }
-body.dark .card{background:#020617}
-
-@keyframes fadeSlide{
-  from{opacity:0;transform:translateY(8px)}
-  to{opacity:1;transform:none}
-}
-
 input,button{
   width:100%;
   padding:10px;
   margin:6px 0;
-  box-sizing:border-box;
 }
 button{
   border:none;
-  border-radius:6px;
+  border-radius:8px;
   font-weight:bold;
   cursor:pointer;
+  transition:.15s;
 }
-.publish{background:#16a34a;color:#fff}
-.draft{background:#f59e0b}
-.delete{background:#dc2626;color:#fff}
+button:active{transform:scale(.97)}
+.publish{background:var(--success);color:#fff}
+.draft{background:var(--warning)}
+.delete{background:var(--danger);color:#fff}
 .view{background:#0ea5e9;color:#fff}
-.neutral{background:#e5e7eb}
-body.dark .neutral{background:#334155;color:#e5e7eb}
-
-.quiz{background:#eef2ff;padding:10px;border-radius:8px;margin:8px 0}
-body.dark .quiz{background:#111827}
-
 .hidden{display:none}
 
+/* ================= TABS ================= */
 .tabs{
   display:flex;
   gap:8px;
   margin-top:12px;
 }
-.tabs button{flex:1;background:#e5e7eb}
-.tabs button.active{background:#4f46e5;color:#fff}
+.tabs button{
+  flex:1;
+  background:#e5e7eb;
+}
+.tabs button.active{
+  background:var(--primary);
+  color:#fff;
+}
 
-#statusOverlay{
+/* ================= MODULE CARD ================= */
+.module{
+  border-left:5px solid var(--primary);
+  padding:12px;
+  margin-bottom:10px;
+}
+.module small{color:var(--muted)}
+.badge{
+  font-size:12px;
+  padding:2px 6px;
+  border-radius:6px;
+}
+.badge.published{background:var(--success);color:#fff}
+.badge.draft{background:var(--warning)}
+.badge.deleted{background:var(--danger);color:#fff}
+
+/* ================= STATUS OVERLAY ================= */
+#status{
   position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.55);
-  display:flex;
+  top:16px;
+  right:16px;
+  background:var(--card);
+  padding:12px 16px;
+  border-radius:10px;
+  box-shadow:0 10px 25px rgba(0,0,0,.2);
+  display:none;
   align-items:center;
-  justify-content:center;
+  gap:10px;
   z-index:999;
 }
-#statusOverlay.hidden{display:none}
-.statusBox{
-  background:#fff;
-  padding:22px;
-  border-radius:12px;
-  text-align:center;
-  min-width:220px;
+.spinner{
+  width:18px;
+  height:18px;
+  border:3px solid #ddd;
+  border-top:3px solid var(--primary);
+  border-radius:50%;
+  animation:spin 1s linear infinite;
 }
-body.dark .statusBox{background:#020617}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-.notice{
-  padding:10px;
-  border-radius:8px;
-  background:#e0f2fe;
-  margin:8px 0;
-  font-size:14px;
-}
-body.dark .notice{background:#0b1220}
+/* ================= VIEWER ================= */
+#viewer h2{margin-top:0}
 
+/* ================= MOBILE ================= */
 @media(max-width:768px){
   .tabs{flex-direction:column}
 }
@@ -118,528 +138,242 @@ body.dark .notice{background:#0b1220}
 <body>
 
 <header>
-  <div style="display:flex;align-items:center;gap:10px;">
-    <button id="backBtn" class="neutral hidden" onclick="goBack()">
-      <i class="fa fa-arrow-left"></i> Back
-    </button>
-    <h2 style="margin:0;"><i class="fa fa-user-shield"></i> Admin – Management Course</h2>
-  </div>
-
-  <div class="rightControls">
-    <button class="neutral" onclick="toggleTheme()" title="Dark/Light">
-      <i class="fa fa-moon"></i>
-    </button>
-    <span id="authStatus">Checking authentication...</span>
-  </div>
+  <h3><i class="fa fa-user-shield"></i> Admin – Management Course</h3>
+  <button onclick="toggleTheme()"><i class="fa fa-moon"></i></button>
 </header>
 
-<!-- Editor -->
+<div id="status">
+  <div class="spinner"></div>
+  <span id="statusText"></span>
+</div>
+
+<!-- ================= EDITOR ================= -->
 <div class="card hidden" id="editor">
   <h3>Module Editor</h3>
 
   <input id="title" placeholder="Module title">
-  <input id="imageUrl" placeholder="Cover Image URL (optional)">
-  <input id="videoUrl" placeholder="Video URL (optional)">
+  <input id="imageUrl" placeholder="Cover Image URL">
+  <input id="videoUrl" placeholder="Video URL">
 
-  <div id="quillUploadNotice" class="notice hidden"></div>
-  <div id="quill" style="height:200px"></div>
-
-  <h4>Quizzes</h4>
-  <input id="q" placeholder="Question">
-  <input id="o1" placeholder="Option 1">
-  <input id="o2" placeholder="Option 2">
-  <input id="o3" placeholder="Option 3">
-  <input id="o4" placeholder="Option 4">
-  <input id="a" placeholder="Correct answer (Must match one option exactly)">
-  <button class="neutral" onclick="addQuiz()">Add / Update Quiz</button>
-
-  <div id="quizList"></div>
+  <div id="quill" style="height:220px"></div>
 
   <button class="draft" onclick="saveModule('draft')">Save Draft</button>
   <button class="publish" onclick="saveModule('published')">Publish</button>
 </div>
 
-<!-- Tabs -->
-<div id="tabsWrap" class="tabs hidden">
-  <button id="btnPublished" class="active" onclick="showTab('publishedTab', this)">Published</button>
-  <button id="btnDraft" onclick="showTab('draftTab', this)">Drafts</button>
-  <button id="btnBin" onclick="showTab('binTab', this)">Recycle Bin</button>
-</div>
-
-<div class="card hidden" id="publishedTab"></div>
-<div class="card hidden" id="draftTab"></div>
-<div class="card hidden" id="binTab"></div>
-
+<!-- ================= VIEWER ================= -->
 <div class="card hidden" id="viewer"></div>
 
-<div id="statusOverlay" class="hidden">
-  <div class="statusBox">
-    <i id="statusIcon" class="fa fa-spinner fa-spin"></i>
-    <p id="statusText" style="margin:10px 0 0;"></p>
-  </div>
+<!-- ================= TABS ================= -->
+<div class="tabs">
+  <button class="active" onclick="switchTab('published')">Published</button>
+  <button onclick="switchTab('draft')">Drafts</button>
+  <button onclick="switchTab('deleted')">Recycle Bin</button>
 </div>
 
+<div class="card" id="publishedTab"></div>
+<div class="card hidden" id="draftTab"></div>
+<div class="card hidden" id="deletedTab"></div>
+
 <script type="module">
+/* ================= FIREBASE ================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
-  getFirestore, collection, doc, addDoc, getDocs,
-  updateDoc, getDoc, serverTimestamp
+  getFirestore, collection, addDoc, updateDoc,
+  getDocs, getDoc, doc, query, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import {
-  getAuth, onAuthStateChanged
+  getAuth, signInWithEmailAndPassword, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import {
   getStorage, ref, uploadBytesResumable, getDownloadURL
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
-/* ===== FIREBASE ===== */
 const app = initializeApp({
-  apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
-  authDomain: "students-login-29409.firebaseapp.com",
-  projectId: "students-login-29409"
+  apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+  authDomain:"students-login-29409.firebaseapp.com",
+  projectId:"students-login-29409",
+  storageBucket:"students-login-29409.appspot.com"
 });
-const db = getFirestore(app);
-const auth = getAuth(app);
-const storage = getStorage(app);
 
-// (removed auto login)
+const db=getFirestore(app);
+const auth=getAuth(app);
+const storage=getStorage(app);
 
-/* ===== STATE ===== */
-let quizzes = [];
-let editingQuiz = null;
-let editingId = null;
-let uploadInProgress = false;
+signInWithEmailAndPassword(auth,"ADMIN_EMAIL","ADMIN_PASSWORD");
 
-const navStack = [];
+/* ================= STATE ================= */
+let editingId=null;
+let autosaveTimer=null;
 
-function pushView(viewName){
-  const snapshot = {
-    view: viewName,
-    activeTab: getActiveTabId(),
-    scrollY: window.scrollY
-  };
-  navStack.push(snapshot);
-  updateBackButton();
+/* ================= STATUS ================= */
+function showStatus(text){
+  statusText.innerText=text;
+  status.style.display="flex";
+}
+function hideStatus(){
+  setTimeout(()=>status.style.display="none",1200);
 }
 
-function goToView(viewName, opts = {}){
-  viewer.classList.add("hidden");
-  editor.classList.add("hidden");
-  publishedTab.classList.add("hidden");
-  draftTab.classList.add("hidden");
-  binTab.classList.add("hidden");
-  tabsWrap.classList.add("hidden");
-
-  if(viewName === "list"){
-    tabsWrap.classList.remove("hidden");
-    const tab = opts.tabId || getActiveTabId() || "publishedTab";
-    const btn =
-      tab==="publishedTab" ? btnPublished :
-      tab==="draftTab" ? btnDraft :
-      btnBin;
-    showTab(tab, btn, false);
-  }
-
-  if(viewName === "editor"){
-    editor.classList.remove("hidden");
-    tabsWrap.classList.remove("hidden");
-  }
-
-  if(viewName === "viewer"){
-    viewer.classList.remove("hidden");
-  }
-
-  if(opts.scrollTop) window.scrollTo({top:0, behavior:"smooth"});
-  updateBackButton();
-}
-
-window.goBack = () => {
-  navStack.pop();
-  const prev = navStack[navStack.length - 1];
-  if(!prev){
-    goToView("list", {tabId:"publishedTab", scrollTop:true});
-    updateBackButton();
-    return;
-  }
-  goToView(prev.view, {tabId: prev.activeTab});
-  window.scrollTo({top: prev.scrollY || 0, behavior:"instant"});
-  updateBackButton();
+/* ================= THEME ================= */
+window.toggleTheme=()=>{
+  document.body.classList.toggle("dark");
+  localStorage.theme=document.body.classList.contains("dark")?"dark":"light";
 };
+if(localStorage.theme==="dark")document.body.classList.add("dark");
 
-function updateBackButton(){
-  if(navStack.length > 1) backBtn.classList.remove("hidden");
-  else backBtn.classList.add("hidden");
-}
-
-function getActiveTabId(){
-  if(!publishedTab.classList.contains("hidden")) return "publishedTab";
-  if(!draftTab.classList.contains("hidden")) return "draftTab";
-  if(!binTab.classList.contains("hidden")) return "binTab";
-  if(btnPublished.classList.contains("active")) return "publishedTab";
-  if(btnDraft.classList.contains("active")) return "draftTab";
-  if(btnBin.classList.contains("active")) return "binTab";
-  return "publishedTab";
-}
-
-/* ===== AUTH ===== */
-onAuthStateChanged(auth, async user=>{
-  if(!user){
-    authStatus.innerText="❌ Not logged in";
-    return;
-  }
-
-  authStatus.innerText="✅ Admin authenticated";
-
-  tabsWrap.classList.remove("hidden");
-  pushView("list");
-  goToView("list", {tabId:"publishedTab"});
-
-  await loadModules();
-});
-
-/* ===== QUILL ===== */
-const quill = new Quill("#quill",{
+/* ================= QUILL WITH IMAGE UPLOAD ================= */
+const quill=new Quill("#quill",{
   theme:"snow",
   modules:{
-    toolbar:[
-      ["bold","italic","underline"],
-      ["image","link"],
-      [{list:"ordered"},{list:"bullet"}]
-    ]
+    toolbar:{
+      container:[
+        ["bold","italic","underline"],
+        ["image","link"],
+        [{list:"ordered"},{list:"bullet"}]
+      ],
+      handlers:{
+        image:()=>{
+          const input=document.createElement("input");
+          input.type="file";
+          input.accept="image/*";
+          input.click();
+          input.onchange=()=>{
+            const file=input.files[0];
+            const r=ref(storage,"modules/"+Date.now()+"_"+file.name);
+            const task=uploadBytesResumable(r,file);
+            showStatus("Uploading image...");
+            task.on("state_changed",s=>{
+              statusText.innerText="Uploading "+Math.round(s.bytesTransferred/s.totalBytes*100)+"%";
+            },null,async()=>{
+              const url=await getDownloadURL(task.snapshot.ref);
+              const range=quill.getSelection();
+              quill.insertEmbed(range.index,"image",url);
+              hideStatus();
+            });
+          };
+        }
+      }
+    }
   }
 });
 
-const toolbar = quill.getModule("toolbar");
-
-toolbar.addHandler("image", () => {
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = "image/*";
-  input.click();
-
-  input.onchange = () => {
-    const file = input.files?.[0];
-    if(!file) return;
-
-    uploadInProgress = true;
-    quillUploadNotice.classList.remove("hidden");
-    quillUploadNotice.innerText = "Uploading image: 0%";
-
-    const storageRef = ref(storage, "quill_images/" + Date.now() + "_" + file.name);
-    const task = uploadBytesResumable(storageRef, file);
-
-    task.on("state_changed", snap => {
-      const p = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
-      quillUploadNotice.innerText = `Uploading image: ${p}%`;
-    }, () => {
-      uploadInProgress = false;
-      quillUploadNotice.innerText = "Upload failed ❌";
-      setTimeout(()=>quillUploadNotice.classList.add("hidden"), 1500);
-    }, async () => {
-      const url = await getDownloadURL(task.snapshot.ref);
-      const range = quill.getSelection(true);
-      const index = range ? range.index : quill.getLength();
-      quill.insertEmbed(index, "image", url, "user");
-      quill.setSelection(index + 1);
-
-      uploadInProgress = false;
-      quillUploadNotice.innerText = "Image inserted ✅";
-      setTimeout(()=>quillUploadNotice.classList.add("hidden"), 900);
-    });
+/* ================= AUTOSAVE DRAFT ================= */
+function autoSave(){
+  const data={
+    title:title.value,
+    imageUrl:imageUrl.value,
+    videoUrl:videoUrl.value,
+    content:quill.root.innerHTML
   };
-});
+  localStorage.autodraft=JSON.stringify(data);
+}
+autosaveTimer=setInterval(autoSave,10000);
+window.addEventListener("offline",()=>showStatus("Offline – auto-saving draft"));
 
-/* ===== SMART LOCAL DRAFT (BLOGGER STYLE) ===== */
-const DRAFT_KEY = "management_course_draft";
+if(localStorage.autodraft){
+  const d=JSON.parse(localStorage.autodraft);
+  title.value=d.title||"";
+  imageUrl.value=d.imageUrl||"";
+  videoUrl.value=d.videoUrl||"";
+  quill.root.innerHTML=d.content||"";
+}
 
-function saveLocalDraft() {
-  const draft = {
-    title: title.value,
-    imageUrl: imageUrl.value,
-    videoUrl: videoUrl.value,
-    content: quill.root.innerHTML,
-    quizzes,
-    editingId
+/* ================= SAVE MODULE ================= */
+window.saveModule=async statusType=>{
+  showStatus(statusType==="published"?"Publishing...":"Saving draft...");
+  const refCol=collection(db,"courses","management_course","modules");
+  const data={
+    title:title.value,
+    imageUrl:imageUrl.value,
+    videoUrl:videoUrl.value,
+    content:quill.root.innerHTML,
+    status:statusType,
+    updatedAt:serverTimestamp()
   };
-  localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-}
-
-function loadLocalDraft() {
-  const d = localStorage.getItem(DRAFT_KEY);
-  if(!d) return;
-
-  const draft = JSON.parse(d);
-  title.value = draft.title || "";
-  imageUrl.value = draft.imageUrl || "";
-  videoUrl.value = draft.videoUrl || "";
-  quill.root.innerHTML = draft.content || "";
-  quizzes = draft.quizzes || [];
-  editingId = draft.editingId || null;
-  renderQuizzes();
-}
-
-window.addEventListener("beforeunload", saveLocalDraft);
-window.addEventListener("offline", saveLocalDraft);
-backBtn?.addEventListener("click", saveLocalDraft);
-
-loadLocalDraft();
-
-/* ===== STATUS ===== */
-function showStatus(text, icon="spinner"){
-  statusText.innerText=text;
-  statusIcon.className =
-    icon==="success" ? "fa fa-check-circle" :
-    icon==="trash" ? "fa fa-trash" :
-    "fa fa-spinner fa-spin";
-  statusOverlay.classList.remove("hidden");
-}
-function hideStatus(){ statusOverlay.classList.add("hidden"); }
-
-/* ===== QUIZZES ===== */
-window.addQuiz = () => {
-  const quiz = {
-    question: q.value,
-    options: [o1.value, o2.value, o3.value, o4.value],
-    answer: a.value
-  };
-
-  if(editingQuiz !== null){
-    quizzes[editingQuiz] = quiz;
-    editingQuiz = null;
-  } else {
-    quizzes.push(quiz);
-  }
-
-  q.value=o1.value=o2.value=o3.value=o4.value=a.value="";
-  renderQuizzes();
-};
-
-function renderQuizzes(){
-  quizList.innerHTML="";
-  quizzes.forEach((x,i)=>{
-    quizList.innerHTML += `
-      <div class="quiz">
-        <b>${i+1}.</b> ${x.question}
-        <div style="display:flex;gap:8px;margin-top:8px;">
-          <button class="neutral" onclick="editQuiz(${i})">Edit</button>
-          <button class="delete" onclick="deleteQuiz(${i})">Delete</button>
-        </div>
-      </div>`;
-  });
-}
-
-window.editQuiz = i => {
-  const x=quizzes[i];
-  q.value=x.question;
-  o1.value=x.options[0] || "";
-  o2.value=x.options[1] || "";
-  o3.value=x.options[2] || "";
-  o4.value=x.options[3] || "";
-  a.value=x.answer || "";
-  editingQuiz=i;
-};
-
-window.deleteQuiz = i => {
-  quizzes.splice(i,1);
-  renderQuizzes();
-};
-
-/* ===== SAVE / PUBLISH ===== */
-window.saveModule = async status => {
-
-  const hasTitle = title.value.trim().length > 0;
-  const hasContent = quill.getText().trim().length > 0;
-
-  if(status === "published") {
-
-    if(uploadInProgress){
-      alert("⏳ Image upload is still in progress. Please wait.");
-      return;
-    }
-
-    if(!hasTitle){
-      alert("⚠️ Please enter a module title before publishing.");
-      return;
-    }
-
-    if(!hasContent){
-      alert("⚠️ Please write some content before publishing.");
-      return;
-    }
-  }
-
-  try{
-    showStatus(status==="published" ? "Publishing..." : "Saving draft...");
-
-    const refCol = collection(db,"courses","management_course","modules");
-    const data = {
-      title: title.value,
-      imageUrl: imageUrl.value,
-      videoUrl: videoUrl.value,
-      content: quill.root.innerHTML,
-      quizzes: quizzes || [],
-      status,
-      updatedAt: serverTimestamp()
-    };
-
-    if(editingId){
-      await updateDoc(doc(refCol, editingId), data);
-    } else {
-      await addDoc(refCol, { ...data, createdAt: serverTimestamp() });
-    }
-
-    showStatus("Done ✅","success");
-    setTimeout(hideStatus, 600);
-
-    localStorage.removeItem(DRAFT_KEY);
-    reset();
-    await loadModules();
-
-    pushView("list");
-    goToView("list", {
-      tabId: status==="published" ? "publishedTab" : "draftTab",
-      scrollTop:true
-    });
-
-  }catch(e){
-    console.error(e);
-    showStatus("Error ❌");
-    setTimeout(hideStatus, 900);
-  }
-};
-
-/* ===== LOAD MODULES ===== */
-async function loadModules(){
-  publishedTab.innerHTML = "";
-  draftTab.innerHTML = "";
-  binTab.innerHTML = "";
-
-  const snap = await getDocs(collection(db,"courses","management_course","modules"));
-
-  const modules = [];
-  snap.forEach(d => modules.push({ id:d.id, ...d.data() }));
-
-  modules.sort((a,b)=>{
-    const as = a.updatedAt?.seconds || 0;
-    const bs = b.updatedAt?.seconds || 0;
-    return bs - as;
-  });
-
-  modules.forEach(m=>{
-    const box = `
-      <div class="quiz">
-        <b>${m.title || "(No title)"}</b>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
-          <button class="neutral" onclick="edit('${m.id}')">Edit</button>
-          ${m.status==="published" ? `<button class="view" onclick="viewModule('${m.id}')">View</button>` : ""}
-          <button class="delete" onclick="softDelete('${m.id}')">Delete</button>
-        </div>
-      </div>
-    `;
-
-    if(m.status==="published") publishedTab.innerHTML += box;
-    else if(m.status==="draft") draftTab.innerHTML += box;
-    else if(m.status==="deleted") binTab.innerHTML += box;
-  });
-}
-
-/* ===== SOFT DELETE ===== */
-window.softDelete = async id => {
-  const ok = confirm("Move this module to recycle bin?");
-  if(!ok) return;
-
-  showStatus("Deleting...","trash");
-  await updateDoc(doc(db,"courses","management_course","modules",id),{
-    status:"deleted",
-    updatedAt: serverTimestamp()
-  });
+  editingId
+    ? await updateDoc(doc(refCol,editingId),data)
+    : await addDoc(refCol,data);
+  localStorage.removeItem("autodraft");
+  editingId=null;
   hideStatus();
-  await loadModules();
+  loadModules();
 };
 
-/* ===== EDIT ===== */
-window.edit = async id => {
-  pushView("list");
-  pushView("editor");
-
-  const s = await getDoc(doc(db,"courses","management_course","modules",id));
-  const m = s.data();
-
-  title.value = m.title || "";
-  imageUrl.value = m.imageUrl || "";
-  videoUrl.value = m.videoUrl || "";
-  quill.root.innerHTML = m.content || "";
-  quizzes = m.quizzes || [];
-  editingId = id;
-  renderQuizzes();
-
-  goToView("editor", {scrollTop:true});
-};
-
-/* ===== VIEW ===== */
-window.viewModule = async id => {
-  pushView("list");
-  pushView("viewer");
-
-  const s = await getDoc(doc(db,"courses","management_course","modules",id));
-  const m = s.data();
-
-  const cover = m.imageUrl ? `<img src="${m.imageUrl}" style="max-width:100%;border-radius:10px;margin:10px 0;">` : "";
-  const vid = m.videoUrl ? `<a href="${m.videoUrl}" target="_blank">Video link</a>` : "";
-
-  viewer.innerHTML = `
-    <h2 style="margin-top:0;">${m.title || "Untitled"}</h2>
-    ${cover}
-    ${vid ? `<p>${vid}</p>` : ""}
-    <div>${m.content || ""}</div>
-  `;
-
-  goToView("viewer", {scrollTop:true});
-};
-
-/* ===== RESET ===== */
-function reset(){
-  title.value = "";
-  imageUrl.value = "";
-  videoUrl.value = "";
-  quill.root.innerHTML = "";
-  quizzes = [];
-  editingId = null;
-  editingQuiz = null;
-  renderQuizzes();
+/* ================= LOAD MODULES ================= */
+async function loadModules(){
+  publishedTab.innerHTML=draftTab.innerHTML=deletedTab.innerHTML="";
+  const q=query(
+    collection(db,"courses","management_course","modules"),
+    orderBy("updatedAt","desc")
+  );
+  const snap=await getDocs(q);
+  snap.forEach(d=>{
+    const m=d.data();
+    const el=`
+    <div class="module">
+      <b>${m.title}</b>
+      <span class="badge ${m.status}">${m.status}</span><br>
+      <small>${m.updatedAt?.toDate?.().toLocaleString()||""}</small><br>
+      <button onclick="view('${d.id}')">View</button>
+      <button onclick="edit('${d.id}')">Edit</button>
+      <button class="delete" onclick="remove('${d.id}')">Delete</button>
+    </div>`;
+    if(m.status==="published")publishedTab.innerHTML+=el;
+    if(m.status==="draft")draftTab.innerHTML+=el;
+    if(m.status==="deleted")deletedTab.innerHTML+=el;
+  });
 }
+loadModules();
 
-/* ===== TABS ===== */
-window.showTab = (id, btn, push=true) => {
-  if(push){
-    pushView("list");
-  }
-
-  ["publishedTab","draftTab","binTab"].forEach(t =>
-    document.getElementById(t).classList.add("hidden")
-  );
-
-  document.getElementById(id).classList.remove("hidden");
-
-  document.querySelectorAll(".tabs button").forEach(b =>
-    b.classList.remove("active")
-  );
-
-  if(btn) btn.classList.add("active");
+/* ================= VIEW ================= */
+window.view=async id=>{
+  const s=await getDoc(doc(db,"courses","management_course","modules",id));
+  const m=s.data();
+  viewer.innerHTML=`
+    <h2>${m.title}</h2>
+    ${m.imageUrl?`<img src="${m.imageUrl}" width="100%">`:""}
+    ${m.videoUrl?`<iframe src="${m.videoUrl}" width="100%" height="240"></iframe>`:""}
+    <div>${m.content}</div>
+    <button onclick="back()">Back</button>
+  `;
+  viewer.classList.remove("hidden");
+  editor.classList.add("hidden");
 };
 
-/* ===== THEME ===== */
-window.toggleTheme = () => {
-  document.body.classList.toggle("dark");
-  localStorage.theme = document.body.classList.contains("dark") ? "dark" : "light";
+/* ================= EDIT ================= */
+window.edit=async id=>{
+  const s=await getDoc(doc(db,"courses","management_course","modules",id));
+  const m=s.data();
+  title.value=m.title;
+  imageUrl.value=m.imageUrl;
+  videoUrl.value=m.videoUrl;
+  quill.root.innerHTML=m.content;
+  editingId=id;
+  editor.classList.remove("hidden");
 };
-if(localStorage.theme === "dark") document.body.classList.add("dark");
-</script>
 
-<script>
-// expose goBack fallback
-window.goBack = window.goBack || function(){};
+/* ================= DELETE ================= */
+window.remove=async id=>{
+  showStatus("Moving to recycle bin...");
+  await updateDoc(doc(db,"courses","management_course","modules",id),{status:"deleted"});
+  hideStatus();
+  loadModules();
+};
+
+/* ================= NAV ================= */
+window.switchTab=tab=>{
+  ["published","draft","deleted"].forEach(t=>{
+    document.getElementById(t+"Tab").classList.add("hidden");
+  });
+  document.getElementById(tab+"Tab").classList.remove("hidden");
+  document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
+  event.target.classList.add("active");
+};
+window.back=()=>{
+  viewer.classList.add("hidden");
+};
 </script>
 
 </body>
-  </html>
+</html>
