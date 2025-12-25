@@ -84,7 +84,7 @@
         .reader-content { font-size: 1.15rem; line-height: 1.8; color: var(--text-main); margin-bottom: 40px; }
         .reader-content img { max-width: 100%; border-radius: 12px; margin: 20px 0; display: block; }
 
-        /* TTS CONTROLS */
+        /* MUSIC PLAYER STYLE TTS CONTROLS */
         .tts-player {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
             background: #1e293b; padding: 15px 25px; border-radius: 16px;
@@ -108,7 +108,7 @@
         .btn-outline { background: transparent; border: 2px solid var(--border-color); color: var(--text-main); width: 100%; padding: 10px; border-radius: 10px; cursor: pointer; font-weight: 600; }
         .btn-outline:hover { color: var(--primary-solid); border-color: var(--primary-solid); }
 
-        /* --- CERTIFICATE STYLES & PRINT LOGIC --- */
+        /* --- CERTIFICATE SECTION STYLES --- */
         #certificateSection { display: none; }
         #nameInput { text-align: center; background: var(--bg-card); padding: 40px; border-radius: 20px; border: 2px solid var(--accent-yellow); max-width: 600px; margin: 40px auto; }
         #nameForm input { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 10px; border: 1px solid #ccc; }
@@ -121,10 +121,10 @@
             text-align: center;
         }
 
-        /* Certificate Visuals */
+        /* Certificate CSS Specifics (A4 Dimensions) */
         .certificate {
-            width: 794px; /* A4 Width approx */
-            height: 1123px; /* A4 Height approx */
+            width: 794px;
+            height: 1123px; /* A4 Ratio */
             margin: 20px auto;
             background: #ffffff;
             border: 14px solid #f7931e;
@@ -142,9 +142,6 @@
             box-sizing: border-box;
             display: flex;
             align-items: center;
-            /* Ensure gradient prints */
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
         }
 
         .cert-logos {
@@ -157,22 +154,22 @@
             width: 100%;
             max-width: 560px;
         }
-        .cert-logos img { height: 65px; max-width: 240px; object-fit: contain; }
 
+        .cert-logos img { height: 65px; max-width: 240px; object-fit: contain; }
         .cert-content { padding: 90px 90px 60px; text-align: center; }
         .cert-title { font-size: 46px; font-weight: 700; margin-bottom: 18px; color: #000; }
         .cert-subtitle { font-size: 18px; color: #555; margin-bottom: 30px; }
         .cert-name { font-size: 38px; font-weight: 700; letter-spacing: 1px; margin-bottom: 8px; text-transform: uppercase; color: #000; }
-        .cert-divider { width: 60%; height: 2px; background: #000; margin: 16px auto 40px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .cert-divider { width: 60%; height: 2px; background: #000; margin: 16px auto 40px; }
         .cert-description { font-size: 20px; margin-bottom: 18px; color: #333; }
         .cert-course { font-size: 32px; font-weight: 700; color: #f7931e; margin-bottom: 40px; }
         .cert-award { font-size: 19px; color: #444; line-height: 1.7; max-width: 650px; margin: auto; }
         .cert-award strong { color: #000; }
-
+        
         .cert-footer {
             position: absolute; bottom: 60px; width: 100%; padding: 0 90px;
-            box-sizing: border-box; display: flex; justify-content: space-between; align-items: flex-end;
-            font-size: 15px; color: #444;
+            box-sizing: border-box; display: flex; justify-content: space-between;
+            align-items: flex-end; font-size: 15px; color: #444;
         }
         .cert-footer strong { color: #000; }
         .cert-signature { text-align: center; }
@@ -180,30 +177,19 @@
         .cert-signature-name { font-weight: 600; font-size: 14px; color: #000; }
         .cert-signature-title { font-size: 13px; color: #555; }
 
-        /* --- PRINT MEDIA QUERY (Crucial for Download/Print) --- */
+        /* PRINT CONFIGURATION */
         @media print {
-            @page {
-                size: A4 portrait;
-                margin: 0;
-            }
-            body { 
-                margin: 0; padding: 0; background: #fff; 
-                -webkit-print-color-adjust: exact; 
-                print-color-adjust: exact; 
-            }
+            @page { size: A4 portrait; margin: 0; }
+            body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             body * { visibility: hidden; }
             #certificatePreviewWrapper, #certificatePreviewWrapper * { visibility: visible; }
             #certificatePreviewWrapper { 
-                position: fixed; left: 0; top: 0; width: 100%; height: 100%; 
-                margin: 0; padding: 0; background: white; z-index: 9999;
+                position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; padding: 0; 
+                background: white; overflow: hidden; z-index: 9999;
             }
             .certificate { 
-                border: 14px solid #f7931e !important; 
-                margin: 0 !important; 
-                width: 100% !important; 
-                height: 100% !important; 
-                box-shadow: none; 
-                page-break-inside: avoid;
+                margin: 0; width: 100%; height: 100%; border: 14px solid #f7931e !important; box-shadow: none; 
+                transform-origin: top left;
             }
             .print-btn-container { display: none !important; }
         }
@@ -229,11 +215,11 @@
     <div id="certificateSection">
         <div id="nameInput">
             <h3>🎉 Course Completed!</h3>
-            <p>Enter your name to generate and save your certificate:</p>
+            <p>Enter your name for the certificate. This will be saved permanently.</p>
             <form id="nameForm">
                 <input type="text" id="firstNameInput" placeholder="First Name" required>
                 <input type="text" id="lastNameInput" placeholder="Last Name" required>
-                <button type="submit" id="generateBtn" class="btn-primary">Generate & Save Certificate</button>
+                <button type="submit" class="btn-primary" id="generateBtn">Generate & Save Certificate</button>
             </form>
         </div>
 
@@ -281,12 +267,12 @@
             </div>
 
             <div class="print-btn-container" style="text-align:center; margin-top:20px;">
-                <p><i>Your certificate has been saved to your profile.</i></p>
-                <button class="btn-primary" onclick="window.print()">🖨️ Download PDF / Print</button>
+                <button class="btn-primary" onclick="window.print()">Print Certificate / Save as PDF</button>
             </div>
         </div>
     </div>
 </div>
+
 <div id="readerModal" class="reader-modal">
     <div class="reader-container">
         <div class="reader-header">
@@ -313,7 +299,6 @@
         </div>
     </div>
 </div>
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     
@@ -328,7 +313,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const db = firebase.firestore();
     const COURSE_ID = "management_course";
     
-    // --- 2. HELPERS ---
+    // --- 2. ADVANCED TEXT CLEANER ---
     function cleanLessonContent(htmlContent) {
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = htmlContent;
@@ -393,7 +378,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const modulesContainer = document.getElementById('modules');
         const modsSnap = await db.collection("courses").doc(COURSE_ID).collection("modules").where("status", "==", "published").get();
         const userSnap = await db.collection("students").doc(user.uid).get();
-        const completedData = userSnap.data()?.enrolledCourses?.[COURSE_ID]?.completedModules || {};
+        const enrolledData = userSnap.data()?.enrolledCourses?.[COURSE_ID] || {};
+        const completedData = enrolledData.completedModules || {};
         
         let doneCount = 0;
         let isPrevModuleDone = true;
@@ -430,9 +416,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const percent = Math.round((doneCount / modsSnap.size) * 100) || 0;
         document.getElementById('progressFill').style.width = percent + "%";
         
-        // CHECK IF ALL MODULES DONE
+        // CHECK IF COMPLETED ALL
         if (doneCount === modsSnap.size && modsSnap.size > 0) {
-            checkExistingCertificate(user);
+            // Check if certificate already exists in DB
+            if (enrolledData.certificate) {
+                // If yes, skip input, show certificate directly
+                renderCertificate(enrolledData.certificate.name, enrolledData.certificate.date, enrolledData.certificate.number);
+            } else {
+                // If no, show input form
+                showCertificateInput();
+            }
         }
     };
 
@@ -442,7 +435,11 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('readerBody').innerHTML = decodeURIComponent(content);
         document.getElementById('readerModal').style.display = 'block';
         document.body.style.overflow = 'hidden';
+
+        // Init TTS
         TTSManager.init(document.getElementById('readerBody').innerHTML);
+
+        // START NEW QUIZ LOGIC
         prepareQuiz(mId);
     };
 
@@ -451,10 +448,10 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.style.overflow = 'auto';
         TTSManager.stop();
         document.getElementById('ttsPlayer').style.display = 'none';
-        clearInterval(quizTimerInterval);
+        clearInterval(quizTimerInterval); 
     };
 
-    // --- 6. QUIZ LOGIC ---
+    // --- 6. GLOBAL QUIZ STATE ---
     let currentQuizData = [];
     let currentQIndex = 0;
     let currentScore = 0;
@@ -465,6 +462,7 @@ document.addEventListener('DOMContentLoaded', function() {
         activeModuleId = mId;
         const quizArea = document.getElementById('quizContainer');
         quizArea.innerHTML = "<h3>Loading Quiz...</h3>";
+
         try {
             const modDoc = await db.collection("courses").doc(COURSE_ID).collection("modules").doc(mId).get();
             if (modDoc.exists && modDoc.data().quizzes) {
@@ -474,12 +472,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 quizArea.innerHTML = "<p>No quiz available for this lesson.</p>";
             }
         } catch (e) {
+            console.error(e);
             quizArea.innerHTML = "<p>Error connecting to quiz system.</p>";
         }
     };
 
     window.showStartScreen = function() {
-        document.getElementById('quizContainer').innerHTML = `
+        const quizArea = document.getElementById('quizContainer');
+        quizArea.innerHTML = `
             <div style="padding: 20px; border: 2px solid var(--primary-solid); border-radius: 12px;">
                 <h3>Assess Your Knowledge</h3>
                 <p>Module Quiz: ${currentQuizData.length} Questions</p>
@@ -496,101 +496,146 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     window.renderQuestion = function() {
+        const quizArea = document.getElementById('quizContainer');
         clearInterval(quizTimerInterval);
-        if (currentQIndex >= currentQuizData.length) { processFinalResults(); return; }
+
+        if (currentQIndex >= currentQuizData.length) {
+            processFinalResults();
+            return;
+        }
+
         const q = currentQuizData[currentQIndex];
         let timeLeft = 30;
-        document.getElementById('quizContainer').innerHTML = `
+
+        quizArea.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <span style="font-weight:bold;">Question ${currentQIndex + 1} of ${currentQuizData.length}</span>
                 <span id="qTimer" style="color:var(--accent-red); font-weight:800; font-size:1.2rem;">⏱ 30s</span>
             </div>
             <p style="text-align:left; font-size:1.1rem; margin-bottom:20px;">${q.question}</p>
-            <div class="options-group">${q.options.map(opt => `<label><input type="radio" name="quizOpt" value="${opt}"> ${opt}</label>`).join('')}</div>
+            <div class="options-group">
+                ${q.options.map((opt) => `
+                    <label>
+                        <input type="radio" name="quizOpt" value="${opt}">
+                        ${opt}
+                    </label>
+                `).join('')}
+            </div>
             <button class="btn-primary" style="width:100%; margin-top:20px;" onclick="validateAndNext()">Submit Answer</button>
         `;
+
         quizTimerInterval = setInterval(() => {
             timeLeft--;
-            if(document.getElementById('qTimer')) document.getElementById('qTimer').innerText = `⏱ ${timeLeft}s`;
-            if (timeLeft <= 0) { clearInterval(quizTimerInterval); validateAndNext(); }
+            const timerEl = document.getElementById('qTimer');
+            if(timerEl) timerEl.innerText = `⏱ ${timeLeft}s`;
+            if (timeLeft <= 0) {
+                clearInterval(quizTimerInterval);
+                validateAndNext(); 
+            }
         }, 1000);
     };
 
     window.validateAndNext = function() {
         const selected = document.querySelector('input[name="quizOpt"]:checked');
-        if (selected && selected.value.trim() === currentQuizData[currentQIndex].answer.trim()) currentScore++;
+        const correctAnswer = currentQuizData[currentQIndex].answer;
+
+        if (selected && selected.value.trim() === correctAnswer.trim()) {
+            currentScore++;
+        }
+
         currentQIndex++;
         renderQuestion();
     };
 
     window.processFinalResults = async function() {
+        const quizArea = document.getElementById('quizContainer');
         const percentage = (currentScore / currentQuizData.length) * 100;
-        if (percentage >= 60) {
+        const isPass = percentage >= 60;
+
+        if (isPass) {
             if (auth.currentUser) {
                 await db.collection("students").doc(auth.currentUser.uid).set({
-                    enrolledCourses: { [COURSE_ID]: { completedModules: { [activeModuleId]: true } } }
+                    enrolledCourses: {
+                        [COURSE_ID]: { 
+                            completedModules: { [activeModuleId]: true } 
+                        }
+                    }
                 }, { merge: true });
             }
-            document.getElementById('quizContainer').innerHTML = `<div style="text-align:center;"><h2 style="color:var(--success-green);">🎉 Passed!</h2><p>Score: ${Math.round(percentage)}%</p><button class="btn-primary" onclick="location.reload()">Return & Unlock Next</button></div>`;
+
+            quizArea.innerHTML = `
+                <div style="text-align:center;">
+                    <h2 style="color:var(--success-green);">🎉 Passed!</h2>
+                    <p style="font-size:1.5rem; font-weight:bold;">Score: ${Math.round(percentage)}%</p>
+                    <p>Well done! This module is now complete.</p>
+                    <button class="btn-primary" onclick="location.reload()">Return & Unlock Next</button>
+                </div>
+            `;
         } else {
-            document.getElementById('quizContainer').innerHTML = `<div style="text-align:center;"><h2 style="color:var(--accent-red);">❌ Try Again</h2><p>Score: ${Math.round(percentage)}%</p><button class="btn-primary" onclick="startQuizEngine()">Retry Quiz</button></div>`;
+            quizArea.innerHTML = `
+                <div style="text-align:center;">
+                    <h2 style="color:var(--accent-red);">❌ Try Again</h2>
+                    <p style="font-size:1.5rem; font-weight:bold;">Score: ${Math.round(percentage)}%</p>
+                    <p>You need at least 60% to pass.</p>
+                    <button class="btn-primary" style="background:#6b7280;" onclick="startQuizEngine()">Retry Quiz</button>
+                </div>
+            `;
         }
     };
 
-    // --- 7. CERTIFICATE GENERATION & SAVING ---
-    async function checkExistingCertificate(user) {
+    // --- 7. UTILS & CERTIFICATE SAVING ---
+    function showCertificateInput() {
         document.getElementById('certificateSection').style.display = 'block';
-        
-        // Check if cert exists in Firestore
-        const certSnap = await db.collection("students").doc(user.uid).collection("certificates").doc(COURSE_ID).get();
-        
-        if (certSnap.exists) {
-            // If exists, load data and show preview immediately
-            const data = certSnap.data();
-            renderCertificate(data.studentName, data.issueDate, data.certificateId);
-            document.getElementById('nameInput').style.display = 'none';
-        } else {
-            // Show input form
-            document.getElementById('nameInput').style.display = 'block';
-            document.getElementById('nameForm').onsubmit = (e) => generateAndSaveCertificate(e, user);
-        }
+        document.getElementById('nameInput').style.display = 'block'; // Ensure form is visible
+        document.getElementById('certificatePreviewWrapper').style.display = 'none';
+
+        const form = document.getElementById('nameForm');
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('generateBtn');
+            btn.innerText = "Saving...";
+            btn.disabled = true;
+
+            const fullName = (document.getElementById('firstNameInput').value + " " + document.getElementById('lastNameInput').value).toUpperCase();
+            const dateStr = new Date().toLocaleDateString();
+            const certNum = "FPBA-" + new Date().getFullYear() + "-" + Math.floor(1000 + Math.random() * 9000);
+
+            // SAVE TO FIREBASE
+            if(auth.currentUser) {
+                try {
+                    await db.collection("students").doc(auth.currentUser.uid).set({
+                        enrolledCourses: {
+                            [COURSE_ID]: {
+                                certificate: {
+                                    name: fullName,
+                                    date: dateStr,
+                                    number: certNum,
+                                    issuedAt: firebase.firestore.FieldValue.serverTimestamp()
+                                }
+                            }
+                        }
+                    }, { merge: true });
+                    
+                    // Show Cert
+                    renderCertificate(fullName, dateStr, certNum);
+                } catch(err) {
+                    alert("Error saving certificate: " + err.message);
+                    btn.innerText = "Generate";
+                    btn.disabled = false;
+                }
+            }
+        };
     }
 
-    async function generateAndSaveCertificate(e, user) {
-        e.preventDefault();
-        const btn = document.getElementById('generateBtn');
-        btn.disabled = true;
-        btn.innerText = "Saving...";
-
-        const fullName = (document.getElementById('firstNameInput').value + " " + document.getElementById('lastNameInput').value).toUpperCase();
-        const dateStr = new Date().toLocaleDateString();
-        const certID = "FPBA-" + new Date().getFullYear() + "-" + Math.floor(1000 + Math.random() * 9000);
-
-        try {
-            // Save to Firestore
-            await db.collection("students").doc(user.uid).collection("certificates").doc(COURSE_ID).set({
-                studentName: fullName,
-                issueDate: dateStr,
-                certificateId: certID,
-                courseName: "Management Course",
-                generatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            // Update UI
-            renderCertificate(fullName, dateStr, certID);
-            document.getElementById('nameInput').style.display = 'none';
-        } catch (error) {
-            console.error("Error saving certificate:", error);
-            alert("Could not save certificate. Please try again.");
-            btn.disabled = false;
-            btn.innerText = "Generate & Save";
-        }
-    }
-
-    function renderCertificate(name, date, id) {
+    function renderCertificate(name, date, number) {
+        // Populate Data
         document.getElementById('certStudentName').innerText = name;
         document.getElementById('certDate').innerText = date;
-        document.getElementById('certNum').innerText = id;
+        document.getElementById('certNum').innerText = number;
+
+        // Switch Views
+        document.getElementById('certificateSection').style.display = 'block';
+        document.getElementById('nameInput').style.display = 'none';
         document.getElementById('certificatePreviewWrapper').style.display = 'block';
     }
 
