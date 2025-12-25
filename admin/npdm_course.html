@@ -194,7 +194,7 @@ body{max-width:720px;margin:auto}
     </div>
     <div class="header-right">
       <div id="authStatus" class="header-chip">Checking…</div>
-      <button class="theme-btn" onclick="toggleTheme()">🌓</button>
+      <button class="theme-btn">🌓</button>
     </div>
   </div>
 </header>
@@ -205,7 +205,7 @@ body{max-width:720px;margin:auto}
 </div>
 
 <div class="card hidden" id="addModuleCard">
-  <button class="publish" onclick="openEditor()">➕ Add New Module</button>
+  <button class="publish">➕ Add New Module</button>
 </div>
 
 <div class="card hidden" id="editor">
@@ -222,17 +222,17 @@ body{max-width:720px;margin:auto}
   <input id="o4" placeholder="Option 4">
   <input id="a" placeholder="Correct answer">
 
-  <button onclick="addQuiz()">Add / Update Quiz</button>
+  <button>Add / Update Quiz</button>
   <div id="quizList"></div>
 
-  <button class="draft" onclick="saveModule('draft')">Save Draft</button>
-  <button class="publish" onclick="saveModule('published')">Publish</button>
+  <button class="draft">Save Draft</button>
+  <button class="publish">Publish</button>
 </div>
 
 <div class="tabs">
-  <button class="active" onclick="showTab('publishedTab',this)">Published</button>
-  <button onclick="showTab('draftTab',this)">Drafts</button>
-  <button onclick="showTab('binTab',this)">Recycle Bin</button>
+  <button class="active">Published</button>
+  <button>Drafts</button>
+  <button>Recycle Bin</button>
 </div>
 
 <div class="card" id="publishedTab"></div>
@@ -387,6 +387,24 @@ function showTab(id,btn){
 function toggleTheme(){
   document.body.classList.toggle("dark");
 }
+
+/* EXPOSE FUNCTIONS FOR BUTTONS */
+window.openEditor = openEditor;
+window.addQuiz = addQuiz;
+window.saveModule = saveModule;
+window.showTab = showTab;
+window.toggleTheme = toggleTheme;
+
+/* ATTACH BUTTON EVENT LISTENERS */
+document.querySelector("#addModuleCard button").onclick = openEditor;
+document.querySelector("#editor button.draft").onclick = () => saveModule('draft');
+document.querySelector("#editor button.publish").onclick = () => saveModule('published');
+document.querySelector("#editor button:nth-of-type(1)").onclick = addQuiz; // Add/Update Quiz
+document.querySelector(".theme-btn").onclick = toggleTheme;
+document.querySelectorAll(".tabs button").forEach((btn,i)=>{
+  const tabs = ["publishedTab","draftTab","binTab"];
+  btn.onclick = () => showTab(tabs[i],btn);
+});
 </script>
 
 </body>
