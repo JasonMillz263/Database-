@@ -1,225 +1,218 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>My Course Progress</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <title>Master Course Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            color: #333;
+        }
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 40px 20px;
+        }
 
-<style>
-body {
-  margin: 0;
-  font-family: 'Segoe UI', sans-serif;
-  background: #f4f6f9;
-}
+        .header-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
 
-.container {
-  max-width: 1200px;
-  margin: auto;
-  padding: 20px;
-}
+        h2 {
+            font-size: 2.5rem;
+            color: #1a202c;
+            margin-bottom: 10px;
+        }
 
-h2 {
-  text-align: center;
-  margin-bottom: 30px;
-}
+        .course-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+        }
 
-.course-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-}
+        .course-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #e1e8ed;
+        }
 
-.course-card {
-  background: white;
-  border-radius: 14px;
-  padding: 20px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-}
+        .course-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+        }
 
-.course-title {
-  font-size: 16px;
-  font-weight: 700;
-  margin-bottom: 10px;
-}
+        .course-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: #2d3748;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-.progress-bar {
-  height: 12px;
-  background: #e0e0e0;
-  border-radius: 8px;
-  overflow: hidden;
-}
+        /* Progress Visuals */
+        .progress-container {
+            margin: 20px 0;
+        }
 
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #667eea, #764ba2);
-  transition: width 0.6s ease;
-}
+        .progress-bar {
+            background: #edf2f7;
+            height: 12px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
 
-.progress-text {
-  font-size: 13px;
-  margin-top: 8px;
-  color: #444;
-}
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 1s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+        }
 
-.actions {
-  margin-top: 12px;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            font-weight: 600;
+            color: #718096;
+            margin-top: 8px;
+        }
 
-button {
-  border: none;
-  padding: 7px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  cursor: pointer;
-}
+        /* Module Tags */
+        .module-info {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 13px;
+            border-left: 4px solid #667eea;
+        }
 
-.resume {
-  background: #4CAF50;
-  color: #fff;
-}
+        /* Certificate Badge */
+        .cert-badge {
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #c6f6d5;
+            color: #22543d;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            animation: fadeIn 0.5s ease;
+        }
 
-.completed-badge {
-  margin-top: 12px;
-  display: inline-block;
-  background: #2196F3;
-  color: white;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-}
-</style>
+        @keyframes fadeIn {
+            from { opacity: 0; } to { opacity: 1; }
+        }
+    </style>
 </head>
-
 <body>
 
 <div class="container">
-  <h2>📊 My Learning Progress</h2>
-  <div id="courseGrid" class="course-grid"></div>
+    <div class="header-section">
+        <h2>🚀 Learning Path</h2>
+        <p>Track your journey across all enrolled courses</p>
+    </div>
+    <div id="courseGrid" class="course-grid">
+        <p style="text-align: center; grid-column: 1/-1;">Loading your progress...</p>
+    </div>
 </div>
 
 <script>
 /* ---------------- FIREBASE CONFIG ---------------- */
 const firebaseConfig = {
-  apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
-  authDomain: "students-login-29409.firebaseapp.com",
-  projectId: "students-login-29409"
+    apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+    authDomain: "students-login-29409.firebaseapp.com",
+    projectId: "students-login-29409"
 };
 
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* ---------------- LOAD PROGRESS ---------------- */
-auth.onAuthStateChanged(async user => {
-  if (!user) {
-    window.location.href = "login.html";
-    return;
-  }
+/* ---------------- LOAD GLOBAL COURSE PROGRESS ---------------- */
+async function loadAllCourses() {
+    const grid = document.getElementById("courseGrid");
+    
+    try {
+        // We are now fetching the entire 'courses' collection
+        const querySnapshot = await db.collection("courses").get();
+        
+        if (querySnapshot.empty) {
+            grid.innerHTML = "<p>No courses found in the collection.</p>";
+            return;
+        }
 
-  const studentSnap = await db.collection("students").doc(user.uid).get();
-  if (!studentSnap.exists) return;
+        grid.innerHTML = ""; // Clear loader
 
-  const enrolledCourses = studentSnap.data().enrolledCourses || {};
-  const grid = document.getElementById("courseGrid");
-  grid.innerHTML = "";
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const courseName = doc.id; // Using Document ID as course name
+            
+            // Logic: Assume modules are stored as 'currentModule' or similar in doc
+            const currentModule = data.currentModule || "Getting Started";
+            const percent = data.progress || 0; // Assuming a 'progress' field exists
+            const hasCertificate = data.certificateGenerated === true;
 
-  for (const courseId of Object.keys(enrolledCourses)) {
+            const card = document.createElement("div");
+            card.className = "course-card";
 
-    const courseSnap = await db.collection("courses").doc(courseId).get();
-    if (!courseSnap.exists) continue;
+            card.innerHTML = `
+                <div class="course-title">
+                    <span>${formatTitle(courseName)}</span>
+                    <span style="font-size: 20px;">${percent === 100 ? '✅' : '📖'}</span>
+                </div>
+                
+                <div class="module-info">
+                    <strong>Current Module:</strong><br> ${currentModule}
+                </div>
 
-    /* ✅ FETCH ONLY ACTIVE MODULES */
-    const modulesSnap = await db
-      .collection("courses")
-      .doc(courseId)
-      .collection("modules")
-      .get();
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width:${percent}%"></div>
+                    </div>
+                    <div class="stats">
+                        <span>${percent}% Complete</span>
+                        <span>${percent === 100 ? 'Finished' : 'In Progress'}</span>
+                    </div>
+                </div>
 
-    const activeModuleIds = modulesSnap.docs.map(doc => doc.id);
+                ${hasCertificate ? `
+                    <div class="cert-badge">
+                        🎓 Certificate Issued
+                    </div>
+                ` : ""}
+            `;
 
-    const completedModules =
-      enrolledCourses[courseId].completedModules || {};
+            grid.appendChild(card);
+        });
 
-    /* ✅ COUNT ONLY COMPLETED MODULES THAT STILL EXIST */
-    const completedCount = activeModuleIds.filter(
-      id => completedModules[id]
-    ).length;
-
-    const totalModules = activeModuleIds.length;
-    const percent = totalModules
-      ? Math.round((completedCount / totalModules) * 100)
-      : 0;
-
-    /* 🧪 QUIZ SUMMARY (ONLY ACTIVE MODULES) */
-    const quizResults = enrolledCourses[courseId].quizResults || {};
-    const validQuizScores = activeModuleIds
-      .map(id => quizResults[id])
-      .filter(score => typeof score === "number");
-
-    const avgQuizScore =
-      validQuizScores.length
-        ? Math.round(
-            validQuizScores.reduce((a, b) => a + b, 0) /
-            validQuizScores.length
-          )
-        : null;
-
-    const card = document.createElement("div");
-    card.className = "course-card";
-
-    card.innerHTML = `
-      <div class="course-title">${courseSnap.data().title}</div>
-
-      <div class="progress-bar">
-        <div class="progress-fill" style="width:${percent}%"></div>
-      </div>
-
-      <div class="progress-text">
-        ${completedCount} of ${totalModules} modules completed (${percent}%)
-      </div>
-
-      ${
-        avgQuizScore !== null
-          ? `<div class="progress-text">🧪 Average Quiz Score: ${avgQuizScore}%</div>`
-          : ""
-      }
-
-      <div class="actions">
-        <button class="resume" onclick="resumeCourse('${courseId}')">
-          ▶ Resume Learning
-        </button>
-      </div>
-
-      ${
-        percent === 100
-          ? `<div class="completed-badge">✔ Course Completed</div>`
-          : ""
-      }
-    `;
-
-    grid.appendChild(card);
-  }
-
-  if (!grid.children.length) {
-    grid.innerHTML =
-      "<p style='text-align:center;color:#777'>No enrolled courses found.</p>";
-  }
-});
-
-/* ---------------- RESUME ---------------- */
-function resumeCourse(courseId) {
-  // lastSaved module can be handled inside course page
-  window.location.href = `course.html?course=${courseId}`;
+    } catch (error) {
+        console.error("Error fetching courses:", error);
+        grid.innerHTML = "<p>Error loading dashboard. Check console for details.</p>";
+    }
 }
-</script>
 
+/* ---------------- HELPERS ---------------- */
+function formatTitle(id) {
+    return id.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+}
+
+// Run on load
+loadAllCourses();
+</script>
 </body>
 </html>
