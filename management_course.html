@@ -385,36 +385,59 @@ document.addEventListener('DOMContentLoaded', function() {
         let isPrevModuleDone = true;
         let moduleNumber = 1;
         
-        modulesContainer.innerHTML = "";
+            window.processFinalResults = async function() {
+        const quizArea = document.getElementById('quizContainer');
+        const percentage = (currentScore / currentQuizData.length) * 100;
+        const isPass = percentage >= 60;
 
-        modsSnap.forEach(doc => {
-            const mData = doc.data();
-            const mId = doc.id;
-            const isCompleted = completedData[mId] === true;
-            const isLocked = !isPrevModuleDone;
-            if (isCompleted) doneCount++;
-            const cleanedContent = cleanLessonContent(mData.content || "");
-            const modDiv = document.createElement("div");
-            modDiv.className = `module ${isLocked ? 'locked' : ''} ${isCompleted ? 'completed' : ''}`;
-            
-            let actionBtn = isLocked 
-                ? `<p>🔒 Locked</p>` 
-                : `<button class="btn-outline" onclick="openReader('${mId}', '${encodeURIComponent(mData.title)}', '${encodeURIComponent(cleanedContent)}')">📖 Read & Quiz</button>`;
+        if (isPass) {
+            if (auth.currentUser) {
+                // 1. Get total modules to calculate real progress %
+                const modsSnap = await db.collection("courses").doc(COURSE_ID).collection("modules").where("status", "==", "published").get();
+                const totalModules = modsSnap.size;
 
-            let badge = isCompleted ? `<span class="status-badge" style="display:inline-block">✅ Done</span>` : '';
+                // 2. Get current completed count from DB
+                const userSnap = await db.collection("students").doc(auth.currentUser.uid).get();
+                const completedData = userSnap.data()?.enrolledCourses?.[COURSE_ID]?.completedModules || {};
+                
+                // Add the current module to the count if it wasn't already there
+                completedData[activeModuleId] = true;
+                const doneCount = Object.keys(completedData).length;
+                
+                // 3. Calculate the final progress percentage
+                const progressPercent = Math.round((doneCount / totalModules) * 100);
 
-            modDiv.innerHTML = `
-                <div class="module-header"><h3>Module ${moduleNumber}: ${mData.title}</h3>${badge}</div>
-                <div class="lesson-preview">${cleanedContent}</div>
-                <div class="module-footer">${actionBtn}</div>
+                // 4. SAVE EVERYTHING: including the 'progress' field for your dashboard
+                await db.collection("students").doc(auth.currentUser.uid).set({
+                    enrolledCourses: {
+                        [COURSE_ID]: { 
+                            progress: progressPercent, // Dashboard reads this!
+                            completedModules: completedData 
+                        }
+                    }
+                }, { merge: true });
+            }
+
+            quizArea.innerHTML = `
+                <div style="text-align:center;">
+                    <h2 style="color:var(--success-green);">🎉 Passed!</h2>
+                    <p style="font-size:1.5rem; font-weight:bold;">Score: ${Math.round(percentage)}%</p>
+                    <p>Progress Updated: ${progressPercent}%</p>
+                    <button class="btn-primary" onclick="location.reload()">Return & Unlock Next</button>
+                </div>
             `;
-            modulesContainer.appendChild(modDiv);
-            isPrevModuleDone = isCompleted;
-            moduleNumber++;
-        });
+        } else {
+            quizArea.innerHTML = `
+                <div style="text-align:center;">
+                    <h2 style="color:var(--accent-red);">❌ Try Again</h2>
+                    <p style="font-size:1.5rem; font-weight:bold;">Score: ${Math.round(percentage)}%</p>
+                    <p>You need at least 60% to pass.</p>
+                    <button class="btn-primary" style="background:#6b7280;" onclick="startQuizEngine()">Retry Quiz</button>
+                </div>
+            `;
+        }
+    };
 
-        const percent = Math.round((doneCount / modsSnap.size) * 100) || 0;
-        document.getElementById('progressFill').style.width = percent + "%";
         
         // CHECK IF COMPLETED ALL
         if (doneCount === modsSnap.size && modsSnap.size > 0) {
