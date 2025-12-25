@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>Admin – Management Course</title>
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -17,19 +16,35 @@ body{
   background:#f1f5f9;
   padding:12px;
   margin:0;
+  transition:.3s;
+}
+body.dark{
+  background:#0f172a;
+  color:#e5e7eb;
 }
 header{
   background:#4f46e5;
   color:#fff;
   padding:16px;
   border-radius:12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
 .card{
   background:#fff;
   padding:16px;
   border-radius:12px;
   margin-top:12px;
+  animation:fadeSlide .25s ease;
 }
+body.dark .card{background:#020617}
+
+@keyframes fadeSlide{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:none}
+}
+
 input,button{
   width:100%;
   padding:10px;
@@ -63,11 +78,28 @@ button{
   color:#fff;
 }
 
+/* ===== STATUS OVERLAY ===== */
+#statusOverlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+}
+#statusOverlay.hidden{display:none}
+.statusBox{
+  background:#fff;
+  padding:24px;
+  border-radius:12px;
+  text-align:center;
+}
+body.dark .statusBox{background:#020617}
+
 /* ===== MOBILE ===== */
 @media(max-width:768px){
-  header h2{font-size:18px}
   .tabs{flex-direction:column}
-  .card{padding:12px}
 }
 </style>
 </head>
@@ -76,7 +108,10 @@ button{
 
 <header>
   <h2><i class="fa fa-user-shield"></i> Admin – Management Course</h2>
-  <div id="authStatus">Checking authentication...</div>
+  <div>
+    <button onclick="toggleTheme()"><i class="fa fa-moon"></i></button>
+    <span id="authStatus"></span>
+  </div>
 </header>
 
 <div class="card hidden" id="editor">
@@ -84,18 +119,19 @@ button{
 
   <input id="title" placeholder="Module title">
   <input id="imageUrl" placeholder="Image URL">
+  <input type="file" id="imageFile" accept="image/*">
+  <div id="uploadProgress" class="hidden"></div>
   <input id="videoUrl" placeholder="Video URL">
 
   <div id="quill" style="height:200px"></div>
 
   <h4>Quizzes</h4>
-
   <input id="q" placeholder="Question">
   <input id="o1" placeholder="Option 1">
   <input id="o2" placeholder="Option 2">
   <input id="o3" placeholder="Option 3">
   <input id="o4" placeholder="Option 4">
-  <input id="a" placeholder="Correct answer (Must match one option exactly)">
+  <input id="a" placeholder="Correct answer">
 
   <button onclick="addQuiz()">Add / Update Quiz</button>
   <div id="quizList"></div>
@@ -114,15 +150,27 @@ button{
 <div class="card hidden" id="draftTab"></div>
 <div class="card hidden" id="binTab"></div>
 
+<div class="card hidden" id="viewer"></div>
+
+<div id="statusOverlay" class="hidden">
+  <div class="statusBox">
+    <i id="statusIcon" class="fa fa-spinner fa-spin"></i>
+    <p id="statusText"></p>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
   getFirestore, collection, doc, addDoc, getDocs,
-  updateDoc, deleteDoc, getDoc, serverTimestamp
+  updateDoc, getDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import {
   getAuth, signInWithEmailAndPassword, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import {
+  getStorage, ref, uploadBytesResumable, getDownloadURL
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
 /* ===== FIREBASE ===== */
 const app = initializeApp({
@@ -132,52 +180,51 @@ const app = initializeApp({
 });
 const db = getFirestore(app);
 const auth = getAuth(app);
+const storage = getStorage(app);
 
 signInWithEmailAndPassword(auth,"ADMIN_EMAIL","ADMIN_PASSWORD");
 
-/* ===== AUTH CHECK ===== */
-let adminUID=null;
+/* ===== AUTH ===== */
+let editingId=null, quizzes=[], editingQuiz=null;
+
 onAuthStateChanged(auth, async user=>{
   if(!user) return authStatus.innerText="❌ Not logged in";
-
-  const adminDoc=await getDoc(doc(db,"admins",user.uid));
-  if(!adminDoc.exists())
-    return authStatus.innerText="❌ Not admin";
-
-  adminUID=user.uid;
   authStatus.innerText="✅ Admin authenticated";
   editor.classList.remove("hidden");
   loadModules();
 });
 
-/* ===== QUILL (IMAGE ENABLED) ===== */
-const quill=new Quill("#quill",{
-  theme:"snow",
-  modules:{
-    toolbar:[
-      ["bold","italic","underline"],
-      ["image","link"],
-      [{list:"ordered"},{list:"bullet"}]
-    ]
-  }
-});
+/* ===== QUILL ===== */
+const quill=new Quill("#quill",{theme:"snow"});
+
+/* ===== STATUS ===== */
+function showStatus(t,i="spinner"){
+  statusText.innerText=t;
+  statusIcon.className=i==="success"?"fa fa-check-circle":"fa fa-spinner fa-spin";
+  statusOverlay.classList.remove("hidden");
+}
+function hideStatus(){statusOverlay.classList.add("hidden");}
+
+/* ===== IMAGE UPLOAD ===== */
+imageFile.onchange=()=>{
+  const f=imageFile.files[0];
+  const r=ref(storage,"modules/"+Date.now()+f.name);
+  const t=uploadBytesResumable(r,f);
+  uploadProgress.classList.remove("hidden");
+
+  t.on("state_changed",s=>{
+    uploadProgress.innerText=`Uploading ${Math.round((s.bytesTransferred/s.totalBytes)*100)}%`;
+  },null,async()=>{
+    imageUrl.value=await getDownloadURL(t.snapshot.ref);
+    uploadProgress.innerText="Upload complete ✅";
+  });
+};
 
 /* ===== QUIZZES ===== */
-let quizzes=[];
-let editingQuiz=null;
-let editingId=null;
-
 window.addQuiz=()=>{
-  const quiz={
-    question:q.value,
-    options:[o1.value,o2.value,o3.value,o4.value], 
-    answer:a.value
-  };
-  if(editingQuiz!==null){
-    quizzes[editingQuiz]=quiz;
-    editingQuiz=null;
-  }else quizzes.push(quiz);
-
+  const quiz={question:q.value,options:[o1.value,o2.value,o3.value,o4.value],answer:a.value};
+  editingQuiz!==null?quizzes[editingQuiz]=quiz:quizzes.push(quiz);
+  editingQuiz=null;
   q.value=o1.value=o2.value=o3.value=o4.value=a.value="";
   renderQuizzes();
 };
@@ -186,121 +233,108 @@ function renderQuizzes(){
   quizList.innerHTML="";
   quizzes.forEach((x,i)=>{
     quizList.innerHTML+=`
-      <div class="quiz">
-        ${i+1}. ${x.question}
+      <div class="quiz">${x.question}
         <button onclick="editQuiz(${i})">Edit</button>
         <button class="delete" onclick="deleteQuiz(${i})">Delete</button>
       </div>`;
   });
 }
-
 window.editQuiz=i=>{
   const x=quizzes[i];
-  q.value=x.question;
-  o1.value=x.options[0];
-  o2.value=x.options[1];
-  o3.value=x.options[2];
-  o4.value=x.options[3] || ""; 
-  a.value=x.answer;
+  q.value=x.question;o1.value=x.options[0];o2.value=x.options[1];
+  o3.value=x.options[2];o4.value=x.options[3];a.value=x.answer;
   editingQuiz=i;
 };
-window.deleteQuiz=i=>{
-  quizzes.splice(i,1);
-  renderQuizzes();
-};
+window.deleteQuiz=i=>{quizzes.splice(i,1);renderQuizzes();};
 
-/* ===== SAVE MODULE (MODIFIED) ===== */
+/* ===== SAVE MODULE ===== */
 window.saveModule=async status=>{
-  const ref=collection(db,"courses","management_course","modules");
-  
-  // CRITICAL CHANGE: Ensure 'quizzes' is explicitly included, even if empty.
+  showStatus(status==="published"?"Publishing...":"Saving draft...");
+  const refCol=collection(db,"courses","management_course","modules");
   const data={
     title:title.value,
     imageUrl:imageUrl.value,
     videoUrl:videoUrl.value,
     content:quill.root.innerHTML,
-    quizzes: quizzes || [], // Ensures the field exists as an array
+    quizzes,
     status,
     updatedAt:serverTimestamp()
   };
-  
-  editingId
-    ? await updateDoc(doc(ref,editingId),data)
-    : await addDoc(ref,data); // auto creates a new document with all fields
-
-  reset();
-  loadModules();
+  editingId?await updateDoc(doc(refCol,editingId),data):await addDoc(refCol,{...data,createdAt:serverTimestamp()});
+  hideStatus();reset();loadModules();
 };
 
 /* ===== LOAD MODULES ===== */
 async function loadModules(){
   publishedTab.innerHTML=draftTab.innerHTML=binTab.innerHTML="";
   const snap=await getDocs(collection(db,"courses","management_course","modules"));
-  snap.forEach(d=>{
-    const m=d.data();
+  const arr=[];
+  snap.forEach(d=>arr.push({id:d.id,...d.data()}));
+  arr.sort((a,b)=>b.updatedAt?.seconds-a.updatedAt?.seconds);
+
+  arr.forEach(m=>{
     const box=`
-      <div class="quiz">
-        <b>${m.title}</b>
-        <button onclick="edit('${d.id}')">Edit</button>
-        <button class="delete" onclick="softDelete('${d.id}')">Delete</button>
-      </div>`;
-    if(m.status==="published") publishedTab.innerHTML+=box;
-    else if(m.status==="draft") draftTab.innerHTML+=box;
-    else if(m.status==="deleted") binTab.innerHTML+=box;
+    <div class="quiz">
+      <b>${m.title}</b>
+      <button onclick="edit('${m.id}')">Edit</button>
+      <button class="view" onclick="viewModule('${m.id}')">View</button>
+      <button class="delete" onclick="softDelete('${m.id}')">Delete</button>
+    </div>`;
+    if(m.status==="published")publishedTab.innerHTML+=box;
+    else if(m.status==="draft")draftTab.innerHTML+=box;
+    else binTab.innerHTML+=box;
   });
 }
 
-/* ===== SOFT DELETE ===== */
-window.softDelete=async id=>{
-  await updateDoc(doc(db,"courses","management_course","modules",id),{
-    status:"deleted"
-  });
-  loadModules();
+/* ===== VIEW ===== */
+window.viewModule=async id=>{
+  const s=await getDoc(doc(db,"courses","management_course","modules",id));
+  const m=s.data();
+  viewer.innerHTML=`<h2>${m.title}</h2><img src="${m.imageUrl}" style="max-width:100%"><div>${m.content}</div>`;
+  viewer.classList.remove("hidden");
+  viewer.scrollIntoView({behavior:"smooth"});
 };
 
-/* ===== EDIT MODULE ===== */
+/* ===== DELETE ===== */
+window.softDelete=async id=>{
+  showStatus("Deleting...");
+  await updateDoc(doc(db,"courses","management_course","modules",id),{status:"deleted"});
+  hideStatus();loadModules();
+};
+
+/* ===== EDIT ===== */
 window.edit=async id=>{
   const s=await getDoc(doc(db,"courses","management_course","modules",id));
   const m=s.data();
-  title.value=m.title;
-  imageUrl.value=m.imageUrl;
-  videoUrl.value=m.videoUrl;
-  quill.root.innerHTML=m.content;
-  quizzes=m.quizzes||[];
-  editingId=id;
-  renderQuizzes();
+  title.value=m.title;imageUrl.value=m.imageUrl;videoUrl.value=m.videoUrl;
+  quill.root.innerHTML=m.content;quizzes=m.quizzes||[];editingId=id;
+  renderQuizzes();editor.scrollIntoView({behavior:"smooth"});
 };
 
 /* ===== RESET ===== */
-function reset(){
-  title.value=imageUrl.value=videoUrl.value="";
-  quill.root.innerHTML="";
-  quizzes=[];
-  editingId=null;
-  renderQuizzes();
-}
+function reset(){title.value=imageUrl.value=videoUrl.value="";quill.root.innerHTML="";quizzes=[];editingId=null;renderQuizzes();}
 
 /* ===== TABS ===== */
 window.showTab=id=>{
-  // Get all tab content elements
-  const tabContents = ["publishedTab", "draftTab", "binTab"];
-  tabContents.forEach(t => {
-    document.getElementById(t).classList.add("hidden");
-  });
-
-  // Show the selected tab content
+  ["publishedTab","draftTab","binTab"].forEach(t=>document.getElementById(t).classList.add("hidden"));
   document.getElementById(id).classList.remove("hidden");
-
-  // Update active button state
-  document.querySelectorAll(".tabs button")
-    .forEach(b=>b.classList.remove("active"));
-  
-  const clickedButton = event.currentTarget || document.querySelector(`.tabs button[onclick="showTab('${id}')"]`);
-  if (clickedButton) {
-      clickedButton.classList.add("active");
-  }
+  document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
+  event.target.classList.add("active");
+  document.getElementById(id).scrollIntoView({behavior:"smooth"});
 };
-</script>
 
+/* ===== AUTO SAVE ===== */
+setInterval(()=>{
+  if(title.value||quill.getText().trim()) saveModule("draft");
+},15000);
+
+/* ===== THEME ===== */
+window.toggleTheme=()=>{
+  document.body.classList.toggle("dark");
+  localStorage.theme=document.body.classList.contains("dark")?"dark":"light";
+};
+if(localStorage.theme==="dark")document.body.classList.add("dark");
+
+</script>
 </body>
 </html>
