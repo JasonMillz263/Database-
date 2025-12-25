@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Admin – New Product Development and Management Course</title>
+<title>Admin – New Product Development & Management Course</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -20,12 +20,11 @@ body{
 }
 body.dark{background:#0f172a;color:#f8fafc}
 
-/* HEADER */
 header{
 background:#4f46e5;
 color:#fff;
-padding:16px;
-border-radius:16px;
+padding:14px;
+border-radius:14px;
 display:flex;
 flex-direction:column;
 gap:10px;
@@ -37,21 +36,10 @@ align-items:center;
 }
 .header-left{
 display:flex;
-flex-direction:column;
-gap:2px;
-}
-.header-left .title{
-display:flex;
 gap:10px;
 align-items:center;
-font-size:18px;
-font-weight:700;
 }
-.header-left .subtitle{
-font-size:12px;
-opacity:.9;
-letter-spacing:1px;
-}
+.header-left i{font-size:22px}
 .header-right{
 display:flex;
 gap:10px;
@@ -59,7 +47,7 @@ align-items:center;
 }
 .header-chip{
 background:rgba(255,255,255,.15);
-padding:6px 12px;
+padding:6px 10px;
 border-radius:20px;
 font-size:12px;
 white-space:nowrap;
@@ -75,7 +63,6 @@ cursor:pointer;
 color:#fff;
 }
 
-/* CARDS */
 .card{
 background:#fff;
 padding:14px;
@@ -91,7 +78,6 @@ from{opacity:0;transform:translateY(6px)}
 to{opacity:1;transform:none}
 }
 
-/* INPUTS */
 input,button{
 width:100%;
 padding:12px;
@@ -107,17 +93,15 @@ border:none;
 border-radius:12px;
 font-weight:600;
 cursor:pointer;
-transition:transform .15s ease;
+transition:transform .15s ease,box-shadow .15s ease;
 }
 button:active{transform:scale(.96)}
 
-/* BUTTON COLORS */
 .publish{background:#16a34a;color:#fff}
 .draft{background:#f59e0b;color:#000}
 .delete{background:#dc2626;color:#fff}
 .view{background:#0ea5e9;color:#fff}
 
-/* QUIZ */
 .quiz{
 background:#eef2ff;
 padding:10px;
@@ -129,7 +113,6 @@ gap:6px;
 }
 body.dark .quiz{background:#334155}
 
-/* TABS */
 .tabs{
 display:flex;
 gap:8px;
@@ -138,23 +121,22 @@ margin-top:14px;
 .tabs button{flex:1;background:#e5e7eb}
 .tabs button.active{background:#4f46e5;color:#fff}
 
-/* QUILL */
-#quill{border-radius:12px;overflow:hidden}
+#quill{
+border-radius:12px;
+overflow:hidden;
+}
 .ql-editor{
 font-size:15px;
 line-height:1.6;
 padding:12px;
 }
-.ql-editor img,
-.viewer img{
+.ql-editor img{
 max-width:100%;
-height:auto;
 display:block;
 margin:12px auto;
 border-radius:10px;
 }
 
-/* TOAST */
 #toast{
 position:fixed;
 bottom:20px;
@@ -171,10 +153,8 @@ z-index:9999;
 animation:fadeIn .2s ease;
 }
 #toast.hidden{display:none}
-
 .hidden{display:none}
 
-/* MOBILE */
 @media(min-width:768px){
 body{max-width:720px;margin:auto}
 }
@@ -186,15 +166,12 @@ body{max-width:720px;margin:auto}
 <header>
   <div class="header-top">
     <div class="header-left">
-      <div class="title">
-        <i class="fa fa-user-shield"></i>
-        Admin Panel
-      </div>
-      <div class="subtitle" id="courseTitle"></div>
+      <i class="fa fa-user-shield"></i>
+      <b>New Product Development & Management</b>
     </div>
     <div class="header-right">
       <div id="authStatus" class="header-chip">Checking…</div>
-      <button class="theme-btn">🌓</button>
+      <button class="theme-btn" onclick="toggleTheme()">🌓</button>
     </div>
   </div>
 </header>
@@ -205,7 +182,7 @@ body{max-width:720px;margin:auto}
 </div>
 
 <div class="card hidden" id="addModuleCard">
-  <button class="publish">➕ Add New Module</button>
+  <button class="publish" onclick="openEditor()">➕ Add New Module</button>
 </div>
 
 <div class="card hidden" id="editor">
@@ -222,17 +199,17 @@ body{max-width:720px;margin:auto}
   <input id="o4" placeholder="Option 4">
   <input id="a" placeholder="Correct answer">
 
-  <button>Add / Update Quiz</button>
+  <button onclick="addQuiz()">Add / Update Quiz</button>
   <div id="quizList"></div>
 
-  <button class="draft">Save Draft</button>
-  <button class="publish">Publish</button>
+  <button class="draft" onclick="saveModule('draft')">Save Draft</button>
+  <button class="publish" onclick="saveModule('published')">Publish</button>
 </div>
 
 <div class="tabs">
-  <button class="active">Published</button>
-  <button>Drafts</button>
-  <button>Recycle Bin</button>
+  <button class="active" onclick="showTab('publishedTab',this)">Published</button>
+  <button onclick="showTab('draftTab',this)">Drafts</button>
+  <button onclick="showTab('binTab',this)">Recycle Bin</button>
 </div>
 
 <div class="card" id="publishedTab"></div>
@@ -242,21 +219,12 @@ body{max-width:720px;margin:auto}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import {
-  getFirestore, collection, doc, addDoc, getDocs,
-  updateDoc, getDoc, serverTimestamp,
-  query, orderBy
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-import {
-  getAuth, signInWithEmailAndPassword, onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getFirestore, collection, doc, addDoc, getDocs, updateDoc, getDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-/* COURSE CONFIG */
-const COURSE_ID = "new-product-development-and-management";
-const COURSE_NAME = "New Product Development and Management Course";
-document.getElementById("courseTitle").innerText = COURSE_NAME;
+/* 🔥 NEW COURSE TARGET */
+const COURSE_ID = "new_product_development_and_management_course";
 
-/* FIREBASE */
 const app = initializeApp({
   apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
   authDomain:"students-login-29409.firebaseapp.com",
@@ -265,9 +233,9 @@ const app = initializeApp({
 
 const db = getFirestore(app);
 const auth = getAuth(app);
+
 signInWithEmailAndPassword(auth,"ADMIN_EMAIL","ADMIN_PASSWORD");
 
-/* AUTH */
 onAuthStateChanged(auth, async user=>{
   if(!user){authStatus.innerText="Not logged in";return;}
   const admin = await getDoc(doc(db,"admins",user.uid));
@@ -277,134 +245,79 @@ onAuthStateChanged(auth, async user=>{
   loadModules();
 });
 
-/* QUILL */
-const quill = new Quill("#quill",{
-  theme:"snow",
-  modules:{
-    toolbar:{
-      container:[
-        [{header:[1,2,3,false]}],
-        ["bold","italic","underline"],
-        [{list:"ordered"},{list:"bullet"}],
-        ["link","image"],["clean"]
-      ],
-      handlers:{ image:imageHandler }
-    }
-  }
-});
+const quill = new Quill("#quill",{theme:"snow"});
 
-function imageHandler(){
-  const input=document.createElement("input");
-  input.type="file";
-  input.accept="image/*";
-  input.click();
-  input.onchange=()=>{
-    const file=input.files[0];
-    if(!file)return;
-    toastText.innerText="Uploading image...";
-    toast.classList.remove("hidden");
-    const reader=new FileReader();
-    reader.onload=()=>{
-      quill.insertEmbed(quill.getLength(),"image",reader.result);
-      toastText.innerText="Image uploaded";
-      setTimeout(()=>toast.classList.add("hidden"),1200);
-    };
-    reader.readAsDataURL(file);
-  };
-}
+let quizzes=[],editingId=null;
 
-/* MODULE LOGIC */
-let quizzes=[], editingId=null;
-
-function openEditor(){
-  editor.classList.remove("hidden");
-  title.value="";
-  videoUrl.value="";
-  quill.root.innerHTML="";
-  quizzes=[];
-  quizList.innerHTML="";
-  editingId=null;
-}
-
-function addQuiz(){
-  quizzes.push({
-    q:q.value,o1:o1.value,o2:o2.value,o3:o3.value,o4:o4.value,a:a.value
+async function loadModules(){
+  publishedTab.innerHTML=draftTab.innerHTML=binTab.innerHTML="";
+  const s = await getDocs(
+    query(collection(db,"courses",COURSE_ID,"modules"),orderBy("updatedAt","desc"))
+  );
+  s.forEach(d=>{
+    const m=d.data();
+    const box=`<div class="quiz">
+      <b>${m.title}</b>
+      <button class="view" onclick="viewModule('${d.id}')">View</button>
+      <button onclick="edit('${d.id}')">Edit</button>
+      <button class="delete" onclick="softDelete('${d.id}')">Delete</button>
+    </div>`;
+    (m.status==="published"?publishedTab:m.status==="draft"?draftTab:binTab).innerHTML+=box;
   });
-  quizList.innerHTML += `<div class="quiz">${q.value}</div>`;
-  q.value=o1.value=o2.value=o3.value=o4.value=a.value="";
 }
 
-async function saveModule(status){
+window.saveModule=async status=>{
+  const ref = collection(db,"courses",COURSE_ID,"modules");
   const data={
-    title:title.value.trim(),
-    videoUrl:videoUrl.value.trim(),
+    title:title.value,
+    videoUrl:videoUrl.value,
     content:quill.root.innerHTML,
     quizzes,
     status,
-    courseId:COURSE_ID,
     updatedAt:serverTimestamp()
   };
+  editingId
+    ? await updateDoc(doc(ref,editingId),data)
+    : await addDoc(ref,data);
+  reset(); loadModules();
+};
 
-  const ref=collection(db,"courses",COURSE_ID,"modules");
+window.viewModule=async id=>{
+  const s=await getDoc(doc(db,"courses",COURSE_ID,"modules",id));
+  const m=s.data();
+  viewer.innerHTML=`<h3>${m.title}</h3>${m.content}`;
+  viewer.classList.remove("hidden");
+};
 
-  if(editingId){
-    await updateDoc(doc(ref,editingId),data);
-  }else{
-    data.createdAt=serverTimestamp();
-    await addDoc(ref,data);
-  }
+window.edit=async id=>{
+  const s=await getDoc(doc(db,"courses",COURSE_ID,"modules",id));
+  const m=s.data();
+  title.value=m.title;
+  videoUrl.value=m.videoUrl;
+  quill.root.innerHTML=m.content;
+  quizzes=m.quizzes||[];
+  editingId=id;
+  editor.classList.remove("hidden");
+};
 
-  editor.classList.add("hidden");
-  loadModules();
+window.softDelete=id=>
+  updateDoc(doc(db,"courses",COURSE_ID,"modules",id),{status:"deleted"}).then(loadModules);
+
+function reset(){
+  title.value=videoUrl.value="";
+  quill.root.innerHTML="";
+  quizzes=[];
+  editingId=null;
 }
 
-async function loadModules(){
-  publishedTab.innerHTML="";
-  draftTab.innerHTML="";
-  binTab.innerHTML="";
-
-  const ref=collection(db,"courses",COURSE_ID,"modules");
-  const snap=await getDocs(query(ref,orderBy("createdAt","desc")));
-
-  snap.forEach(d=>{
-    const m=d.data();
-    const div=document.createElement("div");
-    div.className="quiz";
-    div.innerHTML=`<strong>${m.title}</strong><br>Status: ${m.status}`;
-    if(m.status==="published")publishedTab.appendChild(div);
-    else if(m.status==="draft")draftTab.appendChild(div);
-    else binTab.appendChild(div);
-  });
-}
-
-function showTab(id,btn){
-  document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden"));
+window.openEditor=()=>editor.classList.remove("hidden");
+window.showTab=(id,btn)=>{
+  ["publishedTab","draftTab","binTab"].forEach(t=>document.getElementById(t).classList.add("hidden"));
   document.getElementById(id).classList.remove("hidden");
   document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
   btn.classList.add("active");
-}
-
-function toggleTheme(){
-  document.body.classList.toggle("dark");
-}
-
-/* EXPOSE FUNCTIONS FOR BUTTONS */
-window.openEditor = openEditor;
-window.addQuiz = addQuiz;
-window.saveModule = saveModule;
-window.showTab = showTab;
-window.toggleTheme = toggleTheme;
-
-/* ATTACH BUTTON EVENT LISTENERS */
-document.querySelector("#addModuleCard button").onclick = openEditor;
-document.querySelector("#editor button.draft").onclick = () => saveModule('draft');
-document.querySelector("#editor button.publish").onclick = () => saveModule('published');
-document.querySelector("#editor button:nth-of-type(1)").onclick = addQuiz; // Add/Update Quiz
-document.querySelector(".theme-btn").onclick = toggleTheme;
-document.querySelectorAll(".tabs button").forEach((btn,i)=>{
-  const tabs = ["publishedTab","draftTab","binTab"];
-  btn.onclick = () => showTab(tabs[i],btn);
-});
+};
+window.toggleTheme=()=>document.body.classList.toggle("dark");
 </script>
 
 </body>
