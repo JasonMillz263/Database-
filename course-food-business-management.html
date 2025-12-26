@@ -554,16 +554,36 @@ document.addEventListener('DOMContentLoaded', function() {
 
         let progressPercent = 0;
 
-if (isPass) {
-            if (auth.currentUser) {
-                await db.collection("students").doc(auth.currentUser.uid).set({
-                    enrolledCourses: {
-                        [COURSE_ID]: { 
-                            completedModules: { [activeModuleId]: true } 
-                        }
-                    }
-                }, { merge: true });
+if (isPass && auth.currentUser) {
+  try {
+    const moduleRef = db
+      .collection("courses")
+      .doc(COURSE_ID)
+      .collection("modules")
+      .doc(activeModuleId);
+
+    const moduleSnap = await moduleRef.get();
+
+    // Ignore drafts or deleted modules
+    if (!moduleSnap.exists) return;
+    if (moduleSnap.data().status !== "published") return;
+
+    await db.collection("students")
+      .doc(auth.currentUser.uid)
+      .set({
+        enrolledCourses: {
+          [COURSE_ID]: {
+            completedModules: {
+              [activeModuleId]: true
             }
+          }
+        }
+      }, { merge: true });
+
+  } catch (err) {
+    console.error("Failed to save completed module:", err);
+  }
+}
 
             quizArea.innerHTML = `
                 <div style="text-align:center;">
