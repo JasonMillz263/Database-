@@ -552,40 +552,55 @@ document.addEventListener('DOMContentLoaded', function() {
         const percentage = (currentScore / currentQuizData.length) * 100;
         const isPass = percentage >= 60;
 
-        let progressPercent = 0; 
+        let progressPercent = 0;
 
-        if (isPass) {
-            if (auth.currentUser) {
-                try {
-                    // 1. Get total modules to calculate real progress %
-                    const modsSnap = await db.collection("courses").doc(COURSE_ID).collection("modules").where("status", "==", "published").get();
-                    const totalModules = modsSnap.size;
+if (isPass && auth.currentUser) {
+    try {
+        // 1️⃣ Get ALL published modules
+        const modsSnap = await db
+            .collection("courses")
+            .doc(COURSE_ID)
+            .collection("modules")
+            .where("status", "==", "published")
+            .get();
 
-                    // 2. Get current completed count from DB
-                    const userSnap = await db.collection("students").doc(auth.currentUser.uid).get();
-                    const completedData = userSnap.data()?.enrolledCourses?.[COURSE_ID]?.completedModules || {};
-                    
-                    // Add the current module to the count if it wasn't already there
-                    completedData[activeModuleId] = true;
-                    const doneCount = Object.keys(completedData).length;
-                    
-                    // 3. Calculate the final progress percentage
-                    progressPercent = Math.round((doneCount / totalModules) * 100);
+        const publishedModuleIds = modsSnap.docs.map(doc => doc.id);
+        const totalModules = publishedModuleIds.length;
 
-                    // 4. SAVE EVERYTHING: including the 'progress' field for your dashboard
-                    await db.collection("students").doc(auth.currentUser.uid).set({
-                        enrolledCourses: {
-                            [COURSE_ID]: { 
-                                progress: progressPercent, // Dashboard reads this!
-                                completedModules: completedData 
-                            }
-                        }
-                    }, { merge: true });
+        // 2️⃣ Get student progress data
+        const userRef = db.collection("students").doc(auth.currentUser.uid);
+        const userSnap = await userRef.get();
 
-                } catch (error) {
-                    console.error("Error saving progress:", error);
+        const completedModules =
+            userSnap.data()?.enrolledCourses?.[COURSE_ID]?.completedModules || {};
+
+        // 3️⃣ Mark current module as completed
+        completedModules[activeModuleId] = true;
+
+        // 4️⃣ FILTER: only count completed modules that are still published
+        const validCompletedCount = Object.keys(completedModules)
+            .filter(moduleId => publishedModuleIds.includes(moduleId))
+            .length;
+
+        // 5️⃣ Calculate real progress
+        progressPercent = totalModules > 0
+            ? Math.round((validCompletedCount / totalModules) * 100)
+            : 0;
+
+        // 6️⃣ Save CLEAN progress
+        await userRef.set({
+            enrolledCourses: {
+                [COURSE_ID]: {
+                    progress: progressPercent,
+                    completedModules
                 }
             }
+        }, { merge: true });
+
+    } catch (error) {
+        console.error("Error saving progress:", error);
+    }
+}
 
             quizArea.innerHTML = `
                 <div style="text-align:center;">
