@@ -559,9 +559,7 @@ if (isPass && auth.currentUser) {
         const uid = auth.currentUser.uid;
         const userRef = db.collection("students").doc(uid);
 
-        /* =====================================================
-           1️⃣ GET ALL PUBLISHED MODULES FOR THIS COURSE
-        ===================================================== */
+        // 1️⃣ Get published modules
         const modsSnap = await db
             .collection("courses")
             .doc(COURSE_ID)
@@ -572,47 +570,43 @@ if (isPass && auth.currentUser) {
         const publishedModuleIds = modsSnap.docs.map(doc => doc.id);
         const totalModules = publishedModuleIds.length;
 
-        /* =====================================================
-           2️⃣ GET EXISTING STUDENT COURSE DATA
-        ===================================================== */
+        // 2️⃣ Get existing student course data
         const userSnap = await userRef.get();
-        const courseData =
-            userSnap.data()?.enrolledCourses?.[COURSE_ID] || {};
-
+        const enrolledCourses = userSnap.data()?.enrolledCourses || {};
+        const courseData = enrolledCourses[COURSE_ID] || {};
         const completedModules = courseData.completedModules || {};
 
-        /* =====================================================
-           3️⃣ MARK CURRENT MODULE AS COMPLETED
-        ===================================================== */
+        // 3️⃣ Mark module complete
         completedModules[activeModuleId] = true;
 
-        /* =====================================================
-           4️⃣ COUNT ONLY COMPLETED + PUBLISHED MODULES
-        ===================================================== */
+        // 4️⃣ Count only completed + published
         const validCompletedCount = Object.keys(completedModules)
-            .filter(moduleId => publishedModuleIds.includes(moduleId))
+            .filter(id => publishedModuleIds.includes(id))
             .length;
 
-        /* =====================================================
-           5️⃣ CALCULATE REAL PROGRESS
-        ===================================================== */
+        // 5️⃣ Calculate progress
         progressPercent = totalModules > 0
             ? Math.round((validCompletedCount / totalModules) * 100)
             : 0;
 
-        /* =====================================================
-           6️⃣ SAVE (WITHOUT OVERWRITING OTHER DATA)
-        ===================================================== */
-        await userRef.update({
-            [`enrolledCourses.${COURSE_ID}.completedModules`]: completedModules,
-            [`enrolledCourses.${COURSE_ID}.progress`]: progressPercent
-        });
+        // 6️⃣ SAFE SAVE (NO DATA LOSS, NO SILENT FAIL)
+        await userRef.set({
+            enrolledCourses: {
+                ...enrolledCourses,
+                [COURSE_ID]: {
+                    ...courseData,
+                    completedModules,
+                    progress: progressPercent
+                }
+            }
+        }, { merge: true });
 
         console.log("✅ Progress saved:", progressPercent + "%");
 
     } catch (error) {
         console.error("❌ Error saving progress:", error);
     }
+}
 }
 
             quizArea.innerHTML = `
