@@ -1,153 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Inbox | Academy</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Ticket Inbox</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #eef1f5;
+      padding: 1rem;
+    }
 
-<style>
-:root { --primary:#6d28d9; --bg:#f3f4f6; --border:#e5e7eb; }
-body { margin:0; font-family:Poppins,sans-serif; background:var(--bg); height:100vh; display:flex; flex-direction:column; overflow:hidden; }
-.nav { background:white; padding:15px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
-.nav h2 { margin:0; color:var(--primary); }
-.tab { padding:6px 12px; border-radius:8px; font-size:13px; cursor:pointer; border:none; background:#eee; }
-.tab.active { background:var(--primary); color:white; }
-.main { display:flex; flex:1; overflow:hidden; }
-.ticket-list { width:100%; max-width:400px; background:white; border-right:1px solid var(--border); overflow-y:auto; }
-.list-item { padding:15px; border-bottom:1px solid var(--border); cursor:pointer; }
-.list-item:hover { background:#f9fafb; }
-.list-item.selected { background:#ede9fe; border-left:4px solid var(--primary); }
-.tag { font-size:10px; padding:2px 6px; border-radius:4px; background:#e5e7eb; }
-.payment { background:#fef3c7; color:#b45309; }
-.ticket-detail { flex:1; padding:30px; overflow-y:auto; }
-.detail-card { background:white; padding:25px; border-radius:16px; max-width:800px; margin:auto; box-shadow:0 4px 20px rgba(0,0,0,.05); }
-.message-box { background:#f9fafb; padding:15px; border-radius:12px; margin:15px 0; }
-textarea { width:100%; border:2px solid var(--border); border-radius:12px; padding:12px; }
-button { padding:10px 20px; border:none; border-radius:8px; cursor:pointer; font-weight:600; }
-.send { background:var(--primary); color:white; }
-.close { background:#ef4444; color:white; margin-left:10px; }
-</style>
+    h2 {
+      text-align: center;
+    }
+
+    .ticket {
+      background: white;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 8px;
+    }
+
+    select {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    img {
+      max-width: 100%;
+      margin-top: 0.5rem;
+      border-radius: 6px;
+    }
+  </style>
 </head>
 
 <body>
 
-<div class="nav">
-  <h2>👮 Admin Inbox</h2>
-  <div>
-    <button class="tab active" onclick="filterTickets('Open',this)">Active</button>
-    <button class="tab" onclick="filterTickets('Closed',this)">Closed</button>
-  </div>
-</div>
-
-<div class="main">
-  <div class="ticket-list" id="ticketList">Loading…</div>
-
-  <div class="ticket-detail">
-    <div id="placeholder" style="color:#9ca3af;text-align:center;padding-top:100px">
-      Select a ticket
-    </div>
-
-    <div id="detail" style="display:none">
-      <div class="detail-card">
-        <small id="dMeta"></small>
-        <h2 id="dSubject"></h2>
-        <p id="dEmail"></p>
-
-        <div class="message-box" id="dMessage"></div>
-
-        <img id="dImg" style="max-width:100%;border-radius:10px;display:none">
-
-        <h4>Admin Reply</h4>
-        <textarea id="reply"></textarea>
-
-        <div style="margin-top:10px;text-align:right">
-          <button class="send" onclick="sendReply()">Send</button>
-          <button class="close" onclick="closeTicket()">Close</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+<h2>Admin Ticket Inbox</h2>
+<div id="tickets"></div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+  import { getFirestore, collection, onSnapshot, doc, updateDoc, serverTimestamp } 
+    from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-const app = initializeApp({
-  apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
-  authDomain:"students-login-29409.firebaseapp.com",
-  projectId:"students-login-29409"
-});
+  const firebaseConfig = {
+    apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+    authDomain: "students-login-29409.firebaseapp.com",
+    projectId: "students-login-29409",
+    storageBucket: "students-login-29409.firebasestorage.app",
+    messagingSenderId: "634331456872",
+    appId: "1:634331456872:web:6dae360c5e28d8356562dd",
+    measurementId: "G-96XXYG1VR2"
+  };
 
-const db = getFirestore(app);
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-let tickets=[], currentId=null, filter="Open";
+  const ticketsEl = document.getElementById("tickets");
 
-const q = query(collection(db,"tickets"),orderBy("createdAt","desc"));
-onSnapshot(q,s=>{
-  tickets=s.docs.map(d=>({id:d.id,...d.data()}));
-  render();
-});
-
-window.filterTickets=(f,btn)=>{
-  filter=f;
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
-  render();
-};
-
-function render(){
-  const list=document.getElementById("ticketList");
-  list.innerHTML="";
-  tickets
-    .filter(t=>filter==="Closed"?t.status==="Closed":t.status!=="Closed")
-    .forEach(t=>{
-      const d=document.createElement("div");
-      d.className="list-item";
-      d.innerHTML=`
-        <span class="tag ${t.category==='Payment'?'payment':''}">${t.category}</span>
-        <small style="float:right">${t.status}</small>
-        <h4>${t.subject}</h4>
-        <p>${t.studentName}</p>
+  onSnapshot(collection(db, "tickets"), snap => {
+    ticketsEl.innerHTML = "";
+    snap.forEach(d => {
+      const t = d.data();
+      ticketsEl.innerHTML += `
+        <div class="ticket">
+          <strong>${t.userEmail}</strong>
+          <p>${t.description}</p>
+          <img src="${t.imageBase64}">
+          <select onchange="updateStatus('${d.id}', this.value)">
+            <option value="open" ${t.status==="open"?"selected":""}>Open</option>
+            <option value="in_review" ${t.status==="in_review"?"selected":""}>In Review</option>
+            <option value="closed" ${t.status==="closed"?"selected":""}>Closed</option>
+          </select>
+        </div>
       `;
-      d.onclick=()=>open(t);
-      list.appendChild(d);
     });
-}
-
-function open(t){
-  currentId=t.id;
-  document.getElementById("placeholder").style.display="none";
-  document.getElementById("detail").style.display="block";
-  dSubject.innerText=t.subject;
-  dEmail.innerText=`${t.studentName} (${t.studentEmail})`;
-  dMeta.innerText=t.createdAt?.toDate().toLocaleString()||"";
-  dMessage.innerText=t.message;
-  reply.value=t.adminResponse||"";
-
-  if(t.attachment){
-    dImg.src=t.attachment;
-    dImg.style.display="block";
-  } else dImg.style.display="none";
-}
-
-window.sendReply=async()=>{
-  if(!currentId) return;
-  await updateDoc(doc(db,"tickets",currentId),{
-    adminResponse:reply.value,
-    status:"Replied",
-    lastUpdated:serverTimestamp()
   });
-  alert("Reply sent");
-};
 
-window.closeTicket=async()=>{
-  if(!currentId) return;
-  await updateDoc(doc(db,"tickets",currentId),{status:"Closed"});
-  alert("Ticket closed");
-};
+  window.updateStatus = async (id, status) => {
+    await updateDoc(doc(db, "tickets", id), {
+      status,
+      updatedAt: serverTimestamp()
+    });
+  };
 </script>
+
 </body>
 </html>
