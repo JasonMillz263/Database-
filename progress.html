@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>My Learning Dashboard</title>
+    <title>Academy Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
@@ -13,138 +13,110 @@
 
     <style>
         :root {
-            /* BRANDING COLORS */
-            --brand-primary: #6366f1;       /* Indigo/Purple */
-            --brand-secondary: #3b82f6;     /* Blue */
-            --status-completed: #f59e0b;    /* Yellow/Gold */
-            --status-locked: #ef4444;       /* Red */
-            --status-locked-bg: #fef2f2;
+            /* COLOR PALETTE */
+            --primary: #6366f1;       /* Indigo */
+            --primary-dark: #4338ca;  /* Deep Purple */
+            --accent-blue: #3b82f6;   /* Bright Blue */
+            --status-gold: #f59e0b;   /* Yellow/Gold (Completed) */
+            --status-red: #ef4444;    /* Red (Locked/Not Started) */
             --bg-body: #f3f4f6;
             --bg-card: #ffffff;
-            --text-main: #1f2937;
+            --text-main: #111827;
             --text-muted: #6b7280;
         }
 
-        * { box-sizing: border-box; }
-        
-        body { 
-            margin: 0; 
-            font-family: 'Inter', sans-serif; 
-            background: var(--bg-body); 
-            color: var(--text-main);
+        body {
+            margin: 0; font-family: 'Inter', sans-serif;
+            background: var(--bg-body); color: var(--text-main);
         }
 
-        /* --- HEADER --- */
-        .dashboard-header {
-            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+        /* HEADER SECTION */
+        .hero {
+            background: linear-gradient(135deg, var(--primary-dark), var(--accent-blue));
+            padding: 40px 20px 80px;
             color: white;
-            padding: 40px 20px 80px; /* Extra padding bottom for overlap */
             text-align: center;
             border-bottom-left-radius: 30px;
             border-bottom-right-radius: 30px;
-            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+            box-shadow: 0 10px 30px rgba(67, 56, 202, 0.3);
         }
-        .dashboard-header h1 { margin: 0; font-size: 2.5rem; font-weight: 800; }
-        .dashboard-header p { margin-top: 10px; font-size: 1.1rem; opacity: 0.9; }
+        .hero h1 { margin: 0; font-size: 2.2rem; font-weight: 800; }
+        .hero p { opacity: 0.9; margin-top: 10px; font-size: 1.1rem; }
 
-        /* --- CONTAINER --- */
+        /* GRID CONTAINER */
         .container {
-            max-width: 1000px;
-            margin: -50px auto 50px; /* Pull up to overlap header */
-            padding: 0 20px;
-            position: relative;
-            z-index: 10;
+            max-width: 1100px; margin: -50px auto 50px; padding: 0 20px;
+            position: relative; z-index: 2;
         }
-
-        .grid-container {
+        
+        .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 25px;
         }
 
-        /* --- LOADING STATE --- */
-        .loading-msg {
-            text-align: center; font-weight: 600; color: var(--text-muted); margin-top: 40px;
-        }
-
-        /* --- COURSE CARD --- */
-        .course-card {
+        /* CARD DESIGN */
+        .card {
             background: var(--bg-card);
             border-radius: 16px;
             padding: 25px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s, box-shadow 0.2s;
-            border-top: 6px solid var(--brand-primary);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            display: flex; flex-direction: column;
+            border-top: 6px solid var(--primary); /* Default Active Color */
         }
+        .card:hover { transform: translateY(-5px); }
 
-        .course-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
+        /* DYNAMIC BORDERS */
+        .border-red { border-top-color: var(--status-red); }
+        .border-gold { border-top-color: var(--status-gold); }
 
-        /* LOCKED STATE */
-        .card-locked {
-            border-top-color: var(--status-locked);
-            background: #fffafa; /* Very light red tint */
-            opacity: 0.8;
-        }
-        .card-locked .card-title { color: var(--text-muted); }
-        .lock-icon { 
-            position: absolute; top: 10px; right: 10px; 
-            font-size: 1.5rem; color: var(--status-locked); 
-        }
-
-        /* COMPLETED STATE */
-        .card-completed { border-top-color: var(--status-completed); }
-
-        /* CARD CONTENT */
-        .card-header { margin-bottom: 15px; }
-        .card-title { margin: 0; font-size: 1.3rem; font-weight: 700; color: var(--text-main); }
-        .card-meta { font-size: 0.85rem; color: var(--text-muted); margin-top: 5px; display: flex; justify-content: space-between; }
+        /* CONTENT */
+        .card h3 { margin: 0 0 5px 0; font-size: 1.25rem; }
+        .card-meta { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px; display: flex; justify-content: space-between; }
 
         /* PROGRESS BAR */
-        .progress-wrapper { margin: 20px 0; }
-        .progress-bg { height: 10px; background: #e5e7eb; border-radius: 10px; overflow: hidden; }
-        .progress-fill { height: 100%; transition: width 0.6s ease; width: 0%; border-radius: 10px; }
-
-        /* Fill Colors */
-        .fill-blue { background: linear-gradient(90deg, var(--brand-primary), var(--brand-secondary)); }
-        .fill-yellow { background: var(--status-completed); }
-        .fill-red { background: var(--status-locked); }
+        .progress-track {
+            background: #e5e7eb; height: 10px; border-radius: 10px; overflow: hidden; margin-bottom: 20px;
+        }
+        .progress-fill {
+            height: 100%; width: 0%; transition: width 0.8s ease;
+            background: linear-gradient(90deg, var(--primary), var(--accent-blue));
+        }
+        .bg-red { background: var(--status-red); }
+        .bg-gold { background: var(--status-gold); }
 
         /* BUTTONS */
         .btn {
-            margin-top: auto; padding: 12px; border-radius: 8px;
-            text-align: center; text-decoration: none; font-weight: 600;
-            transition: 0.2s; border: none; cursor: pointer; display: block;
+            margin-top: auto; padding: 12px; border-radius: 8px; text-align: center;
+            text-decoration: none; font-weight: 600; border: none; cursor: pointer; display: block;
+            background: var(--primary); color: white; transition: 0.2s;
         }
+        .btn:hover { filter: brightness(1.1); }
         
-        .btn-start { background: var(--brand-primary); color: white; }
-        .btn-start:hover { background: var(--brand-secondary); }
-
         .btn-locked { background: #d1d5db; color: #6b7280; cursor: not-allowed; pointer-events: none; }
-        
-        .btn-cert { background: var(--status-completed); color: #000; }
-        .btn-cert:hover { filter: brightness(1.1); }
+        .btn-cert { background: var(--status-gold); color: #000; }
+
+        /* LOADING */
+        .loader { text-align: center; margin-top: 50px; font-weight: 600; color: var(--text-muted); }
 
     </style>
 </head>
 <body>
 
-<div class="dashboard-header">
+<div class="hero">
     <h1>Student Portal</h1>
-    <p>Welcome, <span id="userEmail">Student</span></p>
-    <button onclick="logout()" style="margin-top:10px; background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.4); color:white; padding:5px 15px; border-radius:20px; cursor:pointer;">Sign Out</button>
+    <p>Logged in as: <span id="userEmail">Loading...</span></p>
+    <button onclick="logout()" style="margin-top:10px; background:rgba(255,255,255,0.2); border:1px solid white; color:white; padding:5px 15px; border-radius:20px; cursor:pointer;">Sign Out</button>
 </div>
 
 <div class="container">
-    <div id="loading" class="loading-msg">Connecting to database...</div>
-    <div id="coursesGrid" class="grid-container"></div>
+    <div id="loader" class="loader">Analyzing course modules...</div>
+    <div id="grid" class="grid"></div>
 </div>
 
 <script>
-    // 1. CONFIGURATION (Your specific keys)
+    // 1. FIREBASE CONFIGURATION
     const firebaseConfig = {
         apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
         authDomain: "students-login-29409.firebaseapp.com",
@@ -155,137 +127,147 @@
         measurementId: "G-96XXYG1VR2"
     };
 
-    // Initialize Firebase
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    // 2. AUTH LISTENER
+    // 2. AUTHENTICATION
     auth.onAuthStateChanged(async (user) => {
         if (user) {
-            document.getElementById('userEmail').innerText = user.email || "Student";
-            generateDashboard(user);
+            document.getElementById('userEmail').innerText = user.email;
+            loadDashboard(user);
         } else {
-            document.body.innerHTML = "<div style='text-align:center; padding:50px;'><h2>Access Denied</h2><p>Please <a href='index.html'>Login</a> first.</p></div>";
+            window.location.href = "index.html"; // Redirect if not logged in
         }
     });
 
-    // 3. CORE DASHBOARD LOGIC
-    async function generateDashboard(user) {
-        const grid = document.getElementById('coursesGrid');
-        const loading = document.getElementById('loading');
+    // 3. MAIN DASHBOARD LOGIC
+    async function loadDashboard(user) {
+        const grid = document.getElementById('grid');
+        const loader = document.getElementById('loader');
         
         try {
-            // A. Get List of Courses
-            // Note: If you want a specific order (e.g. Course 1, then Course 2), 
-            // ensure your Firestore docs have an 'order' field, or name them alphabetically (1_Management, 2_HR).
-            // Here we sort by document ID for stability.
-            const coursesSnapshot = await db.collection('courses').orderBy(firebase.firestore.FieldPath.documentId()).get();
+            // A. FETCH ALL COURSES
+            // We get the course documents (titles etc)
+            const coursesSnap = await db.collection('courses').get();
             
-            // B. Get Student's Personal Progress
-            const studentDoc = await db.collection('students').doc(user.uid).get();
-            const enrolledData = studentDoc.exists ? (studentDoc.data().enrolledCourses || {}) : {};
+            // B. FETCH STUDENT PROGRESS
+            const studentSnap = await db.collection('students').doc(user.uid).get();
+            const enrolledData = studentSnap.exists ? (studentSnap.data().enrolledCourses || {}) : {};
 
-            let html = '';
-            let previousCourseCompleted = true; // First course is always unlocked
+            let htmlContent = "";
+            let isPrevCourseCompleted = true; // First course is naturally unlocked
 
-            // C. Loop through every course
-            // We use a for...of loop with await to handle the async module counting accurately
-            for (const doc of coursesSnapshot.docs) {
+            // We use Promise.all to fetch subcollections in parallel for speed
+            const renderedCourses = await Promise.all(coursesSnap.docs.map(async (doc) => {
                 const courseId = doc.id;
                 const courseData = doc.data();
-                
-                // --- STEP 1: CALCULATE VALID MODULES ---
-                // Query only 'published' modules. Ignore 'deleted'.
-                const validModulesSnap = await db.collection('courses').doc(courseId)
-                    .collection('modules')
-                    .where('status', '==', 'published') 
-                    .get();
 
-                // Get IDs of valid modules for cross-referencing
-                const validModuleIds = validModulesSnap.docs.map(m => m.id);
-                const totalModules = validModuleIds.length;
-
-                // --- STEP 2: CALCULATE USER PROGRESS ---
-                const userCourseData = enrolledData[courseId] || {};
-                const userCompletedMap = userCourseData.completedModules || {};
+                // --- CRITICAL STEP: COUNT PUBLISHED MODULES ---
+                // Query: Go into subcollection 'modules' -> Filter where status == 'published'
+                const modulesSnap = await db.collection('courses').doc(courseId)
+                                      .collection('modules')
+                                      .where('status', '==', 'published')
+                                      .get();
                 
-                // Only count completed modules if they still exist (are in validModuleIds)
+                // 1. Get List of Active Module IDs
+                const activeModuleIds = modulesSnap.docs.map(m => m.id);
+                const totalActive = activeModuleIds.length;
+
+                // 2. Check User Progress against Active List
+                const userCourseProgress = enrolledData[courseId] || {};
+                const userCompletedMap = userCourseProgress.completedModules || {};
+                
                 let completedCount = 0;
-                validModuleIds.forEach(modId => {
+                // We only count a module as done if the user did it AND it is currently published
+                activeModuleIds.forEach(modId => {
                     if (userCompletedMap[modId] === true) {
                         completedCount++;
                     }
                 });
 
-                // Calculate Percent
+                // 3. Math
                 let percent = 0;
-                if (totalModules > 0) percent = Math.round((completedCount / totalModules) * 100);
-                
-                // --- STEP 3: COURSE LOCKING LOGIC ---
-                // If previous course wasn't 100%, this one is locked.
-                const isLocked = !previousCourseCompleted;
-                const isCompleted = percent === 100;
+                if (totalActive > 0) {
+                    percent = Math.round((completedCount / totalActive) * 100);
+                }
+                if (percent > 100) percent = 100;
 
-                // --- STEP 4: UI STATES ---
-                let cardClass = "";
-                let fillClass = "fill-blue";
+                return {
+                    id: courseId,
+                    title: courseData.title || formatTitle(courseId),
+                    total: totalActive,
+                    completed: completedCount,
+                    percent: percent
+                };
+            }));
+
+            // --- RENDER LOGIC WITH SEQUENTIAL LOCKING ---
+            // Note: If you need a specific order (e.g. Management first), you might need to sort the array here.
+            // Currently, it defaults to the database ID order.
+            
+            renderedCourses.forEach(course => {
+                const isLocked = !isPrevCourseCompleted;
+                const isCompleted = course.percent === 100;
+
+                // Variables for UI
+                let borderClass = "";
+                let progressClass = "";
+                let statusText = `${course.completed}/${course.total} Modules`;
                 let btnHtml = "";
-                let statusText = `${completedCount}/${totalModules} Modules`;
-                let lockIcon = "";
-
+                
                 if (isLocked) {
-                    // LOCKED STATE (Red)
-                    cardClass = "card-locked";
-                    fillClass = "fill-red";
-                    lockIcon = `<div class="lock-icon">🔒</div>`;
-                    btnHtml = `<button class="btn btn-locked">Locked (Complete previous)</button>`;
-                    statusText = "Locked";
-                } 
-                else if (isCompleted) {
-                    // COMPLETED STATE (Yellow)
-                    cardClass = "card-completed";
-                    fillClass = "fill-yellow";
-                    btnHtml = `<button class="btn btn-cert" onclick="alert('Opening Certificate...')">🏆 View Certificate</button>`;
+                    // LOCKED
+                    borderClass = "border-red";
+                    progressClass = "bg-red";
+                    statusText = "🔒 Locked";
+                    btnHtml = `<button class="btn btn-locked">Complete previous course</button>`;
+                } else if (isCompleted) {
+                    // COMPLETED
+                    borderClass = "border-gold";
+                    progressClass = "bg-gold";
                     statusText = "✅ Completed";
-                } 
-                else {
-                    // IN PROGRESS STATE (Blue/Purple)
-                    btnHtml = `<a href="student.html?courseId=${courseId}" class="btn btn-start">Continue Learning</a>`;
+                    btnHtml = `<button class="btn btn-cert" onclick="viewCert('${course.id}')">🏆 View Certificate</button>`;
+                } else {
+                    // IN PROGRESS (Blue/Purple)
+                    btnHtml = `<a href="student.html?courseId=${course.id}" class="btn">Continue Learning</a>`;
                 }
 
-                // Append Card
-                html += `
-                    <div class="course-card ${cardClass}">
-                        ${lockIcon}
-                        <div class="card-header">
-                            <h3 class="card-title">${courseData.title || courseId}</h3>
-                            <div class="card-meta">
-                                <span>${statusText}</span>
-                                <span>${percent}%</span>
-                            </div>
+                htmlContent += `
+                    <div class="card ${borderClass}">
+                        <h3>${course.title}</h3>
+                        <div class="card-meta">
+                            <span>${statusText}</span>
+                            <span>${course.percent}%</span>
                         </div>
-                        <div class="progress-wrapper">
-                            <div class="progress-bg">
-                                <div class="progress-fill ${fillClass}" style="width: ${percent}%"></div>
-                            </div>
+                        <div class="progress-track">
+                            <div class="progress-fill ${progressClass}" style="width: ${course.percent}%"></div>
                         </div>
                         ${btnHtml}
                     </div>
                 `;
 
-                // Update flag for the NEXT iteration
-                // If this course is done, the next one unlocks. If not, next stays locked.
-                previousCourseCompleted = isCompleted;
-            }
+                // Set flag for next loop iteration
+                isPrevCourseCompleted = isCompleted;
+            });
 
-            loading.style.display = 'none';
-            grid.innerHTML = html;
+            loader.style.display = 'none';
+            grid.innerHTML = htmlContent;
 
         } catch (error) {
             console.error(error);
-            loading.innerHTML = `<p style="color:red">Error: ${error.message}</p>`;
+            loader.innerHTML = `<span style="color:red">Error loading data. Check console.</span>`;
         }
+    }
+
+    // Helper to make "management_course" look like "Management Course"
+    function formatTitle(str) {
+        return str.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+
+    function viewCert(id) {
+        alert("Opening Certificate for: " + id);
+        // window.location.href = "certificate.html?courseId=" + id;
     }
 
     function logout() {
