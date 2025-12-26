@@ -553,57 +553,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const isPass = percentage >= 60;
 
         let progressPercent = 0; 
-
-        let progressPercent = 0;
-
-if (isPass && auth.currentUser) {
-    try {
-        // 1️⃣ Get ALL published modules
-        const modsSnap = await db
-            .collection("courses")
-            .doc(COURSE_ID)
-            .collection("modules")
-            .where("status", "==", "published")
-            .get();
-
-        const publishedModuleIds = modsSnap.docs.map(doc => doc.id);
-        const totalModules = publishedModuleIds.length;
-
-        // 2️⃣ Get student progress data
-        const userRef = db.collection("students").doc(auth.currentUser.uid);
-        const userSnap = await userRef.get();
-
-        const completedModules =
-            userSnap.data()?.enrolledCourses?.[COURSE_ID]?.completedModules || {};
-
-        // 3️⃣ Mark current module as completed
-        completedModules[activeModuleId] = true;
-
-        // 4️⃣ FILTER: only count completed modules that are still published
-        const validCompletedCount = Object.keys(completedModules)
-            .filter(moduleId => publishedModuleIds.includes(moduleId))
-            .length;
-
-        // 5️⃣ Calculate real progress
-        progressPercent = totalModules > 0
-            ? Math.round((validCompletedCount / totalModules) * 100)
-            : 0;
-
-        // 6️⃣ Save CLEAN progress
-        await userRef.set({
-            enrolledCourses: {
-                [COURSE_ID]: {
-                    progress: progressPercent,
-                    completedModules
-                }
+if (isPass) {
+            if (auth.currentUser) {
+                await db.collection("students").doc(auth.currentUser.uid).set({
+                    enrolledCourses: {
+                        [COURSE_ID]: { 
+                            completedModules: { [activeModuleId]: true } 
+                        }
+                    }
+                }, { merge: true });
             }
-        }, { merge: true });
-
-    } catch (error) {
-        console.error("Error saving progress:", error);
-    }
-}
-
             quizArea.innerHTML = `
                 <div style="text-align:center;">
                     <h2 style="color:var(--success-green);">🎉 Passed!</h2>
