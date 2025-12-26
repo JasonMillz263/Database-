@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Inbox | Academy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #6d28d9; --bg: #f3f4f6; --sidebar: #ffffff; --border: #e5e7eb; }
+        body { margin: 0; font-family: 'Poppins', sans-serif; background: var(--bg); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        .nav { background: white; padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .nav h2 { margin: 0; font-size: 18px; color: var(--primary); }
+        .status-tabs { display: flex; gap: 10px; }
+        .tab { padding: 6px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; background: #eee; border: none; }
+        .tab.active { background: var(--primary); color: white; }
+        .main { display: flex; height: 100%; overflow: hidden; }
+        .ticket-list { width: 100%; max-width: 400px; background: white; border-right: 1px solid var(--border); overflow-y: auto; padding-bottom: 50px; }
+        .ticket-detail { flex: 1; padding: 30px; overflow-y: auto; display: none; }
+        .list-item { padding: 15px; border-bottom: 1px solid var(--border); cursor: pointer; transition: 0.2s; }
+        .list-item:hover { background: #f9fafb; }
+        .list-item.selected { background: #f3f0ff; border-left: 4px solid var(--primary); }
+        .list-item h4 { margin: 0 0 5px 0; font-size: 15px; }
+        .list-item p { margin: 0; font-size: 12px; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #e5e7eb; color: #374151; margin-right: 5px; }
+        .tag.payment { background: #fef3c7; color: #d97706; }
+        .detail-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); max-width: 800px; margin: auto; }
+        .detail-header { border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; }
+        .meta-row { display: flex; justify-content: space-between; color: #6b7280; font-size: 13px; margin-bottom: 10px; }
+        .message-box { background: #f9fafb; padding: 15px; border-radius: 12px; margin-bottom: 20px; line-height: 1.6; }
+        .attachment-btn { display: inline-block; padding: 8px 12px; background: #e0e7ff; color: #4338ca; border-radius: 8px; text-decoration: none; font-size: 13px; margin-bottom: 20px; }
+        .reply-area textarea { width: 100%; border: 2px solid var(--border); border-radius: 12px; padding: 15px; font-family: inherit; margin-bottom: 10px; resize: vertical; box-sizing: border-box;}
+        .action-btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; }
+        .btn-send { background: var(--primary); color: white; }
+        .btn-close { background: #ef4444; color: white; margin-left: 10px; }
+        @media (min-width: 768px) { .ticket-detail { display: block; background: var(--bg); } }
+        @media (max-width: 767px) { 
+            .ticket-detail.active { display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 20; padding: 20px; box-sizing: border-box; }
+            .btn-back { display: block; margin-bottom: 15px; color: var(--primary); cursor: pointer; }
+        }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <h2>👮 Admin Inbox</h2>
+        <div class="status-tabs">
+            <button class="tab active" onclick="filterTickets('Open')">Active</button>
+            <button class="tab" onclick="filterTickets('Closed')">Closed</button>
+        </div>
+    </div>
+    <div class="main">
+        <div class="ticket-list" id="inboxList">
+            <div style="padding:20px; text-align:center;">Loading Tickets...</div>
+        </div>
+        <div class="ticket-detail" id="detailView">
+            <div class="btn-back" onclick="closeDetail()" style="display:none">← Back to Inbox</div>
+            <div id="detailContent" style="display:none;">
+                <div class="detail-card">
+                    <div class="detail-header">
+                        <div class="meta-row">
+                            <span id="d-category" class="tag">Category</span>
+                            <span id="d-date">Date</span>
+                        </div>
+                        <h2 id="d-subject" style="margin:0 0 5px 0;">Subject</h2>
+                        <small id="d-email">student@email.com</small>
+                    </div>
+                    <div class="message-box"><p id="d-message">Message content...</p></div>
+                    <a id="d-attachment" href="#" target="_blank" class="attachment-btn" style="display:none">📎 View Attachment</a>
+                    <div class="reply-area">
+                        <h4>Response</h4>
+                        <textarea id="replyText" rows="5" placeholder="Type your reply..."></textarea>
+                        <div style="display:flex; justify-content: flex-end;">
+                            <button class="action-btn btn-send" onclick="sendReply()">Send Reply</button>
+                            <button class="action-btn btn-close" onclick="closeTicket()">Close Ticket</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="placeholder" style="text-align:center; padding-top:100px; color:#9ca3af;">Select a ticket to view details</div>
+        </div>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+        authDomain: "students-login-29409.firebaseapp.com",
+        projectId: "students-login-29409",
+        storageBucket: "students-login-29409.firebasestorage.app",
+        messagingSenderId: "634331456872",
+        appId: "1:634331456872:web:6dae360c5e28d8356562dd"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let allTickets = [];
+    let currentTicketId = null;
+    let currentFilter = 'Open';
+
+    const q = query(collection(db, "tickets"), orderBy("createdAt", "desc"));
+    onSnapshot(q, (snapshot) => {
+        allTickets = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+        renderList();
+    });
+
+    window.filterTickets = (status) => {
+        currentFilter = status;
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        event.target.classList.add('active');
+        renderList();
+    };
+
+    function renderList() {
+        const list = document.getElementById("inboxList");
+        list.innerHTML = "";
+        const filtered = allTickets.filter(t => currentFilter === 'Open' ? t.status !== 'Closed' : t.status === 'Closed');
+        
+        filtered.forEach(t => {
+            const el = document.createElement('div');
+            el.className = 'list-item';
+            el.onclick = () => openTicket(t);
+            el.innerHTML = `
+                <div style="display:flex; justify-content:space-between;">
+                    <span class="tag ${t.category === 'Payment' ? 'payment' : ''}">${t.category}</span>
+                    <small style="color:${t.status==='Replied'?'green':'#9ca3af'}">${t.status}</small>
+                </div>
+                <h4>${t.subject}</h4>
+                <p>👤 ${t.studentName || 'Student'}: ${t.message}</p>
+            `;
+            list.appendChild(el);
+        });
+    }
+
+    window.openTicket = (t) => {
+        currentTicketId = t.id;
+        if(window.innerWidth < 768) {
+            document.getElementById('detailView').classList.add('active');
+            document.querySelector('.btn-back').style.display = 'block';
+        }
+        document.getElementById('placeholder').style.display = 'none';
+        document.getElementById('detailContent').style.display = 'block';
+        document.getElementById('d-subject').innerText = t.subject;
+        document.getElementById('d-category').innerText = t.category;
+        document.getElementById('d-email').innerText = `${t.studentName} (${t.studentEmail})`;
+        document.getElementById('d-date').innerText = t.createdAt ? t.createdAt.toDate().toLocaleString() : '';
+        document.getElementById('d-message').innerText = t.message;
+        document.getElementById('replyText').value = t.adminResponse || "";
+
+        const attBtn = document.getElementById('d-attachment');
+        if(t.attachment) {
+            attBtn.style.display = 'inline-block';
+            attBtn.onclick = (e) => { e.preventDefault(); const w = window.open(""); w.document.write(`<img src="${t.attachment}" style="max-width:100%">`); };
+        } else { attBtn.style.display = 'none'; }
+    };
+
+    window.sendReply = async () => {
+        const response = document.getElementById('replyText').value;
+        if(!currentTicketId) return;
+        await updateDoc(doc(db, "tickets", currentTicketId), {
+            adminResponse: response,
+            status: "Replied",
+            lastUpdated: serverTimestamp()
+        });
+        alert("Reply Sent!");
+    };
+
+    window.closeTicket = async () => {
+        if(!confirm("Close ticket?")) return;
+        await updateDoc(doc(db, "tickets", currentTicketId), { status: "Closed" });
+        alert("Closed");
+        if(window.innerWidth < 768) closeDetail();
+    };
+
+    window.closeDetail = () => { document.getElementById('detailView').classList.remove('active'); };
+</script>
+</body>
+</html>
