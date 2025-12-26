@@ -14,7 +14,6 @@
         .header { text-align: center; margin-bottom: 30px; }
         
         .controls { display: flex; gap: 10px; margin-bottom: 30px; justify-content: center; }
-        /* UPDATED: Removed specific number from placeholder */
         #courseSearch { padding: 12px 25px; border-radius: 25px; border: 1px solid #ddd; width: 100%; max-width: 400px; outline: none; transition: 0.3s; }
         #courseSearch:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
 
@@ -47,10 +46,10 @@
     </div>
 
     <div class="controls">
-        <input type="text" id="courseSearch" placeholder="Search your courses..." onkeyup="filterCourses()">
+        <input type="text" id="courseSearch" placeholder="Search your 5 courses..." onkeyup="filterCourses()">
     </div>
 
-    <div id="loading">Calculating latest progress...</div>
+    <div id="loading">Connecting to your profile...</div>
     <div id="courseGrid" class="course-grid"></div>
 </div>
 
@@ -71,130 +70,65 @@ auth.onAuthStateChanged((user) => {
     if (user) {
         loadStudentData(user.uid);
     } else {
-        // Redirect if needed, or handle logout
-        // window.location.href = "login.html";
-        console.log("No user logged in");
+        window.location.href = "login.html";
     }
 });
 
-// --- CORE DATA LOADING (REWRITTEN) ---
+// --- CORE DATA LOADING ---
 async function loadStudentData(uid) {
     const grid = document.getElementById("courseGrid");
     const loader = document.getElementById("loading");
 
     try {
-        // 1. Get Student's Enrolled List
-        const studentDoc = await db.collection("students").doc(uid).get();
+        // Read from 'students' collection based on your progress-saving code
+        const docRef = db.collection("students").doc(uid);
+        const doc = await docRef.get();
 
-        if (!studentDoc.exists || !studentDoc.data().enrolledCourses) {
-            renderEmptyState(loader);
+        if (!doc.exists || !doc.data().enrolledCourses) {
+            loader.innerHTML = `
+                <div class="empty-state">
+                    <h3>No courses found.</h3>
+                    <p>Enroll in a course to start tracking your progress!</p>
+                </div>`;
             return;
         }
 
-        const enrolledMap = studentDoc.data().enrolledCourses;
-        const courseIds = Object.keys(enrolledMap);
-
-        if (courseIds.length === 0) {
-            renderEmptyState(loader);
-            return;
-        }
-
-        // 2. Process courses in parallel to fetch "Source of Truth" module counts
-        const coursePromises = courseIds.map(async (courseId) => {
-            const studentCourseData = enrolledMap[courseId];
-            
-            // --- CRITICAL UPDATE: Fetch Valid Modules from DB ---
-            // We assume modules are stored at: courses/{courseId}/modules
-            // We filter for published ones immediately.
-            const modulesSnapshot = await db.collection('courses').doc(courseId).collection('modules')
-                .where('status', '==', 'published')
-                .get();
-
-            // Filter out 'deleted' ones if you use a specific flag like isDeleted
-            // (If you actually delete the doc from Firestore, the query above is sufficient)
-            const validModuleIds = [];
-            modulesSnapshot.forEach(doc => {
-                const data = doc.data();
-                // If you have a soft delete field, uncomment the check below:
-                // if (data.isDeleted !== true) { 
-                    validModuleIds.push(doc.id);
-                // }
-            });
-
-            const totalModules = validModuleIds.length;
-
-            // --- BUG FIX: Hide empty courses (like Management) ---
-            if (totalModules === 0) {
-                return null; // This course will be filtered out later
-            }
-
-            // 3. Calculate Progress
-            // We intersect student's completed IDs with the currently valid IDs
-            const studentCompletedMap = studentCourseData.completedModules || {};
-            const studentCompletedIds = Object.keys(studentCompletedMap);
-            
-            // Count how many completed modules are actually in the valid list
-            let validCompletedCount = 0;
-            studentCompletedIds.forEach(id => {
-                if (validModuleIds.includes(id)) {
-                    validCompletedCount++;
-                }
-            });
-
-            const progressPercentage = Math.floor((validCompletedCount / totalModules) * 100);
-
-            return {
-                id: courseId,
-                title: formatTitle(courseId),
-                progress: progressPercentage,
-                completedCount: validCompletedCount,
-                totalCount: totalModules,
-                isDone: progressPercentage >= 100
-            };
-        });
-
-        // Wait for all calculations
-        const coursesData = await Promise.all(coursePromises);
-        
-        // Remove nulls (empty courses)
-        const activeCourses = coursesData.filter(c => c !== null);
-
-        // Render
+        const enrolledCourses = doc.data().enrolledCourses;
         grid.innerHTML = "";
         loader.style.display = "none";
 
-        if (activeCourses.length === 0) {
-            renderEmptyState(loader); // User has courses, but none have active modules
-            return;
-        }
+        // Object.entries lets us loop through the Map of courses
+        Object.entries(enrolledCourses).forEach(([courseId, data]) => {
+            const progress = data.progress || 0;
+            const completedModules = data.completedModules ? Object.keys(data.completedModules).length : 0;
+            const isDone = progress >= 100;
 
-        activeCourses.forEach(course => {
             const card = document.createElement("div");
             card.className = "card";
-            card.setAttribute("data-name", course.id.toLowerCase());
+            card.setAttribute("data-name", courseId.toLowerCase());
 
             card.innerHTML = `
-                <div class="title">${course.title}</div>
+                <div class="title">${formatTitle(courseId)}</div>
                 
                 <div class="stats-row">
-                    <span>Active Modules:</span>
-                    <strong>${course.completedCount} / ${course.totalCount}</strong>
+                    <span>Modules Finished:</span>
+                    <strong>${completedModules}</strong>
                 </div>
 
                 <div class="progress-container">
                     <div class="progress-bar">
-                        <div class="progress-fill ${course.isDone ? 'completed' : ''}" style="width: ${course.progress}%"></div>
+                        <div class="progress-fill ${isDone ? 'completed' : ''}" style="width: ${progress}%"></div>
                     </div>
                 </div>
 
                 <div class="meta">
-                    <span style="color: ${course.isDone ? 'var(--success)' : 'var(--primary)'}">
-                        ${course.progress}% COMPLETE
+                    <span style="color: ${isDone ? 'var(--success)' : 'var(--primary)'}">
+                        ${progress}% COMPLETE
                     </span>
-                    <span>${course.isDone ? '✅ FINISHED' : '📖 STUDYING'}</span>
+                    <span>${isDone ? '✅ FINISHED' : '📖 STUDYING'}</span>
                 </div>
 
-                ${course.isDone ? `
+                ${isDone ? `
                     <div class="cert-badge">✨ Certificate Unlocked & Ready</div>
                 ` : `
                     <div style="font-size:11px; color:#94a3b8; margin-top:15px; text-align:center;">
@@ -207,12 +141,27 @@ async function loadStudentData(uid) {
 
     } catch (error) {
         console.error("Dashboard Error:", error);
-        loader.innerHTML = `<p style="color:red">Error syncing data. Please check console.</p>`;
+        loader.innerHTML = `<p style="color:red">Error syncing data. Please check connection.</p>`;
     }
 }
 
 // --- HELPERS ---
 
-function renderEmptyState(container) {
-    container.innerHTML = `
-        <div class="empty
+// Converts "python_basics" to "Python Basics"
+function formatTitle(id) {
+    return id.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+}
+
+// Live Search Filter
+function filterCourses() {
+    const query = document.getElementById("courseSearch").value.toLowerCase();
+    const cards = document.querySelectorAll('.card');
+    
+    cards.forEach(card => {
+        const name = card.getAttribute('data-name');
+        card.style.display = name.includes(query) ? "block" : "none";
+    });
+}
+</script>
+</body>
+</html>
