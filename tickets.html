@@ -2,274 +2,237 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Support Tickets | Food Business Academy</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-
+<title>Student Support | Academy</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-body{
-  margin:0;
-  font-family:'Poppins',sans-serif;
-  background:#f4f6fb;
-  color:#1f2937;
+:root {
+    --primary: #6d28d9;
+    --secondary: #2563eb;
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --text: #1e293b;
+    --text-light: #64748b;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --green: #10b981;
 }
 
-.container{
-  max-width:1200px;
-  margin:auto;
-  padding:40px 20px;
-}
+body { margin: 0; font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); padding-bottom: 80px; }
 
-h1{margin-bottom:6px}
-.subtitle{color:#6b7280;margin-bottom:30px}
+/* Mobile First Container */
+.app-container { max-width: 600px; margin: 0 auto; padding: 20px; }
 
-.grid{
-  display:grid;
-  grid-template-columns:420px 1fr;
-  gap:25px;
-}
+/* Header */
+header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; }
+h1 { font-size: 24px; margin: 0; background: -webkit-linear-gradient(45deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.avatar { width: 40px; height: 40px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
 
-.card{
-  background:#fff;
-  border-radius:18px;
-  padding:22px;
-  box-shadow:0 20px 40px rgba(0,0,0,.08);
-}
+/* Forms */
+.card { background: var(--card); border-radius: 20px; padding: 20px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #e2e8f0; }
+.card h3 { margin-top: 0; color: var(--primary); }
 
-.input{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  margin-bottom:14px;
-}
+.form-group { margin-bottom: 15px; }
+label { display: block; font-size: 13px; color: var(--text-light); margin-bottom: 6px; font-weight: 500; }
+input, select, textarea { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 12px; font-family: inherit; box-sizing: border-box; transition: 0.3s; font-size: 14px; }
+input:focus, select:focus, textarea:focus { border-color: var(--secondary); outline: none; }
 
-input, select, textarea{
-  padding:10px 12px;
-  border:1px solid #e5e7eb;
-  border-radius:12px;
-  font-family:inherit;
-}
+/* Button */
+.btn-main { width: 100%; padding: 14px; border: none; border-radius: 14px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; font-weight: 600; cursor: pointer; font-size: 16px; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); }
+.btn-main:active { transform: scale(0.98); }
 
-textarea{resize:vertical}
+/* Ticket List */
+.ticket-card { background: white; border-radius: 16px; padding: 18px; margin-bottom: 15px; border-left: 5px solid var(--text-light); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+.ticket-card.open { border-left-color: var(--yellow); }
+.ticket-card.replied { border-left-color: var(--green); }
+.ticket-card.closed { border-left-color: var(--red); }
 
-button{
-  padding:12px 18px;
-  border:none;
-  border-radius:14px;
-  background:linear-gradient(135deg,#2563eb,#6d28d9);
-  color:#fff;
-  font-weight:600;
-  cursor:pointer;
-}
+.badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; color: white; float: right; }
+.bg-open { background: var(--yellow); }
+.bg-replied { background: var(--green); }
+.bg-closed { background: var(--red); }
 
-button:hover{opacity:.9}
+.ticket-meta { font-size: 12px; color: var(--text-light); margin-bottom: 8px; display: block; }
+.ticket-msg { font-size: 14px; line-height: 1.5; margin: 10px 0; }
+.admin-reply { background: #f0f9ff; border-radius: 10px; padding: 12px; margin-top: 12px; border: 1px solid #bae6fd; }
+.admin-reply strong { color: var(--secondary); display: block; font-size: 12px; margin-bottom: 4px; }
 
-.ticket{
-  border:1px solid #e5e7eb;
-  border-radius:14px;
-  padding:14px;
-  margin-bottom:12px;
-}
-
-.ticket-header{
-  display:flex;
-  justify-content:space-between;
-  font-weight:600;
-}
-
-.status{
-  padding:4px 10px;
-  border-radius:999px;
-  font-size:12px;
-  color:#fff;
-}
-
-.open{background:#f59e0b}
-.review{background:#3b82f6}
-.replied{background:#10b981}
-.closed{background:#ef4444}
-
-.ticket small{color:#6b7280}
-
-.empty{
-  text-align:center;
-  padding:40px;
-  color:#6b7280;
-}
-
-.support-box{
-  margin-top:25px;
-  display:flex;
-  gap:12px;
-  flex-wrap:wrap;
-}
-
-.support-box a{
-  text-decoration:none;
-  padding:12px 16px;
-  border-radius:14px;
-  font-weight:600;
-  display:inline-block;
-}
-
-.whatsapp{
-  background:#25D366;
-  color:#fff;
-}
-
-.email{
-  background:#e5e7eb;
-  color:#111827;
-}
+/* Auth Overlay */
+#authOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 </style>
 </head>
-
 <body>
 
-<div class="container">
-  <h1>🎟️ Support Tickets</h1>
-  <p class="subtitle">Need help? Submit a ticket and our team will assist you.</p>
-
-  <div class="grid">
-
-    <!-- CREATE TICKET -->
-    <div class="card">
-      <h3>Create a Ticket</h3>
-
-      <div class="input">
-        <label>Subject</label>
-        <input id="subject" placeholder="e.g. Payment confirmation issue">
-      </div>
-
-      <div class="input">
-        <label>Category</label>
-        <select id="category">
-          <option value="Payment">Payment</option>
-          <option value="Course">Course / Learning</option>
-          <option value="Technical">Technical</option>
-          <option value="Certificate">Certificate</option>
-          <option value="Other">Other</option>
-        </select>
-      </div>
-
-      <div class="input">
-        <label>Message</label>
-        <textarea id="message" rows="4" placeholder="Describe your issue in detail"></textarea>
-      </div>
-
-      <div class="input">
-        <label>Attachment (optional)</label>
-        <input type="file" id="attachment" accept="image/*,.pdf">
-      </div>
-
-      <button onclick="createTicket()">Submit Ticket</button>
-
-      <div class="support-box">
-        <a href="https://wa.me/263786008070" target="_blank" class="whatsapp">
-          WhatsApp Support
-        </a>
-        <a href="#" class="email">Email Support</a>
-      </div>
-    </div>
-
-    <!-- TICKET LIST -->
-    <div class="card">
-      <h3>My Tickets</h3>
-      <div id="ticketList"></div>
-    </div>
-
-  </div>
+<div id="authOverlay">
+    <h2>Welcome Student</h2>
+    <p>Please log in to manage tickets</p>
+    <button class="btn-main" onclick="login()" style="width: 200px;">Login with Google</button>
 </div>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<div class="app-container">
+    <header>
+        <h1>Academy Support</h1>
+        <div class="avatar" id="userInitial">U</div>
+    </header>
 
-<script>
-firebase.initializeApp({
-  apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
-  authDomain:"students-login-29409.firebaseapp.com",
-  projectId:"students-login-29409"
-});
+    <div class="card">
+        <h3>✨ New Request</h3>
+        <div class="form-group">
+            <label>What's the issue?</label>
+            <select id="category">
+                <option value="Payment">💰 Proof of Payment / Issue</option>
+                <option value="Course">📚 Course Access / Content</option>
+                <option value="Technical">⚙️ Technical Error</option>
+                <option value="Complain">📢 Complaint</option>
+                <option value="Other">❓ Other</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Subject</label>
+            <input type="text" id="subject" placeholder="e.g. Can't access Module 2">
+        </div>
+        <div class="form-group">
+            <label>Details</label>
+            <textarea id="message" rows="3" placeholder="Explain clearly..."></textarea>
+        </div>
+        <div class="form-group">
+            <label>Attachment (Image/PDF)</label>
+            <input type="file" id="attachment">
+        </div>
+        <button class="btn-main" id="submitBtn" onclick="createTicket()">Submit Ticket</button>
+    </div>
 
-const auth = firebase.auth();
-const db = firebase.firestore();
-const storage = firebase.storage();
+    <h3 style="margin-left: 10px; margin-bottom: 15px;">Your Tickets</h3>
+    <div id="ticketList">
+        <div style="text-align: center; color: #94a3b8; padding: 20px;">Loading tickets...</div>
+    </div>
+</div>
 
-auth.onAuthStateChanged(user=>{
-  if(!user){
-    document.getElementById("ticketList").innerHTML =
-      "<div class='empty'>Please log in to view tickets.</div>";
-    return;
-  }
-  loadTickets(user.uid);
-});
+<script type="module">
+    // 1. Import Firebase v9 Modular
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
-async function createTicket(){
-  const user = auth.currentUser;
-  if(!user) return alert("Login required");
+    const firebaseConfig = {
+      apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+      authDomain: "students-login-29409.firebaseapp.com",
+      projectId: "students-login-29409",
+      storageBucket: "students-login-29409.firebasestorage.app",
+      messagingSenderId: "634331456872",
+      appId: "1:634331456872:web:6dae360c5e28d8356562dd",
+      measurementId: "G-96XXYG1VR2"
+    };
 
-  const s = subject.value.trim();
-  const m = message.value.trim();
-  if(!s || !m) return alert("Subject and message required");
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
 
-  let fileUrl = "";
-  if(attachment.files[0]){
-    const ref = storage.ref(`tickets/${user.uid}/${Date.now()}_${attachment.files[0].name}`);
-    const snap = await ref.put(attachment.files[0]);
-    fileUrl = await snap.ref.getDownloadURL();
-  }
-
-  await db.collection("students").doc(user.uid)
-    .collection("tickets").add({
-      subject:s,
-      category:category.value,
-      message:m,
-      attachment:fileUrl,
-      status:"Open",
-      created:Date.now()
+    // Auth Logic
+    window.login = () => signInWithPopup(auth, new GoogleAuthProvider());
+    
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            document.getElementById('authOverlay').style.display = 'none';
+            document.getElementById('userInitial').innerText = user.displayName ? user.displayName[0] : 'U';
+            loadTickets(user);
+        } else {
+            document.getElementById('authOverlay').style.display = 'flex';
+        }
     });
 
-  subject.value="";
-  message.value="";
-  attachment.value="";
-  loadTickets(user.uid);
-}
+    // Create Ticket
+    window.createTicket = async () => {
+        const user = auth.currentUser;
+        if (!user) return;
 
-async function loadTickets(uid){
-  const list = document.getElementById("ticketList");
-  const snap = await db.collection("students").doc(uid)
-    .collection("tickets").orderBy("created","desc").get();
+        const btn = document.getElementById('submitBtn');
+        const subject = document.getElementById('subject').value;
+        const category = document.getElementById('category').value;
+        const message = document.getElementById('message').value;
+        const file = document.getElementById('attachment').files[0];
 
-  if(snap.empty){
-    list.innerHTML = "<div class='empty'>You have no support tickets yet.</div>";
-    return;
-  }
+        if (!subject || !message) return alert("Please fill in all fields");
 
-  list.innerHTML = snap.docs.map(d=>{
-    const t = d.data();
-    const cls =
-      t.status === "Open" ? "open" :
-      t.status === "In Review" ? "review" :
-      t.status === "Replied" ? "replied" : "closed";
+        btn.innerText = "Sending...";
+        btn.disabled = true;
 
-    return `
-      <div class="ticket">
-        <div class="ticket-header">
-          <span>${t.subject}</span>
-          <span class="status ${cls}">${t.status}</span>
-        </div>
-        <small>${t.category} • ${new Date(t.created).toLocaleString()}</small>
-        <p>${t.message}</p>
-        ${t.attachment ? `<a href="${t.attachment}" target="_blank">View Attachment</a>` : ""}
-      </div>
-    `;
-  }).join("");
-}
+        try {
+            let fileUrl = null;
+            if (file) {
+                const storageRef = ref(storage, `attachments/${user.uid}/${Date.now()}_${file.name}`);
+                await uploadBytes(storageRef, file);
+                fileUrl = await getDownloadURL(storageRef);
+            }
+
+            // Save to top-level 'tickets' collection for easier Admin Querying
+            await addDoc(collection(db, "tickets"), {
+                studentId: user.uid,
+                studentEmail: user.email,
+                studentName: user.displayName || "Student",
+                subject,
+                category,
+                message,
+                attachment: fileUrl,
+                status: "Open", // Open, Replied, Closed
+                createdAt: serverTimestamp(),
+                adminResponse: "" 
+            });
+
+            alert("Ticket Sent! 🎟️");
+            document.getElementById('subject').value = "";
+            document.getElementById('message').value = "";
+            document.getElementById('attachment').value = "";
+        } catch (error) {
+            console.error(error);
+            alert("Error sending ticket.");
+        }
+        btn.innerText = "Submit Ticket";
+        btn.disabled = false;
+    };
+
+    // Real-time Ticket Listener
+    function loadTickets(user) {
+        const q = query(
+            collection(db, "tickets"), 
+            where("studentId", "==", user.uid),
+            orderBy("createdAt", "desc")
+        );
+
+        onSnapshot(q, (snapshot) => {
+            const list = document.getElementById("ticketList");
+            if (snapshot.empty) {
+                list.innerHTML = "<div style='text-align:center; padding:30px;'>No tickets yet.</div>";
+                return;
+            }
+
+            list.innerHTML = snapshot.docs.map(doc => {
+                const data = doc.data();
+                const statusClass = data.status === "Open" ? "open" : (data.status === "Replied" ? "replied" : "closed");
+                const bgClass = "bg-" + statusClass;
+                
+                return `
+                <div class="ticket-card ${statusClass}">
+                    <span class="badge ${bgClass}">${data.status}</span>
+                    <strong style="font-size:16px; display:block; margin-bottom:4px;">${data.subject}</strong>
+                    <span class="ticket-meta">${data.category} • ${data.createdAt ? data.createdAt.toDate().toLocaleDateString() : 'Just now'}</span>
+                    
+                    <p class="ticket-msg">${data.message}</p>
+                    ${data.attachment ? `<a href="${data.attachment}" target="_blank" style="color:var(--secondary); font-size:13px;">📎 View Attachment</a>` : ''}
+
+                    ${data.adminResponse ? `
+                        <div class="admin-reply">
+                            <strong>👨‍🏫 Admin Response:</strong>
+                            ${data.adminResponse}
+                        </div>
+                    ` : ''}
+                </div>
+                `;
+            }).join("");
+        });
+    }
 </script>
-
 </body>
 </html>
