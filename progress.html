@@ -15,7 +15,6 @@
             --brand-purple: #6366f1;
             --brand-blue: #3b82f6;
             --status-gold: #f59e0b;
-            --status-red: #ef4444;
             --status-green: #10b981;
             --bg-body: #f3f4f6;
             --bg-card: #ffffff;
@@ -78,7 +77,6 @@
         .card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
 
         /* Status Variants */
-        .card-locked { border-top-color: var(--status-red); opacity: 0.75; pointer-events: none; filter: grayscale(0.8); }
         .card-completed { border-top-color: var(--status-gold); }
         .card-active { border-top-color: var(--status-green); }
 
@@ -113,9 +111,11 @@
             margin-top: auto; text-decoration: none; transition: filter 0.2s;
         }
         .btn:hover { filter: brightness(1.1); }
+        
+        /* Purple for in-progress */
         .btn-start { background: var(--brand-purple); color: white; }
-        .btn-cert { background: var(--status-gold); color: #000; }
-        .btn-locked { background: #d1d5db; color: #6b7280; cursor: not-allowed; }
+        /* Gold for completed */
+        .btn-completed { background: var(--status-gold); color: #000; }
 
         .loader { text-align: center; font-weight: 600; color: var(--text-muted); margin-top: 50px; }
     </style>
@@ -149,7 +149,7 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    // 2. Define Course Order (Linear Progression)
+    // 2. Define Course Order
     const courseIds = [
         "financial_management_for_food_processors",
         "food_business_management_course",
@@ -179,10 +179,8 @@
             const enrolledData = studentDoc.exists ? (studentDoc.data().enrolledCourses || {}) : {};
 
             let html = "";
-            let previousCourseCompleted = true; // First course is always unlocked
 
             // B. Iterate through defined course list
-            // We use a for...of loop to handle async/await cleanly in order
             for (const courseId of courseIds) {
                 
                 // 1. Fetch Course Details
@@ -194,7 +192,7 @@
                 // 2. Fetch ONLY Published Modules (Source of Truth)
                 const modulesSnap = await db.collection('courses').doc(courseId)
                     .collection('modules')
-                    .where('status', '==', 'published') // CRITICAL: Only counts published
+                    .where('status', '==', 'published') 
                     .get();
 
                 const activeModuleIds = modulesSnap.docs.map(m => m.id);
@@ -206,43 +204,37 @@
 
                 let completedCount = 0;
                 
-                // We check: Is the Published Module ID inside the User's Completed Map?
+                // Check if user completed the published modules
                 activeModuleIds.forEach(modId => {
                     if (userCompletedMap[modId] === true) {
                         completedCount++;
                     }
                 });
 
-                // Calculate Percentage (Avoid divide by zero)
+                // Calculate Percentage
                 let percent = totalModules > 0 ? Math.round((completedCount / totalModules) * 100) : 0;
-                if (percent > 100) percent = 100; // Safety cap
+                if (percent > 100) percent = 100;
 
-                // 4. Determine Card State (Locked vs Unlocked)
+                // 4. Determine Card State (Progress vs Completed)
                 const isCompleted = percent === 100;
-                const isLocked = !previousCourseCompleted;
 
-                let cardClass = "";
-                let fillClass = "progress-fill";
+                let cardClass = "card-active";
+                let fillClass = "progress-fill fill-green";
                 let btnHtml = "";
-                let statusBadge = "";
+                let statusBadge = "⚡ In Progress";
 
-                if (isLocked) {
-                    // Scenario: Previous course not done
-                    cardClass = "card-locked";
-                    statusBadge = "🔒 Locked";
-                    btnHtml = `<button class="btn btn-locked">Complete Previous Course</button>`;
-                } else if (isCompleted) {
-                    // Scenario: Course done
+                if (isCompleted) {
+                    // Scenario: Course Completed
                     cardClass = "card-completed";
-                    fillClass += " fill-gold";
-                    statusBadge = "🏆 Certified";
-                    btnHtml = `<button class="btn btn-cert">View Certificate</button>`;
+                    fillClass = "progress-fill fill-gold";
+                    statusBadge = "🏆 Completed";
+                    
+                    // Button directs to Homepage (as requested)
+                    btnHtml = `<a href="index.html" class="btn btn-completed">Completed</a>`;
                 } else {
                     // Scenario: In Progress
-                    cardClass = "card-active";
-                    fillClass += " fill-green";
-                    statusBadge = "⚡ In Progress";
-                    btnHtml = `<a href="student.html?courseId=${courseId}" class="btn btn-start">Continue Learning</a>`;
+                    // Button directs to # (Temporal link)
+                    btnHtml = `<a href="#" class="btn btn-start">Continue Learning</a>`;
                 }
 
                 // 5. Build HTML
@@ -266,9 +258,6 @@
                         ${btnHtml}
                     </div>
                 `;
-
-                // Update flag for the next iteration (Linear Progression)
-                previousCourseCompleted = isCompleted;
             }
 
             loader.style.display = 'none';
