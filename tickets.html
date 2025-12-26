@@ -1,217 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Student Support</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
-:root { --primary:#6d28d9; --secondary:#2563eb; --bg:#f8fafc; --card:#ffffff; --text:#1e293b; --yellow:#f59e0b; --green:#10b981; --red:#ef4444; }
-
-body { margin:0; font-family:'Poppins',sans-serif; background:var(--bg); color:var(--text); padding-bottom:80px; }
-
-.app-container { max-width:600px; margin:0 auto; padding:20px; }
-
-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:25px; }
-h1 { margin:0; color:var(--primary); }
-
-.card { background:#fff; border-radius:20px; padding:20px; box-shadow:0 4px 20px rgba(0,0,0,0.05); margin-bottom:20px; }
-
-.form-group { margin-bottom:15px; }
-label { display:block; font-size:13px; color:#64748b; margin-bottom:6px; }
-
-input, select, textarea { width:100%; padding:12px; border:2px solid #e2e8f0; border-radius:12px; box-sizing:border-box; }
-
-.btn-main { width:100%; padding:14px; border:none; border-radius:14px; background:linear-gradient(135deg,var(--primary),var(--secondary)); color:#fff; font-weight:600; cursor:pointer; }
-
-.ticket-card { background:white; border-radius:16px; padding:18px; margin-bottom:15px; border-left:5px solid #ccc; box-shadow:0 4px 6px rgba(0,0,0,0.05); }
-.ticket-card.open { border-left-color:var(--yellow); }
-.ticket-card.replied { border-left-color:var(--green); }
-.ticket-card.closed { border-left-color:var(--red); }
-
-.badge { padding:4px 10px; border-radius:20px; font-size:11px; color:white; float:right; }
-.bg-open { background:var(--yellow); }
-.bg-replied { background:var(--green); }
-.bg-closed { background:var(--red); }
-
-.ticket-img-preview { width:100%; max-height:200px; object-fit:cover; border-radius:8px; margin-top:10px; border:1px solid #eee; }
+body{margin:0;font-family:Poppins,sans-serif;background:#f8fafc}
+.container{max-width:600px;margin:auto;padding:20px}
+.card{background:white;border-radius:16px;padding:20px;margin-bottom:20px;box-shadow:0 4px 20px rgba(0,0,0,.05)}
+input,select,textarea{width:100%;padding:12px;border-radius:12px;border:2px solid #e5e7eb}
+button{width:100%;padding:14px;border:none;border-radius:14px;background:#6d28d9;color:white;font-weight:600}
+.ticket{background:white;border-left:5px solid #f59e0b;border-radius:14px;padding:15px;margin-bottom:12px}
+.replied{border-color:#10b981}
+.closed{border-color:#ef4444}
+img{max-width:100%;border-radius:8px;margin-top:10px}
 </style>
 </head>
 
 <body>
+<div class="container">
+<h2>🎓 Student Support</h2>
 
-<div class="app-container">
-    <header>
-        <h1>Academy Help</h1>
-        <div id="userInfo" style="font-weight:600;"></div>
-    </header>
+<div class="card">
+<select id="cat">
+<option>Payment</option>
+<option>Course</option>
+<option>Technical</option>
+<option>Other</option>
+</select><br><br>
 
-    <div class="card">
-        <h3>✨ Create Ticket</h3>
+<input id="sub" placeholder="Subject"><br><br>
+<textarea id="msg" placeholder="Message"></textarea><br><br>
+<input type="file" id="file" accept="image/*"><br><br>
+<button onclick="send()">Submit Ticket</button>
+</div>
 
-        <div class="form-group">
-            <label>Topic</label>
-            <select id="category">
-                <option value="Payment">💰 Proof of Payment / Issue</option>
-                <option value="Course">📚 Course Content</option>
-                <option value="Technical">⚙️ Technical Error</option>
-                <option value="Other">❓ Other</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label>Subject</label>
-            <input id="subject" type="text" placeholder="Brief summary..." />
-        </div>
-
-        <div class="form-group">
-            <label>Message</label>
-            <textarea id="message" rows="3" placeholder="Describe the issue..."></textarea>
-        </div>
-
-        <div class="form-group">
-            <label>Attachment (Image only)</label>
-            <input type="file" id="attachment" accept="image/*" />
-        </div>
-
-        <button class="btn-main" id="submitBtn" onclick="createTicket()">Submit Ticket</button>
-    </div>
-
-    <h3>My Tickets</h3>
-    <div id="ticketList"></div>
+<h3>My Tickets</h3>
+<div id="list"></div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
-  authDomain:"students-login-29409.firebaseapp.com",
-  projectId:"students-login-29409",
-  storageBucket:"students-login-29409.firebasestorage.app",
-  messagingSenderId:"634331456872",
-  appId:"1:634331456872:web:6dae360c5e28d8356562dd",
-  measurementId:"G-96XXYG1VR2"
-};
-
-const app = initializeApp(firebaseConfig);
+const app = initializeApp({
+ apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+ authDomain:"students-login-29409.firebaseapp.com",
+ projectId:"students-login-29409"
+});
 const db = getFirestore(app);
 
-// 👉 Replace this with your REAL logged-in student data
-const student = {
-  id: "STUDENT_ID_HERE",
-  name: "Student Name",
-  email: "student@email.com"
-};
+// ⚠️ replace with real logged user
+const student={id:"STUDENT_ID",name:"Student Name",email:"student@email.com"};
 
-document.getElementById("userInfo").innerText = student.name;
+async function send(){
+ if(!sub.value||!msg.value) return alert("Fill all fields");
 
-// compress image
-const compressImage = (file) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (e) => {
-      const img = new Image();
-      img.src = e.target.result;
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const MAX_WIDTH = 800;
-        const scale = MAX_WIDTH / img.width;
-        canvas.width = MAX_WIDTH;
-        canvas.height = img.height * scale;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", 0.7));
-      };
-    };
-    reader.onerror = reject;
-  });
+ let img=null;
+ if(file.files[0]){
+  const r=new FileReader();
+  r.onload=e=>img=e.target.result;
+  r.readAsDataURL(file.files[0]);
+  await new Promise(res=>r.onloadend=res);
+ }
 
-window.createTicket = async () => {
-  const subject = subjectInput.value = document.getElementById("subject").value;
-  const category = document.getElementById("category").value;
-  const message = document.getElementById("message").value;
-  const fileInput = document.getElementById("attachment");
-  const btn = document.getElementById("submitBtn");
+ await addDoc(collection(db,"tickets"),{
+  studentId:student.id,
+  studentName:student.name,
+  studentEmail:student.email,
+  subject:sub.value,
+  message:msg.value,
+  category:cat.value,
+  attachment:img,
+  status:"Open",
+  createdAt:serverTimestamp(),
+  adminResponse:""
+ });
 
-  if (!subject || !message) return alert("Please fill in subject and message.");
-
-  btn.disabled = true;
-  btn.innerText = "Sending...";
-
-  try {
-    let base64Image = null;
-
-    if (fileInput.files.length) {
-      btn.innerText = "Compressing image...";
-      base64Image = await compressImage(fileInput.files[0]);
-    }
-
-    await addDoc(collection(db, "tickets"), {
-      studentId: student.id,
-      studentName: student.name,
-      studentEmail: student.email,
-      subject,
-      category,
-      message,
-      attachment: base64Image,
-      status: "Open",
-      createdAt: serverTimestamp(),
-      adminResponse: ""
-    });
-
-    alert("Ticket Sent!");
-    document.getElementById("subject").value = "";
-    document.getElementById("message").value = "";
-    document.getElementById("attachment").value = "";
-
-  } catch (e) {
-    alert(e.message);
-  } finally {
-    btn.disabled = false;
-    btn.innerText = "Submit Ticket";
-  }
-};
-
-function loadTickets() {
-  const q = query(
-    collection(db, "tickets"),
-    where("studentId", "==", student.id),
-    orderBy("createdAt", "desc")
-  );
-
-  onSnapshot(q, (snapshot) => {
-    const list = document.getElementById("ticketList");
-
-    if (snapshot.empty) {
-      list.innerHTML = "<p style='text-align:center;color:#999'>No tickets yet.</p>";
-      return;
-    }
-
-    list.innerHTML = snapshot.docs
-      .map((doc) => {
-        const t = doc.data();
-        const cls = t.status === "Open" ? "open" : t.status === "Replied" ? "replied" : "closed";
-
-        return `
-        <div class="ticket-card ${cls}">
-            <span class="badge bg-${cls}">${t.status}</span>
-            <strong>${t.subject}</strong>
-            <small>${t.category} • ${t.createdAt?.toDate().toLocaleDateString?.() || ""}</small>
-            <p>${t.message}</p>
-            ${t.attachment ? `<img src="${t.attachment}" class="ticket-img-preview" />` : ""}
-            ${t.adminResponse ? `<div style="background:#f1f5f9;padding:10px;border-radius:8px;margin-top:10px;"><strong>👮 Admin:</strong> ${t.adminResponse}</div>` : ""}
-        </div>`;
-      })
-      .join("");
-  });
+ sub.value=msg.value="";
+ alert("Ticket sent");
 }
 
-loadTickets();
+const q=query(
+ collection(db,"tickets"),
+ where("studentId","==",student.id),
+ orderBy("createdAt","desc")
+);
+
+onSnapshot(q,s=>{
+ list.innerHTML=s.docs.map(d=>{
+  const t=d.data();
+  const cls=t.status==="Replied"?"replied":t.status==="Closed"?"closed":"";
+  return `
+   <div class="ticket ${cls}">
+    <strong>${t.subject}</strong><br>
+    <small>${t.status}</small>
+    <p>${t.message}</p>
+    ${t.attachment?`<img src="${t.attachment}">`:""}
+    ${t.adminResponse?`<p><b>Admin:</b> ${t.adminResponse}</p>`:""}
+   </div>`;
+ }).join("")||"<p>No tickets</p>";
+});
 </script>
 </body>
 </html>
