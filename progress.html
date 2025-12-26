@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>My Student Dashboard</title>
+    <title>Student Learning Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -13,102 +13,95 @@
         .container { max-width: 1100px; margin: auto; padding: 40px 20px; }
         .header { text-align: center; margin-bottom: 30px; }
         
-        /* Search & Filter Bar */
         .controls { display: flex; gap: 10px; margin-bottom: 30px; justify-content: center; }
         #courseSearch { padding: 12px 25px; border-radius: 25px; border: 1px solid #ddd; width: 100%; max-width: 400px; outline: none; transition: 0.3s; }
         #courseSearch:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
 
-        .course-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .course-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; }
         
-        .card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.3s; border: 1px solid #edf2f7; }
-        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.3s; border: 1px solid #edf2f7; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 12px 24px rgba(0,0,0,0.1); }
         
-        .title { font-weight: 800; font-size: 1.1rem; margin-bottom: 10px; color: #2d3748; }
-        .module-info { font-size: 13px; color: #718096; background: #f7fafc; padding: 8px; border-radius: 8px; margin-bottom: 15px; }
+        .title { font-weight: 800; font-size: 1.2rem; margin-bottom: 12px; color: #1e293b; }
+        .stats-row { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 13px; color: #64748b; }
         
-        .progress-bar { background: #edf2f7; height: 10px; border-radius: 5px; overflow: hidden; }
-        .progress-fill { height: 100%; width: 0%; background: var(--primary); transition: width 1s ease; }
+        .progress-container { margin: 15px 0; }
+        .progress-bar { background: #f1f5f9; height: 12px; border-radius: 6px; overflow: hidden; }
+        .progress-fill { height: 100%; width: 0%; background: var(--primary); transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
         .progress-fill.completed { background: var(--success); }
         
-        .meta { display: flex; justify-content: space-between; font-size: 12px; margin-top: 8px; font-weight: bold; }
-        .cert-badge { margin-top: 15px; padding: 10px; background: #f0fff4; color: #276749; border-radius: 8px; font-size: 12px; font-weight: bold; text-align: center; border: 1px solid #c6f6d5; }
+        .meta { display: flex; justify-content: space-between; font-size: 12px; margin-top: 10px; font-weight: bold; letter-spacing: 0.5px; }
+        .cert-badge { margin-top: 18px; padding: 12px; background: #ecfdf5; color: #065f46; border-radius: 10px; font-size: 13px; font-weight: bold; text-align: center; border: 1px solid #a7f3d0; }
         
-        #loading { text-align: center; padding: 50px; font-weight: bold; color: #667eea; }
+        #loading { text-align: center; padding: 60px; font-size: 1.1rem; color: #6366f1; }
+        .empty-state { text-align: center; grid-column: 1 / -1; padding: 40px; color: #94a3b8; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <h1>🚀 My Dashboard</h1>
-        <p>Track your payments and course progress</p>
+        <h1>🚀 Student Dashboard</h1>
+        <p>Your real-time course progress and certificates</p>
     </div>
 
     <div class="controls">
-        <input type="text" id="courseSearch" placeholder="Filter courses..." onkeyup="filterCourses()">
+        <input type="text" id="courseSearch" placeholder="Search your 5 courses..." onkeyup="filterCourses()">
     </div>
 
-    <div id="loading">Syncing your enrollment data...</div>
+    <div id="loading">Connecting to your profile...</div>
     <div id="courseGrid" class="course-grid"></div>
 </div>
 
 <script>
+// --- CONFIGURATION ---
 const firebaseConfig = {
     apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
     authDomain: "students-login-29409.firebaseapp.com",
     projectId: "students-login-29409"
 };
+
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-auth.onAuthStateChanged(async (user) => {
-    if (!user) {
+// --- AUTH OBSERVER ---
+auth.onAuthStateChanged((user) => {
+    if (user) {
+        loadStudentData(user.uid);
+    } else {
         window.location.href = "login.html";
-        return;
     }
-    loadData(user.uid);
 });
 
-async function loadData(uid) {
+// --- CORE DATA LOADING ---
+async function loadStudentData(uid) {
     const grid = document.getElementById("courseGrid");
     const loader = document.getElementById("loading");
 
     try {
-        // 1. SCAN PAYMENTS: Find what courses the user has actually paid for
-        // Assuming you have a 'payments' collection or a 'paidCourses' array in user doc
-        // For this fix, we will pull all courses from the "courses" collection 
-        // and match them against progress fields.
-        
-        const snapshot = await db.collection("courses").get();
-        
-        if (snapshot.empty) {
-            loader.innerHTML = "No enrolled courses found.";
+        // Read from 'students' collection based on your progress-saving code
+        const docRef = db.collection("students").doc(uid);
+        const doc = await docRef.get();
+
+        if (!doc.exists || !doc.data().enrolledCourses) {
+            loader.innerHTML = `
+                <div class="empty-state">
+                    <h3>No courses found.</h3>
+                    <p>Enroll in a course to start tracking your progress!</p>
+                </div>`;
             return;
         }
 
+        const enrolledCourses = doc.data().enrolledCourses;
         grid.innerHTML = "";
         loader.style.display = "none";
 
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            const courseId = doc.id;
-
-            // --- THE FIX FOR THE 0% PROGRESS ISSUE ---
-            // We check for several variations of "certificate" and "completed"
-            const hasCert = data.certificateGenerated === true || 
-                            data.certificate === true || 
-                            data.status === "completed" ||
-                            data.certificateGenerated === "true"; // handle string values
-
-            let progressValue = 0;
-            if (hasCert) {
-                progressValue = 100;
-            } else {
-                progressValue = data.progress || 0;
-            }
-
-            const currentModule = data.currentModule || "Module 1: Getting Started";
+        // Object.entries lets us loop through the Map of courses
+        Object.entries(enrolledCourses).forEach(([courseId, data]) => {
+            const progress = data.progress || 0;
+            const completedModules = data.completedModules ? Object.keys(data.completedModules).length : 0;
+            const isDone = progress >= 100;
 
             const card = document.createElement("div");
             card.className = "card";
@@ -116,41 +109,57 @@ async function loadData(uid) {
 
             card.innerHTML = `
                 <div class="title">${formatTitle(courseId)}</div>
-                <div class="module-info">
-                    <strong>Current:</strong> ${hasCert ? "All Modules Finished" : currentModule}
+                
+                <div class="stats-row">
+                    <span>Modules Finished:</span>
+                    <strong>${completedModules}</strong>
                 </div>
-                <div class="progress-bar">
-                    <div class="progress-fill ${hasCert ? 'completed' : ''}" style="width: ${progressValue}%"></div>
+
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill ${isDone ? 'completed' : ''}" style="width: ${progress}%"></div>
+                    </div>
                 </div>
+
                 <div class="meta">
-                    <span>${progressValue}% COMPLETE</span>
-                    <span>${hasCert ? '🏆 DONE' : '🔥 LEARNING'}</span>
+                    <span style="color: ${isDone ? 'var(--success)' : 'var(--primary)'}">
+                        ${progress}% COMPLETE
+                    </span>
+                    <span>${isDone ? '✅ FINISHED' : '📖 STUDYING'}</span>
                 </div>
-                ${hasCert ? `
+
+                ${isDone ? `
                     <div class="cert-badge">✨ Certificate Unlocked & Ready</div>
                 ` : `
-                    <div style="font-size:11px; color:#cbd5e0; margin-top:10px; text-align:center;">
-                        Complete modules to earn certificate
+                    <div style="font-size:11px; color:#94a3b8; margin-top:15px; text-align:center;">
+                        Keep learning to earn your certificate
                     </div>
                 `}
             `;
             grid.appendChild(card);
         });
 
-    } catch (err) {
-        console.error(err);
-        loader.innerHTML = "Error loading data. Check Firestore permissions.";
+    } catch (error) {
+        console.error("Dashboard Error:", error);
+        loader.innerHTML = `<p style="color:red">Error syncing data. Please check connection.</p>`;
     }
 }
 
+// --- HELPERS ---
+
+// Converts "python_basics" to "Python Basics"
 function formatTitle(id) {
     return id.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 }
 
+// Live Search Filter
 function filterCourses() {
-    const val = document.getElementById("courseSearch").value.toLowerCase();
-    document.querySelectorAll('.card').forEach(card => {
-        card.style.display = card.getAttribute('data-name').includes(val) ? "block" : "none";
+    const query = document.getElementById("courseSearch").value.toLowerCase();
+    const cards = document.querySelectorAll('.card');
+    
+    cards.forEach(card => {
+        const name = card.getAttribute('data-name');
+        card.style.display = name.includes(query) ? "block" : "none";
     });
 }
 </script>
