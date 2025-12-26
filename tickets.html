@@ -1,109 +1,153 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Student Support</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Student Ticket System</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 1rem;
+    }
 
-<style>
-body{margin:0;font-family:Poppins,sans-serif;background:#f8fafc}
-.container{max-width:600px;margin:auto;padding:20px}
-.card{background:white;border-radius:16px;padding:20px;margin-bottom:20px;box-shadow:0 4px 20px rgba(0,0,0,.05)}
-input,select,textarea{width:100%;padding:12px;border-radius:12px;border:2px solid #e5e7eb}
-button{width:100%;padding:14px;border:none;border-radius:14px;background:#6d28d9;color:white;font-weight:600}
-.ticket{background:white;border-left:5px solid #f59e0b;border-radius:14px;padding:15px;margin-bottom:12px}
-.replied{border-color:#10b981}
-.closed{border-color:#ef4444}
-img{max-width:100%;border-radius:8px;margin-top:10px}
-</style>
+    h2 {
+      text-align: center;
+    }
+
+    .card {
+      background: #fff;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+
+    input, textarea, button, select {
+      width: 100%;
+      margin-top: 0.5rem;
+      padding: 0.6rem;
+      font-size: 1rem;
+    }
+
+    button {
+      background: #1976d2;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .ticket {
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .status {
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    img {
+      max-width: 100%;
+      border-radius: 5px;
+      margin-top: 0.5rem;
+    }
+  </style>
 </head>
 
 <body>
-<div class="container">
-<h2>🎓 Student Support</h2>
+
+<h2>Submit Payment Ticket</h2>
 
 <div class="card">
-<select id="cat">
-<option>Payment</option>
-<option>Course</option>
-<option>Technical</option>
-<option>Other</option>
-</select><br><br>
-
-<input id="sub" placeholder="Subject"><br><br>
-<textarea id="msg" placeholder="Message"></textarea><br><br>
-<input type="file" id="file" accept="image/*"><br><br>
-<button onclick="send()">Submit Ticket</button>
+  <input id="email" type="email" placeholder="Your email" required />
+  <textarea id="description" placeholder="Ticket description"></textarea>
+  <input id="image" type="file" accept="image/*"/>
+  <button id="submit">Submit Ticket</button>
 </div>
 
-<h3>My Tickets</h3>
-<div id="list"></div>
-</div>
+<h2>Your Ticket History</h2>
+<div id="tickets"></div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+  import { getFirestore, collection, addDoc, query, where, onSnapshot, serverTimestamp } 
+    from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-const app = initializeApp({
- apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
- authDomain:"students-login-29409.firebaseapp.com",
- projectId:"students-login-29409"
-});
-const db = getFirestore(app);
+  const firebaseConfig = {
+    apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+    authDomain: "students-login-29409.firebaseapp.com",
+    projectId: "students-login-29409",
+    storageBucket: "students-login-29409.firebasestorage.app",
+    messagingSenderId: "634331456872",
+    appId: "1:634331456872:web:6dae360c5e28d8356562dd",
+    measurementId: "G-96XXYG1VR2"
+  };
 
-// ⚠️ replace with real logged user
-const student={id:"STUDENT_ID",name:"Student Name",email:"student@email.com"};
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-async function send(){
- if(!sub.value||!msg.value) return alert("Fill all fields");
+  const emailEl = document.getElementById("email");
+  const descEl = document.getElementById("description");
+  const imgEl = document.getElementById("image");
+  const ticketsEl = document.getElementById("tickets");
 
- let img=null;
- if(file.files[0]){
-  const r=new FileReader();
-  r.onload=e=>img=e.target.result;
-  r.readAsDataURL(file.files[0]);
-  await new Promise(res=>r.onloadend=res);
- }
+  document.getElementById("submit").onclick = () => {
+    if (!imgEl.files[0]) {
+      alert("Please upload proof of payment");
+      return;
+    }
 
- await addDoc(collection(db,"tickets"),{
-  studentId:student.id,
-  studentName:student.name,
-  studentEmail:student.email,
-  subject:sub.value,
-  message:msg.value,
-  category:cat.value,
-  attachment:img,
-  status:"Open",
-  createdAt:serverTimestamp(),
-  adminResponse:""
- });
+    const reader = new FileReader();
+    reader.onload = async () => {
+      await addDoc(collection(db, "tickets"), {
+        userEmail: emailEl.value,
+        description: descEl.value,
+        imageBase64: reader.result,
+        status: "open",
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        history: [
+          {
+            status: "open",
+            changedBy: "student",
+            changedAt: new Date()
+          }
+        ]
+      });
 
- sub.value=msg.value="";
- alert("Ticket sent");
-}
+      alert("Ticket submitted successfully");
+    };
+    reader.readAsDataURL(imgEl.files[0]);
+  };
 
-const q=query(
- collection(db,"tickets"),
- where("studentId","==",student.id),
- orderBy("createdAt","desc")
-);
+  emailEl.addEventListener("input", () => {
+    ticketsEl.innerHTML = "";
 
-onSnapshot(q,s=>{
- list.innerHTML=s.docs.map(d=>{
-  const t=d.data();
-  const cls=t.status==="Replied"?"replied":t.status==="Closed"?"closed":"";
-  return `
-   <div class="ticket ${cls}">
-    <strong>${t.subject}</strong><br>
-    <small>${t.status}</small>
-    <p>${t.message}</p>
-    ${t.attachment?`<img src="${t.attachment}">`:""}
-    ${t.adminResponse?`<p><b>Admin:</b> ${t.adminResponse}</p>`:""}
-   </div>`;
- }).join("")||"<p>No tickets</p>";
-});
+    const q = query(
+      collection(db, "tickets"),
+      where("userEmail", "==", emailEl.value)
+    );
+
+    onSnapshot(q, snap => {
+      ticketsEl.innerHTML = "";
+      snap.forEach(doc => {
+        const t = doc.data();
+        ticketsEl.innerHTML += `
+          <div class="ticket">
+            <div class="status">Status: ${t.status}</div>
+            <p>${t.description}</p>
+            <img src="${t.imageBase64}">
+          </div>
+        `;
+      });
+    });
+  });
 </script>
+
 </body>
 </html>
