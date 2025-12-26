@@ -1,92 +1,151 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin Ticket Inbox</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Ticket Inbox</title>
+    <style>
+        :root { --primary: #4f46e5; --bg: #f3f4f6; --white: #ffffff; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); margin: 0; padding: 0; }
+        
+        /* Navbar */
+        .navbar { background: var(--primary); color: white; padding: 1rem; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .navbar h1 { margin: 0; font-size: 1.2rem; }
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #eef1f5;
-      padding: 1rem;
-    }
+        .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
 
-    h2 {
-      text-align: center;
-    }
+        /* Ticket Cards */
+        .ticket-card { background: var(--white); border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 5px solid #ccc; transition: 0.2s; }
+        
+        /* Status Borders */
+        .border-open { border-left-color: #3b82f6; }
+        .border-in_review { border-left-color: #f59e0b; }
+        .border-closed { border-left-color: #10b981; }
 
-    .ticket {
-      background: white;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      border-radius: 8px;
-    }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .user-email { font-weight: bold; color: #374151; display: block; }
+        .meta { font-size: 0.85rem; color: #6b7280; }
 
-    select {
-      width: 100%;
-      padding: 0.5rem;
-      margin-top: 0.5rem;
-    }
+        .description { background: #f9fafb; padding: 10px; border-radius: 6px; margin-bottom: 10px; color: #1f2937; }
 
-    img {
-      max-width: 100%;
-      margin-top: 0.5rem;
-      border-radius: 6px;
-    }
-  </style>
+        /* Controls */
+        .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; border-top: 1px solid #eee; padding-top: 10px; }
+        select { padding: 8px; border-radius: 6px; border: 1px solid #d1d5db; background: white; }
+        
+        .img-trigger { color: var(--primary); text-decoration: underline; cursor: pointer; font-size: 0.9rem; margin-right: auto; }
+
+        /* Modal for Image */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 200; align-items: center; justify-content: center; }
+        .modal img { max-width: 90%; max-height: 90%; border-radius: 8px; }
+        .modal-close { position: absolute; top: 20px; right: 20px; color: white; font-size: 2rem; cursor: pointer; }
+    </style>
 </head>
-
 <body>
 
-<h2>Admin Ticket Inbox</h2>
-<div id="tickets"></div>
+<div class="navbar">
+    <h1>🎟️ Admin Ticket Inbox</h1>
+</div>
+
+<div class="container" id="inbox">
+    <p style="text-align: center;">Loading tickets...</p>
+</div>
+
+<div class="modal" id="imageModal" onclick="this.style.display='none'">
+    <span class="modal-close">&times;</span>
+    <img id="modalImg" src="">
+</div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-  import { getFirestore, collection, onSnapshot, doc, updateDoc, serverTimestamp } 
-    from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+    import { initializeApp } from "firebase/app";
+    import { getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc } from "firebase/firestore";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
-    authDomain: "students-login-29409.firebaseapp.com",
-    projectId: "students-login-29409",
-    storageBucket: "students-login-29409.firebasestorage.app",
-    messagingSenderId: "634331456872",
-    appId: "1:634331456872:web:6dae360c5e28d8356562dd",
-    measurementId: "G-96XXYG1VR2"
-  };
+    const firebaseConfig = {
+        apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+        authDomain: "students-login-29409.firebaseapp.com",
+        projectId: "students-login-29409",
+        storageBucket: "students-login-29409.firebasestorage.app",
+        messagingSenderId: "634331456872",
+        appId: "1:634331456872:web:6dae360c5e28d8356562dd",
+        measurementId: "G-96XXYG1VR2"
+    };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-  const ticketsEl = document.getElementById("tickets");
+    const inboxDiv = document.getElementById('inbox');
 
-  onSnapshot(collection(db, "tickets"), snap => {
-    ticketsEl.innerHTML = "";
-    snap.forEach(d => {
-      const t = d.data();
-      ticketsEl.innerHTML += `
-        <div class="ticket">
-          <strong>${t.userEmail}</strong>
-          <p>${t.description}</p>
-          <img src="${t.imageBase64}">
-          <select onchange="updateStatus('${d.id}', this.value)">
-            <option value="open" ${t.status==="open"?"selected":""}>Open</option>
-            <option value="in_review" ${t.status==="in_review"?"selected":""}>In Review</option>
-            <option value="closed" ${t.status==="closed"?"selected":""}>Closed</option>
-          </select>
-        </div>
-      `;
+    // Real-time listener for ALL tickets
+    const q = query(collection(db, "tickets"), orderBy("createdAt", "desc"));
+
+    onSnapshot(q, (snapshot) => {
+        inboxDiv.innerHTML = "";
+        
+        if (snapshot.empty) {
+            inboxDiv.innerHTML = "<p style='text-align:center'>No tickets found.</p>";
+            return;
+        }
+
+        snapshot.forEach((docSnap) => {
+            const ticket = docSnap.data();
+            const id = docSnap.id;
+            const time = ticket.createdAt ? ticket.createdAt.toDate().toLocaleString() : 'Pending...';
+
+            // Check if image exists
+            const imgBtn = ticket.image 
+                ? `<span class="img-trigger" onclick="viewImage('${id}')">📸 View Proof</span>` 
+                : `<span style="color:#999; font-size:0.9rem;">No Image</span>`;
+
+            // HTML Structure for Ticket Card
+            const html = `
+                <div class="ticket-card border-${ticket.status}">
+                    <div class="header">
+                        <div>
+                            <span class="user-email">${ticket.email}</span>
+                            <span class="meta">${time}</span>
+                        </div>
+                        <span style="font-weight:bold; font-size:0.8rem; text-transform:uppercase;">${ticket.status.replace('_', ' ')}</span>
+                    </div>
+                    
+                    <div class="description">${ticket.description}</div>
+
+                    <div class="controls">
+                        ${imgBtn}
+                        
+                        <select onchange="updateStatus('${id}', this.value)">
+                            <option value="open" ${ticket.status === 'open' ? 'selected' : ''}>Open</option>
+                            <option value="in_review" ${ticket.status === 'in_review' ? 'selected' : ''}>In Review</option>
+                            <option value="closed" ${ticket.status === 'closed' ? 'selected' : ''}>Closed</option>
+                        </select>
+                    </div>
+                    
+                    <input type="hidden" id="img-${id}" value="${ticket.image || ''}">
+                </div>
+            `;
+            inboxDiv.innerHTML += html;
+        });
     });
-  });
 
-  window.updateStatus = async (id, status) => {
-    await updateDoc(doc(db, "tickets", id), {
-      status,
-      updatedAt: serverTimestamp()
-    });
-  };
+    // Global functions
+    window.updateStatus = async (id, newStatus) => {
+        try {
+            const ticketRef = doc(db, "tickets", id);
+            await updateDoc(ticketRef, {
+                status: newStatus
+            });
+            // No alert needed, UI updates automatically via onSnapshot
+        } catch (error) {
+            alert("Error updating status");
+            console.error(error);
+        }
+    };
+
+    window.viewImage = (id) => {
+        const base64 = document.getElementById(`img-${id}`).value;
+        if(base64) {
+            document.getElementById('modalImg').src = base64;
+            document.getElementById('imageModal').style.display = 'flex';
+        }
+    };
 </script>
 
 </body>
