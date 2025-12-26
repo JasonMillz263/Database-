@@ -552,26 +552,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const percentage = (currentScore / currentQuizData.length) * 100;
         const isPass = percentage >= 60;
 
-        if (!isPass) return;
-if (!auth.currentUser) return;
-
-const uid = auth.currentUser.uid;
-
-await db
-  .collection("students")
-  .doc(uid)
-  .set(
-    {
-      enrolledCourses: {
-        [COURSE_ID]: {
-          completedModules: {
-            [activeModuleId]: true
-          }
-        }
-      }
-    },
-    { merge: true }
-  );
+        if (isPass) {
+            if (auth.currentUser) {
+                await db.collection("students").doc(auth.currentUser.uid).set({
+                    enrolledCourses: {
+                        [COURSE_ID]: { 
+                            completedModules: { [activeModuleId]: true } 
+                        }
+                    }
+                }, { merge: true });
+            }
 
             quizArea.innerHTML = `
                 <div style="text-align:center;">
