@@ -46,7 +46,7 @@
     </div>
 
     <div class="controls">
-        <input type="text" id="courseSearch" placeholder="Search your 5 courses..." onkeyup="filterCourses()">
+        <input type="text" id="courseSearch" placeholder="Search your courses..." onkeyup="filterCourses()">
     </div>
 
     <div id="loading">Connecting to your profile...</div>
@@ -80,11 +80,10 @@ async function loadStudentData(uid) {
     const loader = document.getElementById("loading");
 
     try {
-        // Read from 'students' collection based on your progress-saving code
-        const docRef = db.collection("students").doc(uid);
-        const doc = await docRef.get();
+        // 1. Get Student Data
+        const studentDoc = await db.collection("students").doc(uid).get();
 
-        if (!doc.exists || !doc.data().enrolledCourses) {
+        if (!studentDoc.exists || !studentDoc.data().enrolledCourses) {
             loader.innerHTML = `
                 <div class="empty-state">
                     <h3>No courses found.</h3>
@@ -93,16 +92,38 @@ async function loadStudentData(uid) {
             return;
         }
 
-        const enrolledCourses = doc.data().enrolledCourses;
+        const enrolledCourses = studentDoc.data().enrolledCourses;
         grid.innerHTML = "";
         loader.style.display = "none";
 
-        // Object.entries lets us loop through the Map of courses
-        Object.entries(enrolledCourses).forEach(([courseId, data]) => {
-            const progress = data.progress || 0;
-            const completedModules = data.completedModules ? Object.keys(data.completedModules).length : 0;
+        // 2. Process each course
+        for (const [courseId, userData] of Object.entries(enrolledCourses)) {
+            
+            // 3. Fetch current course structure to verify modules
+            const courseDoc = await db.collection("courses").doc(courseId).get();
+            
+            if (!courseDoc.exists) continue;
+
+            const courseData = courseDoc.data();
+            const allModules = courseData.modules || [];
+            
+            // FILTER: Only include modules that are published and NOT deleted
+            const validModules = allModules.filter(m => m.status === 'published' && !m.deleted);
+            const totalValidCount = validModules.length;
+
+            // BUG FIX: If course has no modules, skip it entirely
+            if (totalValidCount === 0) continue;
+
+            // 4. Calculate accurate progress based on valid modules
+            const userCompletedKeys = userData.completedModules ? Object.keys(userData.completedModules) : [];
+            const validCompletedCount = userCompletedKeys.filter(id => 
+                validModules.some(m => m.id === id)
+            ).length;
+
+            const progress = Math.round((validCompletedCount / totalValidCount) * 100);
             const isDone = progress >= 100;
 
+            // 5. Build UI Card
             const card = document.createElement("div");
             card.className = "card";
             card.setAttribute("data-name", courseId.toLowerCase());
@@ -112,7 +133,7 @@ async function loadStudentData(uid) {
                 
                 <div class="stats-row">
                     <span>Modules Finished:</span>
-                    <strong>${completedModules}</strong>
+                    <strong>${validCompletedCount} / ${totalValidCount}</strong>
                 </div>
 
                 <div class="progress-container">
@@ -137,7 +158,7 @@ async function loadStudentData(uid) {
                 `}
             `;
             grid.appendChild(card);
-        });
+        }
 
     } catch (error) {
         console.error("Dashboard Error:", error);
@@ -147,12 +168,10 @@ async function loadStudentData(uid) {
 
 // --- HELPERS ---
 
-// Converts "python_basics" to "Python Basics"
 function formatTitle(id) {
     return id.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 }
 
-// Live Search Filter
 function filterCourses() {
     const query = document.getElementById("courseSearch").value.toLowerCase();
     const cards = document.querySelectorAll('.card');
