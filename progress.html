@@ -2,121 +2,100 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Academy Dashboard</title>
+    <title>My Five Course Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
 
     <style>
         :root {
             /* COLOR PALETTE */
-            --primary: #6366f1;       /* Indigo */
-            --primary-dark: #4338ca;  /* Deep Purple */
-            --accent-blue: #3b82f6;   /* Bright Blue */
-            --status-gold: #f59e0b;   /* Yellow/Gold (Completed) */
-            --status-red: #ef4444;    /* Red (Locked/Not Started) */
+            --brand-purple: #6366f1;   /* Primary Purple */
+            --brand-blue: #3b82f6;     /* Secondary Blue */
+            --status-gold: #f59e0b;    /* Completed (Yellow) */
+            --status-red: #ef4444;     /* Locked (Red) */
             --bg-body: #f3f4f6;
             --bg-card: #ffffff;
-            --text-main: #111827;
+            --text-main: #1f2937;
             --text-muted: #6b7280;
         }
 
-        body {
-            margin: 0; font-family: 'Inter', sans-serif;
-            background: var(--bg-body); color: var(--text-main);
-        }
+        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-body); color: var(--text-main); }
 
         /* HEADER SECTION */
-        .hero {
-            background: linear-gradient(135deg, var(--primary-dark), var(--accent-blue));
-            padding: 40px 20px 80px;
-            color: white;
-            text-align: center;
-            border-bottom-left-radius: 30px;
-            border-bottom-right-radius: 30px;
-            box-shadow: 0 10px 30px rgba(67, 56, 202, 0.3);
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--brand-purple), var(--brand-blue));
+            color: white; padding: 40px 20px 80px; text-align: center;
+            border-bottom-left-radius: 30px; border-bottom-right-radius: 30px;
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
         }
-        .hero h1 { margin: 0; font-size: 2.2rem; font-weight: 800; }
-        .hero p { opacity: 0.9; margin-top: 10px; font-size: 1.1rem; }
-
-        /* GRID CONTAINER */
+        .dashboard-header h1 { margin: 0; font-size: 2.2rem; font-weight: 800; }
+        
+        /* MAIN CONTAINER */
         .container {
             max-width: 1100px; margin: -50px auto 50px; padding: 0 20px;
-            position: relative; z-index: 2;
+            position: relative; z-index: 10;
         }
-        
+
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 25px;
         }
 
-        /* CARD DESIGN */
+        /* COURSE CARD STYLING */
         .card {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
-            display: flex; flex-direction: column;
-            border-top: 6px solid var(--primary); /* Default Active Color */
+            background: var(--bg-card); border-radius: 16px; padding: 25px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease; display: flex; flex-direction: column;
+            border-top: 6px solid var(--brand-purple); 
         }
-        .card:hover { transform: translateY(-5px); }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
 
-        /* DYNAMIC BORDERS */
-        .border-red { border-top-color: var(--status-red); }
-        .border-gold { border-top-color: var(--status-gold); }
+        /* Status-specific Borders */
+        .card-locked { border-top-color: var(--status-red); opacity: 0.85; }
+        .card-completed { border-top-color: var(--status-gold); }
 
-        /* CONTENT */
         .card h3 { margin: 0 0 5px 0; font-size: 1.25rem; }
         .card-meta { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px; display: flex; justify-content: space-between; }
 
         /* PROGRESS BAR */
-        .progress-track {
-            background: #e5e7eb; height: 10px; border-radius: 10px; overflow: hidden; margin-bottom: 20px;
-        }
-        .progress-fill {
-            height: 100%; width: 0%; transition: width 0.8s ease;
-            background: linear-gradient(90deg, var(--primary), var(--accent-blue));
-        }
-        .bg-red { background: var(--status-red); }
-        .bg-gold { background: var(--status-gold); }
+        .progress-track { background: #e5e7eb; height: 10px; border-radius: 10px; overflow: hidden; margin-bottom: 25px; }
+        .progress-fill { height: 100%; width: 0%; transition: width 0.8s ease; }
+        .fill-active { background: linear-gradient(90deg, var(--brand-purple), var(--brand-blue)); }
+        .fill-gold { background: var(--status-gold); }
+        .fill-red { background: var(--status-red); }
 
         /* BUTTONS */
-        .btn {
-            margin-top: auto; padding: 12px; border-radius: 8px; text-align: center;
-            text-decoration: none; font-weight: 600; border: none; cursor: pointer; display: block;
-            background: var(--primary); color: white; transition: 0.2s;
-        }
-        .btn:hover { filter: brightness(1.1); }
-        
-        .btn-locked { background: #d1d5db; color: #6b7280; cursor: not-allowed; pointer-events: none; }
+        .btn { display: block; width: 100%; padding: 12px 0; text-align: center; text-decoration: none; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; margin-top: auto; }
+        .btn-start { background: var(--brand-purple); color: white; }
         .btn-cert { background: var(--status-gold); color: #000; }
+        .btn-locked { background: #d1d5db; color: #6b7280; cursor: not-allowed; pointer-events: none; }
 
-        /* LOADING */
-        .loader { text-align: center; margin-top: 50px; font-weight: 600; color: var(--text-muted); }
+        .loader { text-align: center; font-weight: 600; color: var(--text-muted); margin-top: 50px; }
 
     </style>
 </head>
 <body>
 
-<div class="hero">
-    <h1>Student Portal</h1>
-    <p>Logged in as: <span id="userEmail">Loading...</span></p>
-    <button onclick="logout()" style="margin-top:10px; background:rgba(255,255,255,0.2); border:1px solid white; color:white; padding:5px 15px; border-radius:20px; cursor:pointer;">Sign Out</button>
+<div class="dashboard-header">
+    <h1>My Learning Path</h1>
+    <p>Viewing progress for all 5 essential courses.</p>
+    <button style="background:rgba(255,255,255,0.2); border:1px solid white; color:white; padding:5px 15px; border-radius:20px; cursor:pointer;" onclick="logout()">Sign Out</button>
 </div>
 
 <div class="container">
-    <div id="loader" class="loader">Analyzing course modules...</div>
+    <div id="loader" class="loader">Loading all courses from the database...</div>
     <div id="grid" class="grid"></div>
 </div>
 
 <script>
-    // 1. FIREBASE CONFIGURATION
+    // 1. FIREBASE CONFIGURATION (Using your provided keys)
     const firebaseConfig = {
         apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
         authDomain: "students-login-29409.firebaseapp.com",
@@ -131,147 +110,141 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    // 2. AUTHENTICATION
-    auth.onAuthStateChanged(async (user) => {
+    // 2. AUTHENTICATION & LOAD
+    auth.onAuthStateChanged((user) => {
         if (user) {
-            document.getElementById('userEmail').innerText = user.email;
             loadDashboard(user);
         } else {
-            window.location.href = "index.html"; // Redirect if not logged in
+            // Redirect to login if not authenticated
+            window.location.href = "index.html"; 
         }
     });
 
-    // 3. MAIN DASHBOARD LOGIC
+    // 3. CORE LOGIC (FETCHING ALL COURSES)
     async function loadDashboard(user) {
         const grid = document.getElementById('grid');
         const loader = document.getElementById('loader');
-        
+
         try {
-            // A. FETCH ALL COURSES
-            // We get the course documents (titles etc)
-            const coursesSnap = await db.collection('courses').get();
+            // A. Fetch ALL Course Documents (This is the key step)
+            // We order by document ID to try and match a natural sequence
+            const coursesSnap = await db.collection('courses').orderBy(firebase.firestore.FieldPath.documentId()).get();
             
-            // B. FETCH STUDENT PROGRESS
-            const studentSnap = await db.collection('students').doc(user.uid).get();
-            const enrolledData = studentSnap.exists ? (studentSnap.data().enrolledCourses || {}) : {};
+            if (coursesSnap.empty) {
+                loader.innerHTML = "No courses found in the Firestore 'courses' collection.";
+                return;
+            }
+
+            // B. Fetch User Progress
+            const studentDoc = await db.collection('students').doc(user.uid).get();
+            const enrolledData = studentDoc.exists ? (studentDoc.data().enrolledCourses || {}) : {};
 
             let htmlContent = "";
-            let isPrevCourseCompleted = true; // First course is naturally unlocked
+            let previousCourseCompleted = true; 
 
-            // We use Promise.all to fetch subcollections in parallel for speed
-            const renderedCourses = await Promise.all(coursesSnap.docs.map(async (doc) => {
+            // C. Process ALL Courses in Parallel
+            const processedCourses = await Promise.all(coursesSnap.docs.map(async (doc) => {
                 const courseId = doc.id;
                 const courseData = doc.data();
 
-                // --- CRITICAL STEP: COUNT PUBLISHED MODULES ---
-                // Query: Go into subcollection 'modules' -> Filter where status == 'published'
+                // 1. Calculate Total Modules (STRICTLY 'published')
                 const modulesSnap = await db.collection('courses').doc(courseId)
-                                      .collection('modules')
-                                      .where('status', '==', 'published')
-                                      .get();
+                    .collection('modules')
+                    .where('status', '==', 'published') // <--- The strict filter
+                    .get();
                 
-                // 1. Get List of Active Module IDs
                 const activeModuleIds = modulesSnap.docs.map(m => m.id);
-                const totalActive = activeModuleIds.length;
+                const totalModules = activeModuleIds.length;
 
-                // 2. Check User Progress against Active List
-                const userCourseProgress = enrolledData[courseId] || {};
-                const userCompletedMap = userCourseProgress.completedModules || {};
+                // 2. Count User Completed Modules against the active list
+                const userCompletedMap = (enrolledData[courseId] && enrolledData[courseId].completedModules) || {};
                 
                 let completedCount = 0;
-                // We only count a module as done if the user did it AND it is currently published
                 activeModuleIds.forEach(modId => {
                     if (userCompletedMap[modId] === true) {
                         completedCount++;
                     }
                 });
 
-                // 3. Math
+                // 3. Calculate Percent
                 let percent = 0;
-                if (totalActive > 0) {
-                    percent = Math.round((completedCount / totalActive) * 100);
-                }
-                if (percent > 100) percent = 100;
-
+                if (totalModules > 0) percent = Math.round((completedCount / totalModules) * 100);
+                
                 return {
                     id: courseId,
                     title: courseData.title || formatTitle(courseId),
-                    total: totalActive,
-                    completed: completedCount,
-                    percent: percent
+                    percent: percent,
+                    stats: `${completedCount} / ${totalModules} Modules`
                 };
             }));
 
-            // --- RENDER LOGIC WITH SEQUENTIAL LOCKING ---
-            // Note: If you need a specific order (e.g. Management first), you might need to sort the array here.
-            // Currently, it defaults to the database ID order.
-            
-            renderedCourses.forEach(course => {
-                const isLocked = !isPrevCourseCompleted;
-                const isCompleted = course.percent === 100;
+            // D. Render Cards with Locking Logic
+            processedCourses.forEach(course => {
+                const isCompleted = course.percent >= 100;
+                const isLocked = !previousCourseCompleted;
 
-                // Variables for UI
-                let borderClass = "";
-                let progressClass = "";
-                let statusText = `${course.completed}/${course.total} Modules`;
+                let cardClass = "";
+                let fillClass = "fill-active";
                 let btnHtml = "";
-                
+                let statusLabel = course.stats;
+
                 if (isLocked) {
                     // LOCKED
-                    borderClass = "border-red";
-                    progressClass = "bg-red";
-                    statusText = "🔒 Locked";
-                    btnHtml = `<button class="btn btn-locked">Complete previous course</button>`;
-                } else if (isCompleted) {
+                    cardClass = "card-locked";
+                    fillClass = "fill-red";
+                    statusLabel = "🔒 Locked";
+                    btnHtml = `<button class="btn btn-locked">Complete Previous Course</button>`;
+                } 
+                else if (isCompleted) {
                     // COMPLETED
-                    borderClass = "border-gold";
-                    progressClass = "bg-gold";
-                    statusText = "✅ Completed";
+                    cardClass = "card-completed";
+                    fillClass = "fill-gold";
+                    statusLabel = "✅ Completed";
                     btnHtml = `<button class="btn btn-cert" onclick="viewCert('${course.id}')">🏆 View Certificate</button>`;
-                } else {
-                    // IN PROGRESS (Blue/Purple)
-                    btnHtml = `<a href="student.html?courseId=${course.id}" class="btn">Continue Learning</a>`;
+                } 
+                else {
+                    // ACTIVE / IN PROGRESS
+                    btnHtml = `<a href="student.html?courseId=${course.id}" class="btn btn-start">Continue Learning</a>`;
                 }
 
                 htmlContent += `
-                    <div class="card ${borderClass}">
+                    <div class="card ${cardClass}">
                         <h3>${course.title}</h3>
                         <div class="card-meta">
-                            <span>${statusText}</span>
-                            <span>${course.percent}%</span>
+                            <span>${statusLabel}</span>
+                            <span style="font-weight:700">${course.percent}%</span>
                         </div>
                         <div class="progress-track">
-                            <div class="progress-fill ${progressClass}" style="width: ${course.percent}%"></div>
+                            <div class="progress-fill ${fillClass}" style="width: ${course.percent}%"></div>
                         </div>
                         ${btnHtml}
                     </div>
                 `;
 
-                // Set flag for next loop iteration
-                isPrevCourseCompleted = isCompleted;
+                // Update lock for the next iteration
+                previousCourseCompleted = isCompleted;
             });
 
             loader.style.display = 'none';
             grid.innerHTML = htmlContent;
 
         } catch (error) {
-            console.error(error);
-            loader.innerHTML = `<span style="color:red">Error loading data. Check console.</span>`;
+            console.error("Dashboard Error:", error);
+            loader.innerHTML = `<span style="color:red">Error loading courses: ${error.message}</span>`;
         }
     }
 
-    // Helper to make "management_course" look like "Management Course"
+    // Helper: Formats "food_business_management_course" -> "Food Business Management Course"
     function formatTitle(str) {
         return str.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
 
     function viewCert(id) {
-        alert("Opening Certificate for: " + id);
-        // window.location.href = "certificate.html?courseId=" + id;
+        alert("Opening Certificate for: " + formatTitle(id));
     }
 
     function logout() {
-        auth.signOut().then(() => location.reload());
+        auth.signOut().then(() => window.location.href = "index.html");
     }
 </script>
 
