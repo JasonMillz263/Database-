@@ -193,12 +193,16 @@ body { margin: 0; font-family: 'Poppins', sans-serif; background: var(--bg); hei
 
         const attBtn = document.getElementById('d-attachment');
         if(t.attachment) {
-            attBtn.style.display = 'inline-block';
-            attBtn.href = t.attachment;
-        } else {
-            attBtn.style.display = 'none';
-        }
+    attBtn.style.display = 'inline-block';
+    attBtn.innerText = "📷 View Image";
+    attBtn.onclick = (e) => {
+        e.preventDefault();
+        const w = window.open("");
+        w.document.write(`<img src="${t.attachment}" style="max-width:100%">`);
     };
+} else {
+    attBtn.style.display = 'none';
+}
 
     window.sendReply = async () => {
         const response = document.getElementById('replyText').value;
