@@ -1,51 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Student Support</title>
+
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
-/* ... (Same CSS as before) ... */
-:root { --primary: #6d28d9; --secondary: #2563eb; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --yellow: #f59e0b; --green: #10b981; --red: #ef4444; }
-body { margin: 0; font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); padding-bottom: 80px; }
-.app-container { max-width: 600px; margin: 0 auto; padding: 20px; }
-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; }
-h1 { font-size: 24px; margin: 0; color: var(--primary); }
-.card { background: var(--card); border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 20px; }
-.form-group { margin-bottom: 15px; }
-label { display: block; font-size: 13px; color: #64748b; margin-bottom: 6px; font-weight: 500; }
-input, select, textarea { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 12px; font-family: inherit; box-sizing: border-box; }
-.btn-main { width: 100%; padding: 14px; border: none; border-radius: 14px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; font-weight: 600; cursor: pointer; }
-.btn-main:disabled { opacity: 0.7; cursor: not-allowed; }
-.ticket-card { background: white; border-radius: 16px; padding: 18px; margin-bottom: 15px; border-left: 5px solid #ccc; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-.ticket-card.open { border-left-color: var(--yellow); }
-.ticket-card.replied { border-left-color: var(--green); }
-.ticket-card.closed { border-left-color: var(--red); }
-.badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; color: white; float: right; }
-.bg-open { background: var(--yellow); }
-.bg-replied { background: var(--green); }
-.bg-closed { background: var(--red); }
-.ticket-img-preview { width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; margin-top: 10px; border: 1px solid #eee; }
-#authOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+:root { --primary:#6d28d9; --secondary:#2563eb; --bg:#f8fafc; --card:#ffffff; --text:#1e293b; --yellow:#f59e0b; --green:#10b981; --red:#ef4444; }
+
+body { margin:0; font-family:'Poppins',sans-serif; background:var(--bg); color:var(--text); padding-bottom:80px; }
+
+.app-container { max-width:600px; margin:0 auto; padding:20px; }
+
+header { display:flex; align-items:center; justify-content:space-between; margin-bottom:25px; }
+h1 { margin:0; color:var(--primary); }
+
+.card { background:#fff; border-radius:20px; padding:20px; box-shadow:0 4px 20px rgba(0,0,0,0.05); margin-bottom:20px; }
+
+.form-group { margin-bottom:15px; }
+label { display:block; font-size:13px; color:#64748b; margin-bottom:6px; }
+
+input, select, textarea { width:100%; padding:12px; border:2px solid #e2e8f0; border-radius:12px; box-sizing:border-box; }
+
+.btn-main { width:100%; padding:14px; border:none; border-radius:14px; background:linear-gradient(135deg,var(--primary),var(--secondary)); color:#fff; font-weight:600; cursor:pointer; }
+
+.ticket-card { background:white; border-radius:16px; padding:18px; margin-bottom:15px; border-left:5px solid #ccc; box-shadow:0 4px 6px rgba(0,0,0,0.05); }
+.ticket-card.open { border-left-color:var(--yellow); }
+.ticket-card.replied { border-left-color:var(--green); }
+.ticket-card.closed { border-left-color:var(--red); }
+
+.badge { padding:4px 10px; border-radius:20px; font-size:11px; color:white; float:right; }
+.bg-open { background:var(--yellow); }
+.bg-replied { background:var(--green); }
+.bg-closed { background:var(--red); }
+
+.ticket-img-preview { width:100%; max-height:200px; object-fit:cover; border-radius:8px; margin-top:10px; border:1px solid #eee; }
 </style>
 </head>
-<body>
 
-<div id="authOverlay">
-    <h2>Student Login</h2>
-    <p>Please log in to submit tickets</p>
-    <button class="btn-main" onclick="login()" style="width: 200px;">Login with Google</button>
-</div>
+<body>
 
 <div class="app-container">
     <header>
         <h1>Academy Help</h1>
-        <div id="userInfo" style="font-weight:600;">...</div>
+        <div id="userInfo" style="font-weight:600;"></div>
     </header>
 
     <div class="card">
         <h3>✨ Create Ticket</h3>
+
         <div class="form-group">
             <label>Topic</label>
             <select id="category">
@@ -55,19 +60,22 @@ input, select, textarea { width: 100%; padding: 12px; border: 2px solid #e2e8f0;
                 <option value="Other">❓ Other</option>
             </select>
         </div>
+
         <div class="form-group">
             <label>Subject</label>
-            <input type="text" id="subject" placeholder="Brief summary...">
+            <input id="subject" type="text" placeholder="Brief summary..." />
         </div>
+
         <div class="form-group">
             <label>Message</label>
             <textarea id="message" rows="3" placeholder="Describe the issue..."></textarea>
         </div>
+
         <div class="form-group">
             <label>Attachment (Image only)</label>
-            <input type="file" id="attachment" accept="image/*">
-            <small style="color:#ef4444; display:none;" id="fileError">File too large, compressing...</small>
+            <input type="file" id="attachment" accept="image/*" />
         </div>
+
         <button class="btn-main" id="submitBtn" onclick="createTicket()">Submit Ticket</button>
     </div>
 
@@ -76,148 +84,134 @@ input, select, textarea { width: 100%; padding: 12px; border: 2px solid #e2e8f0;
 </div>
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // YOUR CONFIG
-    const firebaseConfig = {
-      apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
-      authDomain: "students-login-29409.firebaseapp.com",
-      projectId: "students-login-29409",
-      storageBucket: "students-login-29409.firebasestorage.app",
-      messagingSenderId: "634331456872",
-      appId: "1:634331456872:web:6dae360c5e28d8356562dd",
-      measurementId: "G-96XXYG1VR2"
+const firebaseConfig = {
+  apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+  authDomain:"students-login-29409.firebaseapp.com",
+  projectId:"students-login-29409",
+  storageBucket:"students-login-29409.firebasestorage.app",
+  messagingSenderId:"634331456872",
+  appId:"1:634331456872:web:6dae360c5e28d8356562dd",
+  measurementId:"G-96XXYG1VR2"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// 👉 Replace this with your REAL logged-in student data
+const student = {
+  id: "STUDENT_ID_HERE",
+  name: "Student Name",
+  email: "student@email.com"
+};
+
+document.getElementById("userInfo").innerText = student.name;
+
+// compress image
+const compressImage = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (e) => {
+      const img = new Image();
+      img.src = e.target.result;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_WIDTH = 800;
+        const scale = MAX_WIDTH / img.width;
+        canvas.width = MAX_WIDTH;
+        canvas.height = img.height * scale;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.7));
+      };
     };
+    reader.onerror = reject;
+  });
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+window.createTicket = async () => {
+  const subject = subjectInput.value = document.getElementById("subject").value;
+  const category = document.getElementById("category").value;
+  const message = document.getElementById("message").value;
+  const fileInput = document.getElementById("attachment");
+  const btn = document.getElementById("submitBtn");
 
-    // 1. Auth Handling
-    window.login = () => signInWithPopup(auth, new GoogleAuthProvider()).catch(e => alert(e.message));
-    
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            document.getElementById('authOverlay').style.display = 'none';
-            document.getElementById('userInfo').innerText = user.displayName;
-            loadTickets(user);
-        } else {
-            document.getElementById('authOverlay').style.display = 'flex';
-        }
+  if (!subject || !message) return alert("Please fill in subject and message.");
+
+  btn.disabled = true;
+  btn.innerText = "Sending...";
+
+  try {
+    let base64Image = null;
+
+    if (fileInput.files.length) {
+      btn.innerText = "Compressing image...";
+      base64Image = await compressImage(fileInput.files[0]);
+    }
+
+    await addDoc(collection(db, "tickets"), {
+      studentId: student.id,
+      studentName: student.name,
+      studentEmail: student.email,
+      subject,
+      category,
+      message,
+      attachment: base64Image,
+      status: "Open",
+      createdAt: serverTimestamp(),
+      adminResponse: ""
     });
 
-    // 2. Image Compressor & Base64 Converter
-    const compressImage = (file) => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = (event) => {
-                const img = new Image();
-                img.src = event.target.result;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 800; // Resize to max 800px width
-                    const scaleSize = MAX_WIDTH / img.width;
-                    canvas.width = MAX_WIDTH;
-                    canvas.height = img.height * scaleSize;
+    alert("Ticket Sent!");
+    document.getElementById("subject").value = "";
+    document.getElementById("message").value = "";
+    document.getElementById("attachment").value = "";
 
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    
-                    // Convert to JPEG with 0.7 quality to save space
-                    resolve(canvas.toDataURL('image/jpeg', 0.7)); 
-                };
-            };
-            reader.onerror = (error) => reject(error);
-        });
-    };
+  } catch (e) {
+    alert(e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "Submit Ticket";
+  }
+};
 
-    // 3. Create Ticket Logic
-    window.createTicket = async () => {
-        const user = auth.currentUser;
-        if (!user) return alert("Please log in again.");
+function loadTickets() {
+  const q = query(
+    collection(db, "tickets"),
+    where("studentId", "==", student.id),
+    orderBy("createdAt", "desc")
+  );
 
-        const btn = document.getElementById('submitBtn');
-        const subject = document.getElementById('subject').value;
-        const category = document.getElementById('category').value;
-        const message = document.getElementById('message').value;
-        const fileInput = document.getElementById('attachment');
-        
-        if (!subject || !message) return alert("Please fill in subject and message.");
+  onSnapshot(q, (snapshot) => {
+    const list = document.getElementById("ticketList");
 
-        btn.innerText = "Processing...";
-        btn.disabled = true;
-
-        try {
-            let base64Image = null;
-
-            // Compress image if selected
-            if (fileInput.files.length > 0) {
-                btn.innerText = "Compressing Image...";
-                base64Image = await compressImage(fileInput.files[0]);
-            }
-
-            btn.innerText = "Sending...";
-            
-            await addDoc(collection(db, "tickets"), {
-                studentId: user.uid,
-                studentName: user.displayName,
-                studentEmail: user.email,
-                subject: subject,
-                category: category,
-                message: message,
-                attachment: base64Image, // Saves huge string here
-                status: "Open",
-                createdAt: serverTimestamp(),
-                adminResponse: ""
-            });
-
-            alert("Ticket Sent Successfully!");
-            // Reset Form
-            document.getElementById('subject').value = "";
-            document.getElementById('message').value = "";
-            document.getElementById('attachment').value = "";
-            
-        } catch (error) {
-            console.error("Error adding ticket: ", error);
-            alert("Failed to send: " + error.message);
-        } finally {
-            btn.innerText = "Submit Ticket";
-            btn.disabled = false;
-        }
-    };
-
-    // 4. Load Tickets
-    function loadTickets(user) {
-        const q = query(collection(db, "tickets"), where("studentId", "==", user.uid), orderBy("createdAt", "desc"));
-        
-        onSnapshot(q, (snapshot) => {
-            const list = document.getElementById("ticketList");
-            if(snapshot.empty) {
-                list.innerHTML = "<p style='text-align:center;color:#999'>No tickets yet.</p>";
-                return;
-            }
-
-            list.innerHTML = snapshot.docs.map(doc => {
-                const t = doc.data();
-                const cls = t.status === 'Open' ? 'open' : (t.status === 'Replied' ? 'replied' : 'closed');
-                
-                return `
-                <div class="ticket-card ${cls}">
-                    <span class="badge bg-${cls}">${t.status}</span>
-                    <strong style="display:block; margin-bottom:5px;">${t.subject}</strong>
-                    <small style="color:#666">${t.category} • ${t.createdAt?.toDate().toLocaleDateString() || 'Just now'}</small>
-                    <p>${t.message}</p>
-                    
-                    ${t.attachment ? `<img src="${t.attachment}" class="ticket-img-preview" alt="Proof">` : ''}
-
-                    ${t.adminResponse ? `<div style="background:#f1f5f9; padding:10px; border-radius:8px; margin-top:10px; font-size:14px;"><strong>👮 Admin:</strong> ${t.adminResponse}</div>` : ''}
-                </div>`;
-            }).join("");
-        });
+    if (snapshot.empty) {
+      list.innerHTML = "<p style='text-align:center;color:#999'>No tickets yet.</p>";
+      return;
     }
+
+    list.innerHTML = snapshot.docs
+      .map((doc) => {
+        const t = doc.data();
+        const cls = t.status === "Open" ? "open" : t.status === "Replied" ? "replied" : "closed";
+
+        return `
+        <div class="ticket-card ${cls}">
+            <span class="badge bg-${cls}">${t.status}</span>
+            <strong>${t.subject}</strong>
+            <small>${t.category} • ${t.createdAt?.toDate().toLocaleDateString?.() || ""}</small>
+            <p>${t.message}</p>
+            ${t.attachment ? `<img src="${t.attachment}" class="ticket-img-preview" />` : ""}
+            ${t.adminResponse ? `<div style="background:#f1f5f9;padding:10px;border-radius:8px;margin-top:10px;"><strong>👮 Admin:</strong> ${t.adminResponse}</div>` : ""}
+        </div>`;
+      })
+      .join("");
+  });
+}
+
+loadTickets();
 </script>
 </body>
 </html>
