@@ -1,152 +1,177 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Ticket Inbox</title>
-    <style>
-        :root { --primary: #4f46e5; --bg: #f3f4f6; --white: #ffffff; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); margin: 0; padding: 0; }
-        
-        /* Navbar */
-        .navbar { background: var(--primary); color: white; padding: 1rem; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .navbar h1 { margin: 0; font-size: 1.2rem; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    :root { --primary: #4f46e5; --bg: #f3f4f6; --white: #ffffff; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; padding: 0; color: #1f2937; }
+    
+    /* Nav */
+    .navbar { background: var(--primary); color: white; padding: 15px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 50; display: flex; justify-content: space-between; align-items: center; }
+    .navbar h1 { margin: 0; font-size: 18px; font-weight: 600; }
+    
+    .container { max-width: 900px; margin: 30px auto; padding: 0 15px; }
 
-        .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
+    /* Ticket Card */
+    .ticket-card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: transform 0.2s; border-left: 5px solid #ccc; }
+    
+    /* Dynamic Borders */
+    .border-open { border-left-color: #3b82f6; }
+    .border-in_review { border-left-color: #f59e0b; }
+    .border-closed { border-left-color: #10b981; opacity: 0.8; }
 
-        /* Ticket Cards */
-        .ticket-card { background: var(--white); border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 5px solid #ccc; transition: 0.2s; }
-        
-        /* Status Borders */
-        .border-open { border-left-color: #3b82f6; }
-        .border-in_review { border-left-color: #f59e0b; }
-        .border-closed { border-left-color: #10b981; }
+    .header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+    .user-info { font-weight: 700; color: #111827; }
+    .user-email { font-weight: 400; color: #6b7280; font-size: 13px; display: block; }
+    
+    .ticket-body { background: #f9fafb; padding: 15px; border-radius: 8px; font-size: 14px; line-height: 1.5; color: #374151; margin-bottom: 15px; }
+    
+    /* Controls Area */
+    .controls { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; border-top: 1px solid #e5e7eb; padding-top: 15px; align-items: center; }
+    
+    select { padding: 8px 12px; border-radius: 6px; border: 1px solid #d1d5db; background: white; cursor: pointer; font-weight: 500; }
+    
+    .reply-input { flex-grow: 1; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; min-width: 200px; }
+    
+    .btn-save { background: var(--primary); color: white; border: none; padding: 9px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    .btn-save:hover { background: #4338ca; }
 
-        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-        .user-email { font-weight: bold; color: #374151; display: block; }
-        .meta { font-size: 0.85rem; color: #6b7280; }
-
-        .description { background: #f9fafb; padding: 10px; border-radius: 6px; margin-bottom: 10px; color: #1f2937; }
-
-        /* Controls */
-        .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; border-top: 1px solid #eee; padding-top: 10px; }
-        select { padding: 8px; border-radius: 6px; border: 1px solid #d1d5db; background: white; }
-        
-        .img-trigger { color: var(--primary); text-decoration: underline; cursor: pointer; font-size: 0.9rem; margin-right: auto; }
-
-        /* Modal for Image */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 200; align-items: center; justify-content: center; }
-        .modal img { max-width: 90%; max-height: 90%; border-radius: 8px; }
-        .modal-close { position: absolute; top: 20px; right: 20px; color: white; font-size: 2rem; cursor: pointer; }
-    </style>
+    /* Image Modal */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; align-items: center; justify-content: center; }
+    .modal img { max-width: 90%; max-height: 90%; border-radius: 8px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+    
+    .view-proof-btn { color: var(--primary); text-decoration: underline; cursor: pointer; font-size: 13px; font-weight: 500; }
+    
+    #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+</style>
 </head>
 <body>
 
+<div id="loginOverlay">
+    <h2>🔒 Admin Access</h2>
+    <p>Please login to verify permissions</p>
+    <button onclick="adminLogin()" class="btn-save" style="font-size:16px; padding:12px 24px;">Login as Admin</button>
+</div>
+
 <div class="navbar">
-    <h1>🎟️ Admin Ticket Inbox</h1>
+    <h1>🎟️ Admin Inbox</h1>
+    <button onclick="logout()" style="background:none; border:none; color:white; cursor:pointer;">Logout</button>
 </div>
 
 <div class="container" id="inbox">
-    <p style="text-align: center;">Loading tickets...</p>
+    <p style="text-align: center; color: #6b7280;">Loading tickets...</p>
 </div>
 
-<div class="modal" id="imageModal" onclick="this.style.display='none'">
-    <span class="modal-close">&times;</span>
+<div class="modal" id="imgModal" onclick="this.style.display='none'">
     <img id="modalImg" src="">
 </div>
 
 <script type="module">
-    import { initializeApp } from "firebase/app";
-    import { getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc } from "firebase/firestore";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     const firebaseConfig = {
-        apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
-        authDomain: "students-login-29409.firebaseapp.com",
-        projectId: "students-login-29409",
-        storageBucket: "students-login-29409.firebasestorage.app",
-        messagingSenderId: "634331456872",
-        appId: "1:634331456872:web:6dae360c5e28d8356562dd",
-        measurementId: "G-96XXYG1VR2"
+      apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+      authDomain: "students-login-29409.firebaseapp.com",
+      projectId: "students-login-29409",
+      storageBucket: "students-login-29409.firebasestorage.app",
+      messagingSenderId: "634331456872",
+      appId: "1:634331456872:web:6dae360c5e28d8356562dd"
     };
 
     const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const inboxDiv = document.getElementById('inbox');
+    // --- Auth Logic ---
+    window.adminLogin = () => signInWithPopup(auth, new GoogleAuthProvider());
+    window.logout = () => signOut(auth);
 
-    // Real-time listener for ALL tickets
-    const q = query(collection(db, "tickets"), orderBy("createdAt", "desc"));
-
-    onSnapshot(q, (snapshot) => {
-        inboxDiv.innerHTML = "";
-        
-        if (snapshot.empty) {
-            inboxDiv.innerHTML = "<p style='text-align:center'>No tickets found.</p>";
-            return;
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            document.getElementById('loginOverlay').style.display = 'none';
+            loadAllTickets();
+        } else {
+            document.getElementById('loginOverlay').style.display = 'flex';
         }
-
-        snapshot.forEach((docSnap) => {
-            const ticket = docSnap.data();
-            const id = docSnap.id;
-            const time = ticket.createdAt ? ticket.createdAt.toDate().toLocaleString() : 'Pending...';
-
-            // Check if image exists
-            const imgBtn = ticket.image 
-                ? `<span class="img-trigger" onclick="viewImage('${id}')">📸 View Proof</span>` 
-                : `<span style="color:#999; font-size:0.9rem;">No Image</span>`;
-
-            // HTML Structure for Ticket Card
-            const html = `
-                <div class="ticket-card border-${ticket.status}">
-                    <div class="header">
-                        <div>
-                            <span class="user-email">${ticket.email}</span>
-                            <span class="meta">${time}</span>
-                        </div>
-                        <span style="font-weight:bold; font-size:0.8rem; text-transform:uppercase;">${ticket.status.replace('_', ' ')}</span>
-                    </div>
-                    
-                    <div class="description">${ticket.description}</div>
-
-                    <div class="controls">
-                        ${imgBtn}
-                        
-                        <select onchange="updateStatus('${id}', this.value)">
-                            <option value="open" ${ticket.status === 'open' ? 'selected' : ''}>Open</option>
-                            <option value="in_review" ${ticket.status === 'in_review' ? 'selected' : ''}>In Review</option>
-                            <option value="closed" ${ticket.status === 'closed' ? 'selected' : ''}>Closed</option>
-                        </select>
-                    </div>
-                    
-                    <input type="hidden" id="img-${id}" value="${ticket.image || ''}">
-                </div>
-            `;
-            inboxDiv.innerHTML += html;
-        });
     });
 
-    // Global functions
-    window.updateStatus = async (id, newStatus) => {
+    // --- Load Tickets ---
+    function loadAllTickets() {
+        const q = query(collection(db, "tickets"), orderBy("createdAt", "desc"));
+
+        onSnapshot(q, (snapshot) => {
+            const inbox = document.getElementById("inbox");
+            if(snapshot.empty) {
+                inbox.innerHTML = "<div style='text-align:center; padding:50px;'>🎉 All caught up! No tickets.</div>";
+                return;
+            }
+
+            inbox.innerHTML = snapshot.docs.map(docSnap => {
+                const t = docSnap.data();
+                const id = docSnap.id;
+                const date = t.createdAt ? t.createdAt.toDate().toLocaleString() : 'Pending...';
+                
+                return `
+                <div class="ticket-card border-${t.status}">
+                    <div class="header-row">
+                        <div>
+                            <span class="user-info">${t.studentName || 'Unknown Student'}</span>
+                            <span class="user-email">${t.studentEmail}</span>
+                        </div>
+                        <div style="text-align:right">
+                            <span style="font-size:12px; color:#9ca3af;">${date}</span><br>
+                            <span style="font-size:12px; font-weight:bold; text-transform:uppercase; color:#4f46e5;">${t.category}</span>
+                        </div>
+                    </div>
+
+                    <div class="ticket-body">
+                        <strong>Subject: ${t.subject}</strong><br>
+                        ${t.message}
+                        ${t.attachment ? `<div style="margin-top:10px;"><span class="view-proof-btn" onclick="openImage('${t.attachment}')">📸 View Attachment</span></div>` : ''}
+                    </div>
+
+                    <div class="controls">
+                        <select id="status-${id}">
+                            <option value="open" ${t.status === 'open' ? 'selected' : ''}>🔵 Open</option>
+                            <option value="in_review" ${t.status === 'in_review' ? 'selected' : ''}>🟠 In Review</option>
+                            <option value="closed" ${t.status === 'closed' ? 'selected' : ''}>🟢 Closed</option>
+                        </select>
+                        
+                        <input type="text" class="reply-input" id="reply-${id}" value="${t.adminResponse || ''}" placeholder="Type reply here...">
+                        
+                        <button class="btn-save" onclick="updateTicket('${id}')">Update</button>
+                    </div>
+                </div>`;
+            }).join("");
+        });
+    }
+
+    // --- Actions ---
+    window.updateTicket = async (id) => {
+        const newStatus = document.getElementById(`status-${id}`).value;
+        const newReply = document.getElementById(`reply-${id}`).value;
+        
         try {
             const ticketRef = doc(db, "tickets", id);
             await updateDoc(ticketRef, {
-                status: newStatus
+                status: newStatus,
+                adminResponse: newReply
             });
-            // No alert needed, UI updates automatically via onSnapshot
+            // Visual feedback not needed as onSnapshot updates UI automatically
         } catch (error) {
-            alert("Error updating status");
-            console.error(error);
+            alert("Error updating: " + error.message);
         }
     };
 
-    window.viewImage = (id) => {
-        const base64 = document.getElementById(`img-${id}`).value;
-        if(base64) {
-            document.getElementById('modalImg').src = base64;
-            document.getElementById('imageModal').style.display = 'flex';
-        }
+    window.openImage = (base64) => {
+        document.getElementById('modalImg').src = base64;
+        document.getElementById('imgModal').style.display = 'flex';
     };
 </script>
-
 </body>
 </html>
