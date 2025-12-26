@@ -1,152 +1,203 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Student Ticket System</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Ticket Portal</title>
+    <style>
+        :root { --primary: #2563eb; --bg: #f3f4f6; --white: #ffffff; --text: #1f2937; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        
+        /* Card Styling */
+        .card { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin-bottom: 20px; }
+        h2 { margin-top: 0; color: var(--primary); }
+        
+        /* Form Elements */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }
+        input, textarea { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+        button { width: 100%; background: var(--primary); color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:hover { opacity: 0.9; }
+        button:disabled { background: #9ca3af; cursor: not-allowed; }
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      margin: 0;
-      padding: 1rem;
-    }
+        /* Ticket List */
+        .ticket-item { border-bottom: 1px solid #e5e7eb; padding: 15px 0; }
+        .ticket-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .status-badge { padding: 4px 8px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+        
+        /* Status Colors */
+        .status-open { background: #dbeafe; color: #1e40af; }
+        .status-review { background: #fef3c7; color: #92400e; }
+        .status-closed { background: #d1fae5; color: #065f46; }
 
-    h2 {
-      text-align: center;
-    }
-
-    .card {
-      background: #fff;
-      padding: 1rem;
-      border-radius: 8px;
-      margin-bottom: 1rem;
-    }
-
-    input, textarea, button, select {
-      width: 100%;
-      margin-top: 0.5rem;
-      padding: 0.6rem;
-      font-size: 1rem;
-    }
-
-    button {
-      background: #1976d2;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    .ticket {
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      padding: 0.5rem;
-      margin-top: 0.5rem;
-    }
-
-    .status {
-      font-weight: bold;
-      text-transform: uppercase;
-    }
-
-    img {
-      max-width: 100%;
-      border-radius: 5px;
-      margin-top: 0.5rem;
-    }
-  </style>
+        .ticket-img-preview { max-width: 100px; border-radius: 4px; margin-top: 10px; display: block; }
+        .timestamp { font-size: 0.8rem; color: #6b7280; }
+    </style>
 </head>
-
 <body>
 
-<h2>Submit Payment Ticket</h2>
+<div class="container">
+    <div class="card">
+        <h2>🧾 Submit Proof of Payment</h2>
+        <div class="form-group">
+            <label>Your Email</label>
+            <input type="email" id="studentEmail" placeholder="student@example.com" required>
+        </div>
+        <div class="form-group">
+            <label>Description / Transaction ID</label>
+            <textarea id="ticketDesc" rows="3" placeholder="Attached is my payment for semester 1..."></textarea>
+        </div>
+        <div class="form-group">
+            <label>Attach Screenshot</label>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+        <button id="submitBtn" onclick="submitTicket()">Submit Ticket</button>
+        <p id="msg" style="text-align: center; font-size: 0.9rem;"></p>
+    </div>
 
-<div class="card">
-  <input id="email" type="email" placeholder="Your email" required />
-  <textarea id="description" placeholder="Ticket description"></textarea>
-  <input id="image" type="file" accept="image/*"/>
-  <button id="submit">Submit Ticket</button>
+    <div class="card">
+        <h2>📂 My Ticket History</h2>
+        <div id="ticketList">
+            <p style="text-align: center; color: #6b7280;">Enter your email above to load history.</p>
+        </div>
+    </div>
 </div>
 
-<h2>Your Ticket History</h2>
-<div id="tickets"></div>
-
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-  import { getFirestore, collection, addDoc, query, where, onSnapshot, serverTimestamp } 
-    from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+    import { initializeApp } from "firebase/app";
+    import { getFirestore, collection, addDoc, query, where, onSnapshot, serverTimestamp, orderBy } from "firebase/firestore";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
-    authDomain: "students-login-29409.firebaseapp.com",
-    projectId: "students-login-29409",
-    storageBucket: "students-login-29409.firebasestorage.app",
-    messagingSenderId: "634331456872",
-    appId: "1:634331456872:web:6dae360c5e28d8356562dd",
-    measurementId: "G-96XXYG1VR2"
-  };
+    const firebaseConfig = {
+        apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+        authDomain: "students-login-29409.firebaseapp.com",
+        projectId: "students-login-29409",
+        storageBucket: "students-login-29409.firebasestorage.app",
+        messagingSenderId: "634331456872",
+        appId: "1:634331456872:web:6dae360c5e28d8356562dd",
+        measurementId: "G-96XXYG1VR2"
+    };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-  const emailEl = document.getElementById("email");
-  const descEl = document.getElementById("description");
-  const imgEl = document.getElementById("image");
-  const ticketsEl = document.getElementById("tickets");
-
-  document.getElementById("submit").onclick = () => {
-    if (!imgEl.files[0]) {
-      alert("Please upload proof of payment");
-      return;
+    const emailInput = document.getElementById('studentEmail');
+    
+    // Auto-load email from local storage if exists
+    if(localStorage.getItem('studentEmail')) {
+        emailInput.value = localStorage.getItem('studentEmail');
+        loadTickets(emailInput.value);
     }
 
-    const reader = new FileReader();
-    reader.onload = async () => {
-      await addDoc(collection(db, "tickets"), {
-        userEmail: emailEl.value,
-        description: descEl.value,
-        imageBase64: reader.result,
-        status: "open",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        history: [
-          {
-            status: "open",
-            changedBy: "student",
-            changedAt: new Date()
-          }
-        ]
-      });
-
-      alert("Ticket submitted successfully");
-    };
-    reader.readAsDataURL(imgEl.files[0]);
-  };
-
-  emailEl.addEventListener("input", () => {
-    ticketsEl.innerHTML = "";
-
-    const q = query(
-      collection(db, "tickets"),
-      where("userEmail", "==", emailEl.value)
-    );
-
-    onSnapshot(q, snap => {
-      ticketsEl.innerHTML = "";
-      snap.forEach(doc => {
-        const t = doc.data();
-        ticketsEl.innerHTML += `
-          <div class="ticket">
-            <div class="status">Status: ${t.status}</div>
-            <p>${t.description}</p>
-            <img src="${t.imageBase64}">
-          </div>
-        `;
-      });
+    emailInput.addEventListener('change', (e) => {
+        localStorage.setItem('studentEmail', e.target.value);
+        loadTickets(e.target.value);
     });
-  });
+
+    // Make function available globally
+    window.submitTicket = async () => {
+        const email = document.getElementById('studentEmail').value;
+        const desc = document.getElementById('ticketDesc').value;
+        const fileInput = document.getElementById('fileInput');
+        const btn = document.getElementById('submitBtn');
+        const msg = document.getElementById('msg');
+
+        if (!email || !desc || !fileInput.files[0]) {
+            alert("Please fill all fields and attach an image.");
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = "Processing...";
+
+        try {
+            const file = fileInput.files[0];
+            const base64 = await convertToBase64(file);
+
+            // Firestore Limit Check (approx 1MB)
+            if (base64.length > 1000000) {
+                throw new Error("Image is too large. Please resize it.");
+            }
+
+            await addDoc(collection(db, "tickets"), {
+                email: email,
+                description: desc,
+                image: base64,
+                status: "open", // Default status
+                createdAt: serverTimestamp()
+            });
+
+            msg.innerText = "✅ Ticket submitted successfully!";
+            msg.style.color = "green";
+            document.getElementById('ticketDesc').value = "";
+            document.getElementById('fileInput').value = "";
+            
+            // Ensure listeners act on this email
+            localStorage.setItem('studentEmail', email);
+            loadTickets(email);
+
+        } catch (error) {
+            console.error(error);
+            msg.innerText = "❌ Error: " + error.message;
+            msg.style.color = "red";
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Submit Ticket";
+        }
+    };
+
+    function convertToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+
+    let unsubscribe; // To stop listening when email changes
+
+    function loadTickets(email) {
+        if(!email) return;
+        
+        const listDiv = document.getElementById('ticketList');
+        const q = query(
+            collection(db, "tickets"), 
+            where("email", "==", email),
+            orderBy("createdAt", "desc") 
+        );
+
+        if(unsubscribe) unsubscribe();
+
+        unsubscribe = onSnapshot(q, (snapshot) => {
+            listDiv.innerHTML = "";
+            if (snapshot.empty) {
+                listDiv.innerHTML = "<p>No tickets found for this email.</p>";
+                return;
+            }
+
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const date = data.createdAt ? data.createdAt.toDate().toLocaleDateString() : 'Just now';
+                
+                let badgeClass = 'status-open';
+                if(data.status === 'in_review') badgeClass = 'status-review';
+                if(data.status === 'closed') badgeClass = 'status-closed';
+
+                const html = `
+                    <div class="ticket-item">
+                        <div class="ticket-header">
+                            <span class="timestamp">${date}</span>
+                            <span class="status-badge ${badgeClass}">${data.status.replace('_', ' ')}</span>
+                        </div>
+                        <div style="font-weight:500; margin-bottom:5px;">${data.description}</div>
+                        ${data.image ? `<img src="${data.image}" class="ticket-img-preview" alt="Proof">` : ''}
+                    </div>
+                `;
+                listDiv.innerHTML += html;
+            });
+        });
+    }
 </script>
 
 </body>
