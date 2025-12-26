@@ -552,16 +552,41 @@ document.addEventListener('DOMContentLoaded', function() {
         const percentage = (currentScore / currentQuizData.length) * 100;
         const isPass = percentage >= 60;
 
-        if (isPass) {
-            if (auth.currentUser) {
-                await db.collection("students").doc(auth.currentUser.uid).set({
-                    enrolledCourses: {
-                        [COURSE_ID]: { 
-                            completedModules: { [activeModuleId]: true } 
-                        }
-                    }
-                }, { merge: true });
+        if (isPass) 
+
+ (auth.currentUser) {
+    try {
+        // 1. Get total modules to calculate real progress %
+        const modsSnap = await db.collection("courses").doc(COURSE_ID).collection("modules").where("status", "==", "published").get();
+        const totalModules = modsSnap.size;
+
+        // 2. Get current completed count from DB
+        const userSnap = await db.collection("students").doc(auth.currentUser.uid).get();
+        const completedData = userSnap.data()?.enrolledCourses?.[COURSE_ID]?.completedModules || {};
+        
+        // Add the current module to the count if it wasn't already there
+        completedData[activeModuleId] = true;
+        const doneCount = Object.keys(completedData).length;
+        
+        // 3. Calculate the final progress percentage
+        // (Make sure to define 'progressPercent' variable at the top of the function first, or use 'const' here if you only use it locally)
+        const progressPercent = Math.round((doneCount / totalModules) * 100);
+
+        // 4. SAVE EVERYTHING: including the 'progress' field
+        await db.collection("students").doc(auth.currentUser.uid).set({
+            enrolledCourses: {
+                [COURSE_ID]: { 
+                    progress: progressPercent, 
+                    completedModules: completedData 
+                }
             }
+        }, { merge: true });
+
+    } catch (error) {
+        console.error("Error saving progress:", error);
+    }
+}
+
 
             quizArea.innerHTML = `
                 <div style="text-align:center;">
