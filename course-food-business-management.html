@@ -552,38 +552,26 @@ document.addEventListener('DOMContentLoaded', function() {
         const percentage = (currentScore / currentQuizData.length) * 100;
         const isPass = percentage >= 60;
 
-        let progressPercent = 0;
+        if (!isPass) return;
+if (!auth.currentUser) return;
 
-if (isPass && auth.currentUser) {
-  try {
-    const moduleRef = db
-      .collection("courses")
-      .doc(COURSE_ID)
-      .collection("modules")
-      .doc(activeModuleId);
+const uid = auth.currentUser.uid;
 
-    const moduleSnap = await moduleRef.get();
-
-    // Ignore drafts or deleted modules
-    if (!moduleSnap.exists) return;
-    if (moduleSnap.data().status !== "published") return;
-
-    await db.collection("students")
-      .doc(auth.currentUser.uid)
-      .set({
-        enrolledCourses: {
-          [COURSE_ID]: {
-            completedModules: {
-              [activeModuleId]: true
-            }
+await db
+  .collection("students")
+  .doc(uid)
+  .set(
+    {
+      enrolledCourses: {
+        [COURSE_ID]: {
+          completedModules: {
+            [activeModuleId]: true
           }
         }
-      }, { merge: true });
-
-  } catch (err) {
-    console.error("Failed to save completed module:", err);
-  }
-}
+      }
+    },
+    { merge: true }
+  );
 
             quizArea.innerHTML = `
                 <div style="text-align:center;">
