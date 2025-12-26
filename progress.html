@@ -2,271 +2,290 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Student Learning Dashboard</title>
+    <title>My Learning Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Firebase -->
+    
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --primary: #6366f1;
-            --success: #10b981;
-            --bg: #f8fafc;
+            /* Palette */
+            --primary-dark: #4c1d95; /* Deep Purple */
+            --primary-light: #8b5cf6; /* Lighter Purple */
+            --accent-blue: #3b82f6; /* Blue */
+            --accent-yellow: #fbbf24; /* Amber/Yellow */
+            --accent-red: #ef4444; /* Red */
+            --bg-body: #f3f4f6;
+            --text-main: #1f2937;
+            --card-bg: #ffffff;
+        }
+
+        /* Dark Mode Support */
+        [data-theme="dark"] {
+            --bg-body: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f3f4f6;
         }
 
         body {
-            margin: 0;
-            font-family: Inter, system-ui, sans-serif;
-            background: var(--bg);
-            color: #1e293b;
+            margin: 0; font-family: 'Inter', sans-serif;
+            background: var(--bg-body); color: var(--text-main);
+            transition: background 0.3s, color 0.3s;
         }
 
+        /* --- HERO SECTION --- */
+        .hero {
+            background: linear-gradient(135deg, var(--primary-dark), var(--accent-blue));
+            color: white;
+            padding: 40px 20px 80px; /* Extra padding bottom for overlap */
+            border-bottom-left-radius: 30px;
+            border-bottom-right-radius: 30px;
+            position: relative;
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+        }
+
+        .hero-content { max-width: 1000px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .hero h1 { font-family: 'Playfair Display', serif; font-size: 2.5rem; margin: 0; }
+        .hero p { opacity: 0.9; font-size: 1.1rem; margin-top: 10px; }
+        
+        .logout-btn {
+            background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4);
+            color: white; padding: 8px 16px; border-radius: 20px; cursor: pointer;
+            font-weight: 600; backdrop-filter: blur(5px);
+        }
+        .logout-btn:hover { background: var(--accent-red); border-color: var(--accent-red); }
+
+        /* --- MAIN GRID --- */
         .container {
-            max-width: 1100px;
-            margin: auto;
-            padding: 40px 20px;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .controls {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 30px;
-        }
-
-        #courseSearch {
-            padding: 12px 25px;
-            border-radius: 25px;
-            border: 1px solid #ddd;
-            width: 100%;
-            max-width: 420px;
-            outline: none;
+            max-width: 1000px; margin: -50px auto 40px; padding: 0 20px;
+            position: relative; z-index: 10;
         }
 
         .course-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 25px;
         }
 
-        .card {
-            background: white;
+        /* --- COURSE CARD --- */
+        .course-card {
+            background: var(--card-bg);
             border-radius: 16px;
-            padding: 24px;
-            border: 1px solid #e5e7eb;
-            box-shadow: 0 6px 16px rgba(0,0,0,0.05);
-            transition: .3s;
-        }
-
-        .card:hover {
-            transform: translateY(-4px);
-        }
-
-        .title {
-            font-weight: 800;
-            font-size: 1.2rem;
-            margin-bottom: 12px;
-        }
-
-        .stats-row {
+            padding: 25px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            border-top: 5px solid transparent;
             display: flex;
+            flex-direction: column;
             justify-content: space-between;
-            font-size: 13px;
-            color: #64748b;
         }
 
-        .progress-bar {
-            background: #f1f5f9;
-            height: 12px;
-            border-radius: 6px;
-            overflow: hidden;
-            margin: 14px 0;
+        .course-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
         }
 
+        /* Dynamic Border Colors based on status */
+        .card-active { border-top-color: var(--primary-light); }
+        .card-completed { border-top-color: var(--accent-yellow); }
+        .card-locked { border-top-color: var(--accent-red); opacity: 0.8; }
+
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
+        .badge {
+            font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; font-weight: 700; text-transform: uppercase;
+        }
+        .badge-active { background: #e0e7ff; color: var(--primary-dark); }
+        .badge-done { background: #fef3c7; color: #b45309; }
+        .badge-new { background: #fee2e2; color: var(--accent-red); }
+
+        .course-title { font-size: 1.25rem; font-weight: 800; margin: 0 0 10px 0; color: var(--text-main); }
+        .course-meta { font-size: 0.9rem; color: #6b7280; margin-bottom: 20px; }
+
+        /* PROGRESS BAR DESIGN */
+        .progress-wrapper { margin-bottom: 20px; }
+        .progress-labels { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; margin-bottom: 5px; }
+        .progress-bg {
+            height: 10px; background: #e5e7eb; border-radius: 10px; overflow: hidden;
+        }
         .progress-fill {
-            height: 100%;
-            width: 0%;
-            background: var(--primary);
-            transition: width .6s ease;
+            height: 100%; border-radius: 10px; width: 0%;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+            /* Gradient for the bar */
+            background: linear-gradient(90deg, var(--primary-light), var(--accent-blue));
         }
+        
+        /* Yellow fill for completed courses */
+        .fill-complete { background: var(--accent-yellow); }
 
-        .progress-fill.done {
-            background: var(--success);
+        /* BUTTONS */
+        .card-footer { margin-top: auto; }
+        .btn-course {
+            width: 100%; padding: 12px; border: none; border-radius: 8px;
+            font-weight: 600; cursor: pointer; text-align: center;
+            font-size: 0.95rem; transition: background 0.2s;
+            text-decoration: none; display: inline-block;
         }
+        .btn-start { background: var(--primary-dark); color: white; }
+        .btn-start:hover { background: var(--accent-blue); }
+        
+        .btn-certificate { background: var(--accent-yellow); color: #000; }
+        .btn-certificate:hover { background: #fbbf24; filter: brightness(1.1); }
 
-        .meta {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            font-weight: bold;
-        }
+        /* LOADING STATE */
+        .skeleton { animation: pulse 1.5s infinite; background: #e0e0e0; height: 20px; border-radius: 4px; margin-bottom: 10px; }
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
 
-        .cert-badge {
-            margin-top: 16px;
-            padding: 12px;
-            background: #ecfdf5;
-            color: #065f46;
-            border-radius: 10px;
-            text-align: center;
-            font-size: 13px;
-            border: 1px solid #a7f3d0;
-        }
-
-        #loading {
-            text-align: center;
-            padding: 60px;
-            color: var(--primary);
-        }
-
-        .empty {
-            text-align: center;
-            padding: 40px;
-            color: #94a3b8;
-        }
     </style>
 </head>
 <body>
 
+<div class="hero">
+    <div class="hero-content">
+        <div>
+            <h1>Student Portal</h1>
+            <p>Welcome back! Here is your progress across all 5 courses.</p>
+        </div>
+        <button class="logout-btn" onclick="firebase.auth().signOut()">Sign Out</button>
+    </div>
+</div>
+
 <div class="container">
-    <div class="header">
-        <h1>🚀 Student Dashboard</h1>
-        <p>Live progress from published modules only</p>
+    <div id="loadingGrid" class="course-grid">
+        <div class="course-card"><div class="skeleton" style="height:150px"></div></div>
+        <div class="course-card"><div class="skeleton" style="height:150px"></div></div>
+        <div class="course-card"><div class="skeleton" style="height:150px"></div></div>
     </div>
 
-    <div class="controls">
-        <input id="courseSearch" placeholder="Search courses..." onkeyup="filterCourses()">
-    </div>
-
-    <div id="loading">Loading your progress…</div>
-    <div id="courseGrid" class="course-grid"></div>
+    <div id="coursesGrid" class="course-grid" style="display:none;">
+        </div>
 </div>
 
 <script>
-/* ================= FIREBASE CONFIG ================= */
-const firebaseConfig = {
-    apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
-    authDomain: "students-login-29409.firebaseapp.com",
-    projectId: "students-login-29409"
-};
+    // --- 1. FIREBASE CONFIG ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+        authDomain: "students-login-29409.firebaseapp.com",
+        projectId: "students-login-29409"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-/* ================= AUTH ================= */
-auth.onAuthStateChanged(user => {
-    if (!user) return location.href = "login.html";
-    loadDashboard(user.uid);
-});
-
-/* ================= LOAD DASHBOARD ================= */
-async function loadDashboard(uid) {
-    const grid = document.getElementById("courseGrid");
-    const loading = document.getElementById("loading");
-
-    try {
-        const studentSnap = await db.collection("students").doc(uid).get();
-        const enrolled = studentSnap.data()?.enrolledCourses;
-
-        if (!enrolled) {
-            loading.innerHTML = `<div class="empty">No enrolled courses.</div>`;
-            return;
+    // --- 2. MAIN LOGIC ---
+    auth.onAuthStateChanged(async (user) => {
+        if (user) {
+            loadDashboard(user);
+        } else {
+            // If not logged in, redirect to login page
+            window.location.href = "index.html"; 
         }
-
-        loading.style.display = "none";
-        grid.innerHTML = "";
-
-        for (const [courseId, data] of Object.entries(enrolled)) {
-
-            // 1️⃣ Get published modules
-            const modsSnap = await db
-                .collection("courses")
-                .doc(courseId)
-                .collection("modules")
-                .where("status", "==", "published")
-                .get();
-
-            const publishedIds = modsSnap.docs.map(d => d.id);
-            const total = publishedIds.length;
-
-            // 2️⃣ Normalize completed modules
-            const completedRaw = data.completedModules || {};
-            const completedIds = Object.keys(completedRaw);
-
-            // 3️⃣ Count ONLY published + completed
-            const validCompleted = completedIds.filter(id =>
-                publishedIds.includes(id)
-            );
-
-            const completedCount = validCompleted.length;
-            const progress = total > 0
-                ? Math.round((completedCount / total) * 100)
-                : 0;
-
-            renderCard(grid, {
-                id: courseId,
-                title: formatTitle(courseId),
-                completed: completedCount,
-                total,
-                progress,
-                done: progress === 100 && total > 0
-            });
-        }
-
-    } catch (e) {
-        console.error(e);
-        loading.innerHTML = `<p style="color:red">Error loading dashboard</p>`;
-    }
-}
-
-/* ================= RENDER ================= */
-function renderCard(grid, c) {
-    const card = document.createElement("div");
-    card.className = "card";
-    card.dataset.name = c.id.toLowerCase();
-
-    card.innerHTML = `
-        <div class="title">${c.title}</div>
-
-        <div class="stats-row">
-            <span>Modules</span>
-            <strong>${c.completed} / ${c.total}</strong>
-        </div>
-
-        <div class="progress-bar">
-            <div class="progress-fill ${c.done ? 'done' : ''}"
-                style="width:${c.progress}%"></div>
-        </div>
-
-        <div class="meta">
-            <span>${c.progress}% COMPLETE</span>
-            <span>${c.done ? '✅ FINISHED' : '📖 STUDYING'}</span>
-        </div>
-
-        ${c.done ? `<div class="cert-badge">🎓 Certificate Unlocked</div>` : ``}
-    `;
-
-    grid.appendChild(card);
-}
-
-/* ================= HELPERS ================= */
-function formatTitle(id) {
-    return id.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-}
-
-function filterCourses() {
-    const q = courseSearch.value.toLowerCase();
-    document.querySelectorAll(".card").forEach(c => {
-        c.style.display = c.dataset.name.includes(q) ? "block" : "none";
     });
-}
+
+    async function loadDashboard(user) {
+        const grid = document.getElementById('coursesGrid');
+        const loader = document.getElementById('loadingGrid');
+        
+        try {
+            // A. GET ALL COURSES (The "5 Courses")
+            // We fetch the course definitions first to get Titles and Total Modules
+            const coursesSnapshot = await db.collection('courses').get();
+            
+            // B. GET STUDENT PROGRESS
+            const studentDoc = await db.collection('students').doc(user.uid).get();
+            const studentData = studentDoc.data() || {};
+            const enrolledData = studentData.enrolledCourses || {};
+
+            let htmlContent = '';
+
+            // C. LOOP THROUGH COURSES AND CALCULATE PROGRESS
+            // This is the logic you asked for
+            for (const doc of coursesSnapshot.docs) {
+                const courseId = doc.id;
+                const courseData = doc.data();
+                
+                // 1. Get Total Modules (Count the subcollection or use a field)
+                // Note: Reading subcollections needs a separate query, 
+                // so for efficiency, I assume you have a field 'totalModules' in the course doc.
+                // If not, we set a default or we have to query the subcollection.
+                let totalModules = courseData.totalModules || 5; // Default to 5 if not set
+                
+                // 2. Get User's Completed count
+                const userCourseProgress = enrolledData[courseId] || {};
+                const completedModulesMap = userCourseProgress.completedModules || {};
+                const completedCount = Object.keys(completedModulesMap).length;
+
+                // 3. Calculate Percentage
+                let percent = Math.round((completedCount / totalModules) * 100);
+                if (percent > 100) percent = 100; // Cap at 100
+
+                // 4. Determine Status for UI
+                let statusClass = 'card-active'; 
+                let badgeHtml = `<span class="badge badge-active">In Progress</span>`;
+                let btnHtml = `<a href="course.html?id=${courseId}" class="btn-course btn-start">Continue Learning</a>`;
+                let fillClass = '';
+
+                if (percent === 0) {
+                    statusClass = 'card-locked';
+                    badgeHtml = `<span class="badge badge-new">Not Started</span>`;
+                    btnHtml = `<a href="course.html?id=${courseId}" class="btn-course btn-start" style="background:var(--text-main)">Start Course</a>`;
+                } else if (percent === 100) {
+                    statusClass = 'card-completed';
+                    badgeHtml = `<span class="badge badge-done">Completed</span>`;
+                    fillClass = 'fill-complete';
+                    btnHtml = `<button class="btn-course btn-certificate" onclick="viewCertificate('${courseId}')">🏆 View Certificate</button>`;
+                }
+
+                // 5. Generate HTML Card
+                htmlContent += `
+                    <div class="course-card ${statusClass}">
+                        <div>
+                            <div class="card-header">
+                                <span style="font-size:2rem;">${courseData.icon || '📚'}</span>
+                                ${badgeHtml}
+                            </div>
+                            <h3 class="course-title">${courseData.title || 'Untitled Course'}</h3>
+                            <div class="course-meta">${completedCount} / ${totalModules} Modules</div>
+                            
+                            <div class="progress-wrapper">
+                                <div class="progress-labels">
+                                    <span>Progress</span>
+                                    <span>${percent}%</span>
+                                </div>
+                                <div class="progress-bg">
+                                    <div class="progress-fill ${fillClass}" style="width: ${percent}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            ${btnHtml}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // D. RENDER
+            loader.style.display = 'none';
+            grid.innerHTML = htmlContent;
+            grid.style.display = 'grid';
+
+        } catch (error) {
+            console.error("Error loading dashboard:", error);
+            grid.innerHTML = `<p>Error loading courses. Please check your internet connection.</p>`;
+            loader.style.display = 'none';
+            grid.style.display = 'block';
+        }
+    }
+
+    function viewCertificate(courseId) {
+        // You can link this to the previous code's certificate section
+        // Or simply alert for now
+        alert("Redirecting to certificate for Course ID: " + courseId);
+        // window.location.href = `course_player.html?course=${courseId}&view=certificate`;
+    }
 </script>
 
 </body>
