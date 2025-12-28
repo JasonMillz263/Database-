@@ -1,231 +1,377 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Food Business Academy | Login</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoodPreneurs Business Academy | Login</title>
+    <style>
+        /* --- General Reset & Fonts --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
 
-<style>
-:root{
-  --purple:#6d28d9;
-  --blue:#2563eb;
-  --bg:linear-gradient(135deg,#eef2ff,#f9fbff);
-  --text:#1f2937;
-}
+        /* --- Card Container --- */
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 450px;
+            position: relative;
+            min-height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
 
-*{box-sizing:border-box;font-family:'Poppins',sans-serif}
-body{
-  margin:0;
-  min-height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:var(--bg);
-}
+        /* --- Branding Section --- */
+        .brand-header {
+            text-align: center;
+            padding: 30px 20px 10px 20px;
+            background-color: #fff;
+        }
 
-.auth-card{
-  background:#fff;
-  width:100%;
-  max-width:420px;
-  padding:32px;
-  border-radius:22px;
-  box-shadow:0 30px 60px rgba(0,0,0,.2);
-}
+        .logo {
+            max-width: 120px;
+            height: auto;
+            margin-bottom: 15px;
+            border-radius: 10px; /* Optional: adds softness to logo */
+        }
 
-.auth-card h2{
-  margin-bottom:6px;
-  text-align:center;
-}
+        .academy-name {
+            color: #2c3e50;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            letter-spacing: 0.5px;
+        }
 
-.input-group{
-  margin-bottom:18px;
-  position:relative;
-}
+        /* --- Form Sections --- */
+        .form-container {
+            padding: 20px 40px;
+            flex-grow: 1;
+            transition: opacity 0.4s ease-in-out;
+        }
 
-.input-group input{
-  width:100%;
-  padding:14px 40px 14px 14px;
-  border-radius:14px;
-  border:1px solid #ddd;
-  outline:none;
-}
+        .hidden {
+            display: none;
+            opacity: 0;
+        }
 
-.input-group .toggle-password{
-  position:absolute;
-  right:12px;
-  top:50%;
-  transform:translateY(-50%);
-  cursor:pointer;
-  color:#6d28d9;
-}
+        .fade-in {
+            animation: fadeIn 0.5s forwards;
+        }
 
-.remember{
-  display:flex;
-  align-items:center;
-  margin-bottom:12px;
-  font-size:14px;
-  gap:6px;
-}
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-.link{
-  display:block;
-  text-align:right;
-  margin-top:6px;
-  font-size:14px;
-  color:#6d28d9;
-  cursor:pointer;
-}
+        h2 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
 
-.btn{
-  width:100%;
-  padding:14px;
-  border:none;
-  border-radius:16px;
-  background:linear-gradient(135deg,var(--blue),var(--purple));
-  color:#fff;
-  font-weight:600;
-  cursor:pointer;
-  transition:.3s;
-  margin-top:10px;
-}
+        .instruction-text {
+            color: #666;
+            font-size: 0.95rem;
+            margin-bottom: 25px;
+            line-height: 1.4;
+        }
 
-.btn:hover{
-  transform:scale(1.03);
-  box-shadow:0 18px 35px rgba(109,40,217,.45);
-}
+        /* --- Inputs --- */
+        .input-group {
+            margin-bottom: 15px;
+            position: relative;
+        }
 
-.signup-btn{
-  margin-top:12px;
-  background:transparent;
-  color:#6d28d9;
-  border:2px dashed #6d28d9;
-}
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
 
-.error{
-  color:#ef4444;
-  font-size:14px;
-  text-align:center;
-  margin-top:12px;
-}
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
 
-.pageTransition{
-  position:fixed;
-  inset:0;
-  background:linear-gradient(135deg,var(--blue),var(--purple));
-  z-index:999;
-  opacity:0;
-  pointer-events:none;
-  transition:opacity .45s ease;
-}
-.pageTransition.active{
-  opacity:1;
-  pointer-events:auto;
-}
-</style>
+        input:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+
+        /* --- Error Handling --- */
+        .error-message {
+            color: #e74c3c;
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: none; /* Hidden by default */
+            font-weight: 600;
+        }
+
+        .error-visible {
+            display: block;
+            animation: shake 0.3s ease-in-out;
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* --- Buttons & Animations --- */
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(to right, #43e97b 0%, #38f9d7 100%);
+            border: none;
+            border-radius: 8px;
+            color: #0d3824; /* Dark green for contrast */
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(56, 249, 215, 0.4);
+            
+            /* Animation Setup */
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 20px rgba(56, 249, 215, 0.6);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        /* --- Toggle Link --- */
+        .toggle-text {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: auto;
+        }
+
+        .toggle-text a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .toggle-text a:hover {
+            text-decoration: underline;
+        }
+
+        /* --- Footer --- */
+        .footer {
+            text-align: center;
+            padding: 15px;
+            background: #f9f9f9;
+            font-size: 0.8rem;
+            color: #888;
+            border-top: 1px solid #eee;
+        }
+    </style>
 </head>
-
 <body>
 
-<div id="pageTransition" class="pageTransition"></div>
+<div class="container">
+    
+    <div class="brand-header">
+        <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhIuGx_Tl93TWp5OZYxIn7iCPb3FhwXGTZTr_xVjfUAOy4dt2YzXq0c7H4VizrvCBNkCO12IlSymo4R-7Nq9mSffdpB9w6Yge3O2i0UovqE45XIW1jEyvZJg6sOjDfUUhdRJs2x_Bqui6goNnXmcV8hguXwcIUqsvMv5-kY-yNeo-Onr9TVspl88fBfiEsV/s1600/IMG-20251223-WA0001.png" alt="Logo" class="logo">
+        <div class="academy-name">FoodPreneurs Business Academy</div>
+    </div>
 
-<div class="auth-card">
-  <h2>Student Login</h2>
+    <div id="login-view" class="form-container fade-in">
+        <h2>Welcome Back</h2>
+        <p class="instruction-text">
+            Please login to access courses and start learning.
+        </p>
 
-  <div class="input-group">
-    <input type="email" id="email" placeholder="Email">
-  </div>
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="input-group">
+                <label for="login-email">Email Address</label>
+                <input type="email" id="login-email" placeholder="you@example.com">
+                <div id="login-email-error" class="error-message">⚠ Please enter a valid email address.</div>
+            </div>
 
-  <div class="input-group">
-    <input type="password" id="password" placeholder="Password">
-    <i class="fa fa-eye toggle-password" onclick="togglePassword()"></i>
-  </div>
+            <div class="input-group">
+                <label for="login-password">Password</label>
+                <input type="password" id="login-password" placeholder="••••••••">
+                <div id="login-pass-error" class="error-message">⚠ Incorrect password or field is empty.</div>
+            </div>
 
-  <div class="remember">
-    <input type="checkbox" id="rememberMe">
-    <label for="rememberMe">Remember Me</label>
-  </div>
+            <button type="submit" class="btn">Login Now</button>
+        </form>
 
-  <span class="link" onclick="forgotPassword()">Forgot Password?</span>
+        <div class="toggle-text">
+            Don't have an account? <br>
+            <a onclick="switchView('register')">Create an account here</a>
+        </div>
+    </div>
 
-  <button class="btn" onclick="login()">Login</button>
+    <div id="register-view" class="form-container hidden">
+        <h2>Create Account</h2>
+        <p class="instruction-text">
+            Join the academy today. Fill in the details below to get started.
+        </p>
 
-  <!-- Sign Up button -->
-  <button class="btn signup-btn" onclick="goToSignup()">
-    <i class="fa fa-user-plus"></i> Create Account
-  </button>
+        <form id="registerForm" onsubmit="handleRegister(event)">
+            <div class="input-group">
+                <label for="reg-name">Full Name</label>
+                <input type="text" id="reg-name" placeholder="John Doe">
+            </div>
 
-  <div id="error" class="error"></div>
+            <div class="input-group">
+                <label for="reg-email">Email Address</label>
+                <input type="email" id="reg-email" placeholder="you@example.com">
+                <div id="reg-email-error" class="error-message">⚠ Invalid email format.</div>
+            </div>
+
+            <div class="input-group">
+                <label for="reg-password">Create Password</label>
+                <input type="password" id="reg-password" placeholder="Min 6 characters">
+                <div id="reg-pass-error" class="error-message">⚠ Password must be at least 6 characters.</div>
+            </div>
+
+            <button type="submit" class="btn">Create Account</button>
+        </form>
+
+        <div class="toggle-text">
+            Already have an account? <br>
+            <a onclick="switchView('login')">Login to access courses</a>
+        </div>
+    </div>
+
+    <div class="footer">
+        &copy; 2026 FoodPreneurs Business Academy. All rights reserved.
+    </div>
+
 </div>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-
 <script>
-firebase.initializeApp({
-  apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
-  authDomain:"students-login-29409.firebaseapp.com",
-  projectId:"students-login-29409"
-});
+    // --- View Switching Logic ---
+    function switchView(viewName) {
+        const loginView = document.getElementById('login-view');
+        const regView = document.getElementById('register-view');
 
-const auth = firebase.auth();
-const pageTransition = document.getElementById('pageTransition');
+        // Clear errors when switching
+        clearErrors();
 
-/* Toggle password visibility */
-function togglePassword(){
-  const pass = document.getElementById('password');
-  if(pass.type === 'password') pass.type='text';
-  else pass.type='password';
-}
+        if (viewName === 'register') {
+            loginView.classList.add('hidden');
+            loginView.classList.remove('fade-in');
+            
+            regView.classList.remove('hidden');
+            regView.classList.add('fade-in');
+        } else {
+            regView.classList.add('hidden');
+            regView.classList.remove('fade-in');
 
-/* Forgot password */
-function forgotPassword(){
-  const email = document.getElementById('email').value.trim();
-  if(!email){
-    alert("Enter your email first");
-    return;
-  }
-  auth.sendPasswordResetEmail(email)
-    .then(()=>alert("Reset email sent"))
-    .catch(err=>alert(err.message));
-}
+            loginView.classList.remove('hidden');
+            loginView.classList.add('fade-in');
+        }
+    }
 
-/* Login */
-function login(){
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value.trim();
-  const remember = document.getElementById('rememberMe').checked;
-  const error = document.getElementById('error');
-  error.textContent = '';
+    // --- Utility: Clear all error messages ---
+    function clearErrors() {
+        const errors = document.querySelectorAll('.error-message');
+        errors.forEach(el => el.classList.remove('error-visible'));
+    }
 
-  if(!email || !password){
-    error.textContent = 'Please enter email and password';
-    return;
-  }
+    // --- Login Handler ---
+    function handleLogin(e) {
+        e.preventDefault();
+        clearErrors();
 
-  /* Remember Me logic */
-  const persistence = remember ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION;
+        const email = document.getElementById('login-email').value;
+        const pass = document.getElementById('login-password').value;
+        let isValid = true;
 
-  auth.setPersistence(persistence)
-    .then(()=>{
-      return auth.signInWithEmailAndPassword(email,password);
-    })
-    .then(()=>{
-      pageTransition.classList.add('active');
-      setTimeout(()=> window.location.href='student.html',400);
-    })
-    .catch(err=>{
-      error.textContent = err.message;
-    });
-}
+        // Simple Email Validation
+        if (!email.includes('@') || !email.includes('.')) {
+            document.getElementById('login-email-error').classList.add('error-visible');
+            isValid = false;
+        }
 
-/* Navigate to signup */
-function goToSignup(){
-  window.location.href = 'signup.html';
-}
+        // Simple Password Validation
+        if (pass.length < 1) {
+            document.getElementById('login-pass-error').classList.add('error-visible');
+            isValid = false;
+        }
+
+        if (isValid) {
+            // Here you would normally send data to server
+            // For now, we simulate success
+            const btn = document.querySelector('#loginForm .btn');
+            btn.innerHTML = "Logging in...";
+            setTimeout(() => {
+                alert("Login Successful! Welcome to FoodPreneurs.");
+                btn.innerHTML = "Login Now";
+            }, 1000);
+        }
+    }
+
+    // --- Register Handler ---
+    function handleRegister(e) {
+        e.preventDefault();
+        clearErrors();
+
+        const email = document.getElementById('reg-email').value;
+        const pass = document.getElementById('reg-password').value;
+        let isValid = true;
+
+        // Email Validation
+        if (!email.includes('@') || !email.includes('.')) {
+            document.getElementById('reg-email-error').classList.add('error-visible');
+            isValid = false;
+        }
+
+        // Password Validation (Length check)
+        if (pass.length < 6) {
+            document.getElementById('reg-pass-error').classList.add('error-visible');
+            isValid = false;
+        }
+
+        if (isValid) {
+            const btn = document.querySelector('#registerForm .btn');
+            btn.innerHTML = "Creating...";
+            setTimeout(() => {
+                alert("Account Created! Please Login.");
+                btn.innerHTML = "Create Account";
+                switchView('login');
+            }, 1000);
+        }
+    }
 </script>
 
 </body>
