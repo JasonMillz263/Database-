@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,12 +11,12 @@
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 
 <style>
-/* GLOBAL & RESET */
+/* --- GLOBAL STYLES --- */
 *{box-sizing:border-box}
 html,body{overflow-x:hidden}
 body{
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  background: #f8fafc;
+  background: #f1f5f9;
   padding: 10px;
   margin: 0;
   color: #334155;
@@ -24,224 +25,147 @@ body.dark{background:#0f172a;color:#f1f5f9}
 
 /* HEADER */
 header{
-  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  background: #4f46e5;
   color: #fff;
   padding: 16px;
-  border-radius: 16px;
+  border-radius: 12px;
   margin-bottom: 20px;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-}
-.header-top{
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-.header-left{
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  font-size: 18px;
-}
+.header-left{display: flex; gap: 10px; align-items: center; font-size: 18px;}
 .header-right{display: flex; gap: 10px; align-items: center;}
 .header-chip{
   background: rgba(255,255,255,0.2);
   padding: 5px 12px;
   border-radius: 20px;
   font-size: 12px;
-  font-weight: 600;
 }
 .theme-btn{
-  background: rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.2);
   border: none;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   cursor: pointer;
   color: #fff;
-  transition: 0.2s;
 }
-.theme-btn:hover{background: rgba(255,255,255,0.4);}
 
-/* CARDS */
+/* CARDS & INPUTS */
 .card{
   background: #fff;
   padding: 20px;
-  border-radius: 16px;
+  border-radius: 12px;
   margin-top: 15px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  animation: slideUp 0.3s ease;
 }
-body.dark .card{background: #1e293b; box-shadow: none; border: 1px solid #334155;}
+body.dark .card{background: #1e293b; border: 1px solid #334155;}
+.hidden{display:none}
 
-@keyframes slideUp{
-  from{opacity:0;transform:translateY(10px)}
-  to{opacity:1;transform:none}
-}
-
-/* INPUTS & BUTTONS */
 input, button {
   width: 100%;
-  padding: 12px 15px;
+  padding: 12px;
   margin: 8px 0;
+  border-radius: 8px;
   font-size: 15px;
   outline: none;
 }
-input {
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  transition: 0.2s;
-}
+input { border: 1px solid #cbd5e1; }
 body.dark input {background: #0f172a; border-color: #334155; color: #fff;}
-input:focus {border-color: #4f46e5; ring: 2px solid #4f46e5;}
 
-button {
-  border: none;
-  border-radius: 10px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-}
+button { border: none; font-weight: 600; cursor: pointer; color:#fff; transition:0.2s; }
 button:active {transform: scale(0.98);}
-
-.publish{background:#16a34a;color:#fff}
+.publish{background:#16a34a}
 .draft{background:#f59e0b;color:#000}
-.delete{background:#ef4444;color:#fff}
-.view{background:#0ea5e9;color:#fff}
+.delete{background:#ef4444}
+.view{background:#0ea5e9}
 .action-btn{background:#e2e8f0; color:#334155}
 body.dark .action-btn{background:#334155; color:#fff}
 
 /* TABS */
-.tabs{display:flex; gap:10px; margin-top:15px; overflow-x: auto;}
-.tabs button{
-  flex:1; 
-  background: #e2e8f0; 
-  color: #64748b; 
-  white-space: nowrap;
-}
-body.dark .tabs button{background:#334155; color:#94a3b8}
+.tabs{display:flex; gap:10px; margin-top:15px;}
+.tabs button{flex:1; background: #cbd5e1; color: #475569;}
 .tabs button.active{background: #4f46e5; color: #fff;}
 
-/* QUILL EDITOR CONTAINER */
+/* --- EDITOR STYLES --- */
 #quill-container{
   position: relative;
   background: #fff;
   border-radius: 12px;
-  border: 1px solid #cbd5e1;
   margin-bottom: 20px;
 }
-body.dark #quill-container{background:#1e293b; border-color:#334155}
+body.dark #quill-container{background:#1e293b;}
+#quill { height: 400px; border: none; }
+.ql-toolbar { border-radius: 12px 12px 0 0; }
 
-#quill {
-  height: 400px;
-  border: none !important;
-  font-family: inherit;
-}
-.ql-toolbar {
-  border: none !important;
-  border-bottom: 1px solid #e2e8f0 !important;
-  border-radius: 12px 12px 0 0;
-}
-body.dark .ql-toolbar{border-color: #334155 !important; background: #1e293b;}
-body.dark .ql-stroke{stroke: #cbd5e1 !important;}
-body.dark .ql-fill{fill: #cbd5e1 !important;}
-body.dark .ql-picker{color: #cbd5e1 !important;}
-
-/* HTML CODE VIEW (Dark Mode Area) */
+/* HTML CODE VIEW AREA */
 .ql-html-textarea {
   width: 100%;
   height: 100%;
   background: #282c34;
   color: #abb2bf;
-  font-family: 'Consolas', monospace;
+  font-family: monospace;
   padding: 15px;
   border: none;
-  display: none; /* Hidden by default */
+  display: none;
   resize: none;
   position: absolute;
-  top: 42px; /* Height of toolbar approx */
+  top: 42px;
   left: 0;
   z-index: 10;
-  border-radius: 0 0 12px 12px;
 }
 
-/* --- CUSTOM MODERN PDF PANEL CSS --- */
-.pdf-embed-panel {
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  overflow: hidden;
-  margin: 15px 0;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-  background: #fff;
-  font-family: system-ui, sans-serif;
-  transition: transform 0.2s;
-}
-.pdf-embed-panel:hover {
-  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-}
-.pdf-header {
-  background: #f8fafc;
-  padding: 10px 15px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #e2e8f0;
-}
-body.dark .pdf-embed-panel {border-color: #334155; background: #0f172a;}
-body.dark .pdf-header {background: #1e293b; border-color: #334155;}
-
-.pdf-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  color: #ef4444; /* PDF Red */
-  font-size: 14px;
-}
-.pdf-title-text {
-  color: #334155;
-}
-body.dark .pdf-title-text {color: #e2e8f0;}
-
-.pdf-controls {
-  display: flex;
-  gap: 6px;
-}
-.pdf-btn {
-  background: white;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  padding: 4px 10px;
-  font-size: 12px;
-  cursor: pointer;
-  color: #475569;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  text-decoration: none;
-}
-body.dark .pdf-btn {background: #334155; border-color: #475569; color: #fff;}
-.pdf-btn:hover {background: #f1f5f9;}
-
-.pdf-frame {
+/* --- PDF IFRAME STYLING --- */
+/* This ensures the iframe looks good even if Quill strips inline styles */
+iframe {
   width: 100%;
-  height: 500px;
-  border: none;
+  height: 600px; /* Requested height */
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
   display: block;
 }
+/* The container for the PDF and TTS button */
+.pdf-container {
+  margin: 15px 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.pdf-tts-bar {
+  background: #f1f5f9;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.tts-btn {
+  background: #4f46e5;
+  color: white;
+  border: none;
+  padding: 5px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  width: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+}
+.tts-btn:hover { background: #4338ca; }
 
 /* QUIZZES */
 .quiz-item{
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  padding: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 10px;
   border-radius: 8px;
   margin-bottom: 8px;
 }
-body.dark .quiz-item{background: #172554; border-color: #1e3a8a;}
-.quiz-header{display:flex; justify-content:space-between; margin-bottom:8px;}
+body.dark .quiz-item{background: #0f172a; border-color: #334155;}
 
 /* TOAST */
 #toast{
@@ -251,49 +175,31 @@ body.dark .quiz-item{background: #172554; border-color: #1e3a8a;}
   transform: translateX(-50%);
   background: #1e293b;
   color: #fff;
-  padding: 12px 24px;
+  padding: 12px 20px;
   border-radius: 30px;
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
   z-index: 9999;
-  font-weight: 500;
 }
-#toast.hidden{display:none}
 
-.hidden{display:none}
-
-@media(min-width:768px){
-  body{max-width:800px;margin:30px auto}
-}
+@media(min-width:768px){ body{max-width:800px;margin:20px auto} }
 </style>
 </head>
 
 <body>
 
 <header>
-  <div class="header-top">
-    <div class="header-left">
-      <i class="fa fa-shield-halved"></i>
-      <b>Admin Panel</b>
-    </div>
-    <div class="header-right">
-      <div id="authStatus" class="header-chip"><i class="fa fa-circle-notch fa-spin"></i> Checking</div>
-      <button class="theme-btn" onclick="toggleTheme()"><i class="fa fa-moon"></i></button>
-    </div>
+  <div class="header-left">
+    <i class="fa fa-shield-halved"></i> <b>Admin Panel</b>
+  </div>
+  <div class="header-right">
+    <div id="authStatus" class="header-chip">Checking...</div>
+    <button class="theme-btn" onclick="toggleTheme()">🌓</button>
   </div>
 </header>
 
-<div id="toast" class="hidden">
-  <i class="fa fa-spinner fa-spin"></i>
-  <span id="toastText">Processing...</span>
-</div>
+<div id="toast" class="hidden"><i class="fa fa-spinner fa-spin"></i> <span id="toastText"></span></div>
 
 <div class="card hidden" id="addModuleCard">
-  <button class="publish" onclick="openEditor()">
-    <i class="fa fa-plus-circle"></i> Create New Module
-  </button>
+  <button class="publish" onclick="openEditor()">➕ Create New Module</button>
 </div>
 
 <div class="tabs">
@@ -307,43 +213,33 @@ body.dark .quiz-item{background: #172554; border-color: #1e3a8a;}
 <div class="card hidden" id="binTab"></div>
 
 <div class="card hidden" id="editor">
-  <h3><i class="fa fa-pen-to-square"></i> Module Editor</h3>
-  
-  <label>Module Settings</label>
-  <input id="title" placeholder="Enter Module Title">
-  <input id="videoUrl" placeholder="Header Video URL (Optional)">
-  
-  <label style="margin-top:10px; display:block">Content</label>
+  <h3>Module Editor</h3>
+  <input id="title" placeholder="Module Title">
+  <input id="videoUrl" placeholder="Video URL (Optional)">
   
   <div id="quill-container">
     <div id="quill"></div>
     </div>
 
-  <h4 style="margin-top:20px"><i class="fa fa-list-check"></i> Quiz Builder</h4>
-  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
-    <input id="q" placeholder="Question" style="grid-column:span 2">
-    <input id="o1" placeholder="Option A">
-    <input id="o2" placeholder="Option B">
-    <input id="o3" placeholder="Option C">
-    <input id="o4" placeholder="Option D">
-    <input id="a" placeholder="Correct Answer (text)" style="grid-column:span 2">
-  </div>
+  <h4>Quiz Builder</h4>
+  <input id="q" placeholder="Question">
+  <input id="o1" placeholder="Option 1">
+  <input id="o2" placeholder="Option 2">
+  <input id="o3" placeholder="Option 3">
+  <input id="o4" placeholder="Option 4">
+  <input id="a" placeholder="Correct Answer">
   <button class="action-btn" onclick="addQuiz()">Add Question</button>
+  <div id="quizList" style="margin-top:10px"></div>
   
-  <div id="quizList" style="margin-top:15px"></div>
-
-  <hr style="margin:20px 0; border:0; border-top:1px solid #ddd">
-  
-  <div style="display:flex; gap:10px">
-    <button class="draft" onclick="saveModule('draft')"><i class="fa fa-save"></i> Save Draft</button>
-    <button class="publish" onclick="saveModule('published')"><i class="fa fa-rocket"></i> Publish</button>
+  <div style="display:flex; gap:10px; margin-top:20px">
+    <button class="draft" onclick="saveModule('draft')">Save Draft</button>
+    <button class="publish" onclick="saveModule('published')">Publish</button>
   </div>
 </div>
 
 <div class="card hidden viewer" id="viewer"></div>
 
 <script type="module">
-/* ---------------- FIREBASE SETUP ---------------- */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getFirestore, collection, doc, addDoc, getDocs, updateDoc, getDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
@@ -356,119 +252,103 @@ const app = initializeApp({
 
 const db = getFirestore(app);
 const auth = getAuth(app);
-// NOTE: Hardcoded auth is for demo only. In production, use a login form.
 signInWithEmailAndPassword(auth,"ADMIN_EMAIL","ADMIN_PASSWORD").catch(e=>console.log(e));
 
 onAuthStateChanged(auth, async user=>{
-  if(!user){authStatus.innerHTML="<i class='fa fa-times'></i> Not logged in";return;}
-  // Check admin logic removed for pure demo capability, re-enable if needed
-  authStatus.innerHTML="<i class='fa fa-check'></i> Admin Verified";
+  if(!user){authStatus.innerText="Not Logged In";return;}
+  authStatus.innerText="Admin Verified";
   addModuleCard.classList.remove("hidden");
   loadModules();
 });
 
-/* ---------------- QUILL CONFIGURATION ---------------- */
+/* --- 1. QUILL CONFIGURATION --- */
 
-// 1. Define Icons
+// Custom Icons
 const icons = Quill.import('ui/icons');
 icons['html'] = '<i class="fa fa-code"></i>';
-icons['pdf'] = '<i class="fa fa-file-pdf"></i>'; // Custom PDF Icon
+icons['pdf'] = '<i class="fa fa-file-pdf"></i>'; // PDF Icon
 
-// 2. Setup Quill
 const quill = new Quill("#quill", {
   theme: "snow",
   modules: {
     toolbar: {
       container: [
         [{ header: [1, 2, 3, false] }],
-        ["bold", "italic", "underline", "strike"],
+        ["bold", "italic", "underline"],
         [{ list: "ordered" }, { list: "bullet" }],
-        ["link", "image"], 
-        ["pdf"], // <--- OUR NEW PDF BUTTON
+        ["link", "image"],
+        ["pdf"], // <--- PDF BUTTON
         ["html"] // <--- HTML CODE BUTTON
       ],
       handlers: {
         image: imageHandler,
         html: htmlHandler,
-        pdf: pdfHandler // Handler logic below
+        pdf: pdfHandler
       }
     }
   }
 });
 
-// 3. Create the Hidden Code Editor Area
+// HTML Code View Textarea
 const qContainer = document.querySelector("#quill-container");
 const txtArea = document.createElement('textarea');
 txtArea.className = 'ql-html-textarea';
 qContainer.appendChild(txtArea);
 
-/* ---------------- HANDLERS ---------------- */
+/* --- 2. HANDLERS --- */
 
-// PDF HANDLER (The Core Request)
+// PDF Handler: Uses EXACT iframe template requested + TTS Button
 function pdfHandler() {
-  // 1. Get URL
-  const url = prompt("Paste your PDF Link (must be a direct link ending in .pdf or a displayable URL):");
+  const url = prompt("Paste your PDF Link:");
   if (!url) return;
-
-  // 2. Get Accessibility Description (For TTS)
-  const desc = prompt("Enter a short title/description for this PDF (for Text-to-Speech):", "Course Document");
   
-  // 3. Construct the Modern HTML Panel
-  // We use contenteditable="false" on the wrapper so Quill treats it as a block
-  const pdfHTML = `
-    <div class="pdf-embed-panel" contenteditable="false">
-      <div class="pdf-header">
-        <div class="pdf-info">
-          <i class="fa fa-file-pdf"></i>
-          <span class="pdf-title-text">${desc || "PDF Document"}</span>
-        </div>
-        <div class="pdf-controls">
-          <button class="pdf-btn" onclick="speakText('${desc || "PDF Document"}')">
-            <i class="fa fa-volume-high"></i> Read Info
-          </button>
-          <a href="${url}" target="_blank" class="pdf-btn">
-            <i class="fa fa-expand"></i> Full View
-          </a>
-        </div>
+  const desc = prompt("Enter a short description (This will be read by Text-to-Speech):") || "PDF Document";
+
+  const range = quill.getSelection(true);
+  
+  // This HTML block includes the Text-to-Speech button AND your requested iframe
+  const html = `
+    <div class="pdf-container">
+      <div class="pdf-tts-bar">
+        <button class="tts-btn" onclick="speak('${desc}')">
+          <i class="fa fa-volume-high"></i> Read Info
+        </button>
+        <small style="margin-left:auto; color:#666">PDF Preview</small>
       </div>
-      <iframe class="pdf-frame" src="${url}" allowfullscreen title="${desc}"></iframe>
+      <iframe src="${url}" width="100%" height="600px" allow="autoplay" title="${desc}"></iframe>
     </div>
     <p><br></p>
   `;
 
-  // 4. Insert into Editor
-  const range = quill.getSelection(true);
-  quill.clipboard.dangerouslyPasteHTML(range.index, pdfHTML);
+  quill.clipboard.dangerouslyPasteHTML(range.index, html);
 }
 
-// Global function for the TTS button inside the HTML string
-window.speakText = (text) => {
+// Global Text-to-Speech Function
+window.speak = (text) => {
   if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel(); // Stop previous
-    const utterance = new SpeechSynthesisUtterance("PDF Description: " + text + ". Click Full View to read the document content.");
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance("Document Info: " + text);
     window.speechSynthesis.speak(utterance);
   } else {
-    alert("Text to speech not supported in this browser.");
+    alert("TTS not supported.");
   }
 };
 
-// HTML TOGGLE HANDLER
+// HTML Toggle
 function htmlHandler(){
   const editorArea = qContainer.querySelector('.ql-editor');
   if(txtArea.style.display === 'block'){
-    // Save Code -> Visual
     quill.clipboard.dangerouslyPasteHTML(txtArea.value);
     txtArea.style.display = 'none';
     editorArea.style.display = 'block';
   } else {
-    // Show Code View
     txtArea.value = quill.root.innerHTML;
     editorArea.style.display = 'none';
     txtArea.style.display = 'block';
   }
 }
 
-// IMAGE HANDLER
+// Image Upload
 function imageHandler(){
   const input = document.createElement("input");
   input.type = "file";
@@ -477,31 +357,31 @@ function imageHandler(){
   input.onchange = () => {
     const file = input.files[0];
     if(!file) return;
-    showToast("Uploading image...");
+    toastText.innerText = "Uploading...";
+    toast.classList.remove("hidden");
     const reader = new FileReader();
     reader.onload = () => {
       const range = quill.getSelection(true);
       quill.insertEmbed(range.index, "image", reader.result);
-      hideToast();
+      toast.classList.add("hidden");
     };
     reader.readAsDataURL(file);
   };
 }
 
-/* ---------------- APP LOGIC ---------------- */
-
-let quizzes=[], editingId=null, editingQuiz=null;
+/* --- 3. APP LOGIC --- */
+let quizzes=[], editingId=null;
 
 window.addQuiz = () => {
-  if(!q.value){ alert("Enter a question"); return; }
+  const qVal = document.getElementById('q').value;
+  if(!qVal) return alert("Enter question");
   const quiz = {
-    question: q.value,
+    question: qVal,
     options: [o1.value, o2.value, o3.value, o4.value],
     answer: a.value
   };
-  editingQuiz !== null ? quizzes[editingQuiz] = quiz : quizzes.push(quiz);
-  editingQuiz = null;
-  q.value = o1.value = o2.value = o3.value = o4.value = a.value = "";
+  quizzes.push(quiz);
+  document.getElementById('q').value = o1.value = o2.value = o3.value = o4.value = a.value = "";
   renderQuizzes();
 };
 
@@ -510,58 +390,35 @@ function renderQuizzes(){
   quizzes.forEach((x, i) => {
     quizList.innerHTML += `
       <div class="quiz-item">
-        <div class="quiz-header">
-          <b>${i+1}. ${x.question}</b>
-          <div>
-            <button class="action-btn" style="display:inline; width:auto; padding:5px" onclick="editQuiz(${i})"><i class="fa fa-pen"></i></button>
-            <button class="delete" style="display:inline; width:auto; padding:5px" onclick="deleteQuiz(${i})"><i class="fa fa-trash"></i></button>
-          </div>
-        </div>
-        <small>Ans: ${x.answer}</small>
+        <b>${i+1}. ${x.question}</b>
+        <button class="delete" style="width:auto; float:right; padding:5px 10px" onclick="deleteQuiz(${i})">Delete</button>
       </div>`;
   });
 }
-
-window.editQuiz = i => {
-  const x = quizzes[i];
-  q.value = x.question;
-  [o1.value, o2.value, o3.value, o4.value] = x.options;
-  a.value = x.answer;
-  editingQuiz = i;
-  document.getElementById('q').focus();
-};
-
 window.deleteQuiz = i => { quizzes.splice(i, 1); renderQuizzes(); };
 
 window.saveModule = async status => {
-  // Sync HTML view if open
-  if(txtArea.style.display === 'block') {
-      quill.clipboard.dangerouslyPasteHTML(txtArea.value);
-  }
-
-  showToast(status==="published" ? "Publishing..." : "Saving draft...");
+  if(txtArea.style.display === 'block') quill.clipboard.dangerouslyPasteHTML(txtArea.value);
   
-  try {
-    const refc = collection(db, "courses", "management_course", "modules");
-    const data = {
-      title: title.value, 
-      videoUrl: videoUrl.value, 
-      content: quill.root.innerHTML, 
-      quizzes, 
-      status, 
-      updatedAt: serverTimestamp()
-    };
-    
-    editingId ? await updateDoc(doc(refc, editingId), data) : await addDoc(refc, data);
-    
-    hideToast();
-    reset();
-    openTab('publishedTab'); // Return to list
-    loadModules();
-  } catch(e) {
-    showToast("Error saving!");
-    console.error(e);
-  }
+  toastText.innerText = "Saving...";
+  toast.classList.remove("hidden");
+  
+  const refc = collection(db, "courses", "management_course", "modules");
+  const data = {
+    title: title.value, 
+    videoUrl: videoUrl.value, 
+    content: quill.root.innerHTML, 
+    quizzes, 
+    status, 
+    updatedAt: serverTimestamp()
+  };
+  
+  if(editingId) await updateDoc(doc(refc, editingId), data);
+  else await addDoc(refc, data);
+  
+  toast.classList.add("hidden");
+  openTab('publishedTab');
+  loadModules();
 };
 
 async function loadModules(){
@@ -570,44 +427,32 @@ async function loadModules(){
   
   snap.forEach(d => {
     const m = d.data();
-    if(m.status === 'deleted' && !document.getElementById('binTab').classList.contains('hidden') === false) {
-       // Logic to sort into bins
-    }
-    
-    const cardHTML = `
-      <div class="quiz-item" style="background:${m.status==='published'?'#fff':'#fff9db'}">
-        <div class="quiz-header">
-          <strong>${m.title || 'Untitled Module'}</strong>
-          <small>${m.status.toUpperCase()}</small>
+    if(m.status === 'deleted' && binTab.classList.contains('hidden')) return; // Simple filter
+
+    const html = `
+      <div class="quiz-item" style="background:#fff">
+        <div style="display:flex; justify-content:space-between">
+          <b>${m.title}</b>
+          <small>${m.status}</small>
         </div>
         <div style="display:flex; gap:10px; margin-top:10px">
-          <button class="view" onclick="viewModule('${d.id}')"><i class="fa fa-eye"></i></button>
-          <button class="action-btn" onclick="edit('${d.id}')"><i class="fa fa-pen"></i></button>
-          <button class="delete" onclick="softDelete('${d.id}')"><i class="fa fa-trash"></i></button>
+          <button class="view" onclick="viewModule('${d.id}')">View</button>
+          <button class="action-btn" onclick="edit('${d.id}')">Edit</button>
+          <button class="delete" onclick="softDelete('${d.id}')">Delete</button>
         </div>
-      </div>
-    `;
-
-    if(m.status === "published") publishedTab.innerHTML += cardHTML;
-    else if(m.status === "draft") draftTab.innerHTML += cardHTML;
-    else binTab.innerHTML += cardHTML;
+      </div>`;
+      
+    if(m.status === "published") publishedTab.innerHTML += html;
+    else if(m.status === "draft") draftTab.innerHTML += html;
+    else binTab.innerHTML += html;
   });
 }
 
 window.viewModule = async id => {
   history.pushState({page:"viewer"},"");
-  showToast("Loading...");
   const s = await getDoc(doc(db,"courses","management_course","modules",id));
   const m = s.data();
-  hideToast();
-  
-  viewer.innerHTML = `
-    <h2 style="margin-bottom:20px">${m.title}</h2>
-    ${m.videoUrl ? `<iframe src="${m.videoUrl}" style="width:100%; height:250px; border-radius:10px; margin-bottom:20px" frameborder="0"></iframe>` : ''}
-    <div class="ql-editor" style="padding:0">${m.content}</div>
-    <button onclick="history.back()" style="margin-top:20px; width:auto"><i class="fa fa-arrow-left"></i> Back</button>
-  `;
-  
+  viewer.innerHTML = `<h3>${m.title}</h3>${m.content}<button class="action-btn" onclick="history.back()">Back</button>`;
   toggleViews('viewer');
 };
 
@@ -615,84 +460,59 @@ window.edit = async id => {
   history.pushState({page:"editor"},"");
   const s = await getDoc(doc(db,"courses","management_course","modules",id));
   const m = s.data();
-  
   title.value = m.title;
   videoUrl.value = m.videoUrl;
   quill.root.innerHTML = m.content;
   quizzes = m.quizzes || [];
   editingId = id;
-  
   renderQuizzes();
-  // Ensure visual mode
-  txtArea.style.display = 'none';
-  document.querySelector('.ql-editor').style.display = 'block';
-  
   toggleViews('editor');
 };
 
 window.softDelete = async id => {
-  if(!confirm("Move to Recycle Bin?")) return;
   await updateDoc(doc(db,"courses","management_course","modules",id),{status:"deleted"});
   loadModules();
 };
 
-function reset(){
+window.openEditor = () => {
   title.value = videoUrl.value = "";
   quill.root.innerHTML = "";
   quizzes = [];
   editingId = null;
   renderQuizzes();
-}
-
-window.openEditor = () => {
-  reset();
   history.pushState({page:"editor"},"");
   toggleViews('editor');
 };
 
-/* UTILS */
-function showToast(msg){
-  toastText.innerText = msg;
-  toast.classList.remove("hidden");
-}
-function hideToast(){
-  setTimeout(()=>toast.classList.add("hidden"), 1000);
-}
-
 window.showTab = (id, btn) => {
-  ["publishedTab","draftTab","binTab"].forEach(t => document.getElementById(t).classList.add("hidden"));
-  document.getElementById(id).classList.remove("hidden");
+  openTab(id);
   document.querySelectorAll(".tabs button").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
 };
 
 function openTab(id){
-  document.querySelectorAll(".tabs button").forEach(b => {
-    if(b.getAttribute('onclick').includes(id)) b.click();
-  });
+  ["publishedTab","draftTab","binTab"].forEach(t => document.getElementById(t).classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
 }
 
 function toggleViews(viewId){
   addModuleCard.classList.add("hidden");
+  document.querySelector('.tabs').classList.add("hidden");
   publishedTab.classList.add("hidden");
   draftTab.classList.add("hidden");
   binTab.classList.add("hidden");
-  document.querySelector('.tabs').classList.add("hidden");
   editor.classList.add("hidden");
   viewer.classList.add("hidden");
-  
   document.getElementById(viewId).classList.remove("hidden");
 }
 
 window.onpopstate = () => {
-  toggleViews('publishedTab'); // Default back to list
+  toggleViews('publishedTab');
   addModuleCard.classList.remove("hidden");
   document.querySelector('.tabs').classList.remove("hidden");
-  openTab('publishedTab');
 };
 
 window.toggleTheme = () => document.body.classList.toggle("dark");
-
 </script>
 </body>
 </html>
