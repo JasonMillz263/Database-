@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Ticket Dashboard</title>
     <style>
-        :root { --primary: #4f46e5; --bg: #f3f4f6; --white: #ffffff; }
+        :root { --primary: #4f46e5; --danger: #ef4444; --bg: #f3f4f6; --white: #ffffff; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; padding: 0; color: #1f2937; }
         
         /* Nav */
@@ -35,8 +35,13 @@
         .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
         select { padding: 9px; border-radius: 6px; border: 1px solid #d1d5db; background: white; cursor: pointer; }
         .reply-input { flex-grow: 1; padding: 9px; border: 1px solid #d1d5db; border-radius: 6px; }
+        
+        /* Buttons */
         .btn-save { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
         .btn-save:hover { background: #4338ca; }
+        
+        .btn-delete { background: var(--danger); color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .btn-delete:hover { background: #dc2626; }
 
         /* Modal & Overlay */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; align-items: center; justify-content: center; }
@@ -68,7 +73,8 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    // ADDED: deleteDoc to imports below
+    import { getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
@@ -126,7 +132,6 @@
                         `;
                     }).join("");
                 } else if (t.message) {
-                    // Backwards compatibility for old tickets
                     messagesHtml = `<div class="msg msg-student">${t.message}<br><small>Old format</small></div>`;
                 }
 
@@ -154,12 +159,12 @@
                             <option value="closed" ${t.status === 'closed' ? 'selected' : ''}>🟢 Closed</option>
                         </select>
                         <input type="text" class="reply-input" id="reply-${id}" placeholder="Type reply here...">
-                        <button class="btn-save" onclick="sendReply('${id}')">Send & Update</button>
+                        <button class="btn-save" onclick="sendReply('${id}')">Reply</button>
+                        <button class="btn-delete" onclick="deleteTicket('${id}')" title="Delete Ticket">🗑️</button>
                     </div>
                 </div>`;
             }).join("");
             
-            // Auto scroll to bottom of chats
             document.querySelectorAll('.chat-box').forEach(box => {
                 box.scrollTop = box.scrollHeight;
             });
@@ -179,7 +184,6 @@
                 lastUpdated: Date.now()
             };
 
-            // Only add message if text is not empty
             if (replyText.trim() !== "") {
                 updates.messages = arrayUnion({
                     sender: 'admin',
@@ -189,10 +193,24 @@
             }
 
             await updateDoc(ticketRef, updates);
-            // Clear input
             document.getElementById(`reply-${id}`).value = "";
         } catch (error) {
             alert("Error updating: " + error.message);
+        }
+    };
+
+    // ADDED: Delete Action
+    window.deleteTicket = async (id) => {
+        if(!confirm("Are you sure you want to permanently delete this ticket? This cannot be undone.")) {
+            return;
+        }
+
+        try {
+            await deleteDoc(doc(db, "tickets", id));
+            // No need to manually remove HTML, onSnapshot will refresh the list automatically
+        } catch (error) {
+            console.error(error);
+            alert("Error deleting: " + error.message);
         }
     };
 
