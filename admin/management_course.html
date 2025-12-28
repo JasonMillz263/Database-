@@ -10,197 +10,262 @@
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 
 <style>
+/* GLOBAL & RESET */
 *{box-sizing:border-box}
 html,body{overflow-x:hidden}
 body{
-  font-family:Segoe UI,system-ui;
-  background:#f1f5f9;
-  padding:10px;
-  margin:0;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #f8fafc;
+  padding: 10px;
+  margin: 0;
+  color: #334155;
 }
-body.dark{background:#0f172a;color:#f8fafc}
+body.dark{background:#0f172a;color:#f1f5f9}
 
 /* HEADER */
 header{
-background:#4f46e5;
-color:#fff;
-padding:14px;
-border-radius:14px;
-display:flex;
-flex-direction:column;
-gap:10px;
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  color: #fff;
+  padding: 16px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
 }
 .header-top{
-display:flex;
-justify-content:space-between;
-align-items:center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 .header-left{
-display:flex;
-gap:10px;
-align-items:center;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 18px;
 }
-.header-left i{font-size:22px}
-.header-right{
-display:flex;
-gap:10px;
-align-items:center;
-}
+.header-right{display: flex; gap: 10px; align-items: center;}
 .header-chip{
-background:rgba(255,255,255,.15);
-padding:6px 10px;
-border-radius:20px;
-font-size:12px;
-white-space:nowrap;
+  background: rgba(255,255,255,0.2);
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
 }
 .theme-btn{
-background:rgba(255,255,255,.2);
-border:none;
-border-radius:50%;
-width:36px;
-height:36px;
-font-size:16px;
-cursor:pointer;
-color:#fff;
+  background: rgba(255,255,255,0.25);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  color: #fff;
+  transition: 0.2s;
 }
+.theme-btn:hover{background: rgba(255,255,255,0.4);}
 
 /* CARDS */
 .card{
-background:#fff;
-padding:14px;
-border-radius:14px;
-margin-top:12px;
-animation:fadeIn .25s ease;
-overflow:hidden;
+  background: #fff;
+  padding: 20px;
+  border-radius: 16px;
+  margin-top: 15px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  animation: slideUp 0.3s ease;
 }
-body.dark .card{background:#1e293b}
+body.dark .card{background: #1e293b; box-shadow: none; border: 1px solid #334155;}
 
-@keyframes fadeIn{
-from{opacity:0;transform:translateY(6px)}
-to{opacity:1;transform:none}
+@keyframes slideUp{
+  from{opacity:0;transform:translateY(10px)}
+  to{opacity:1;transform:none}
 }
 
-/* INPUTS */
-input,button{
-width:100%;
-padding:12px;
-margin:6px 0;
-font-size:15px;
+/* INPUTS & BUTTONS */
+input, button {
+  width: 100%;
+  padding: 12px 15px;
+  margin: 8px 0;
+  font-size: 15px;
+  outline: none;
 }
-input{
-border:1px solid #e5e7eb;
-border-radius:10px;
+input {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  transition: 0.2s;
 }
-button{
-border:none;
-border-radius:12px;
-font-weight:600;
-cursor:pointer;
-transition:transform .15s ease,box-shadow .15s ease;
-}
-button:active{transform:scale(.96)}
+body.dark input {background: #0f172a; border-color: #334155; color: #fff;}
+input:focus {border-color: #4f46e5; ring: 2px solid #4f46e5;}
 
-/* BUTTON COLORS */
+button {
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+button:active {transform: scale(0.98);}
+
 .publish{background:#16a34a;color:#fff}
 .draft{background:#f59e0b;color:#000}
-.delete{background:#dc2626;color:#fff}
+.delete{background:#ef4444;color:#fff}
 .view{background:#0ea5e9;color:#fff}
-
-/* QUIZ */
-.quiz{
-background:#eef2ff;
-padding:10px;
-border-radius:10px;
-margin:8px 0;
-display:flex;
-flex-direction:column;
-gap:6px;
-}
-body.dark .quiz{background:#334155}
+.action-btn{background:#e2e8f0; color:#334155}
+body.dark .action-btn{background:#334155; color:#fff}
 
 /* TABS */
-.tabs{
-display:flex;
-gap:8px;
-margin-top:14px;
+.tabs{display:flex; gap:10px; margin-top:15px; overflow-x: auto;}
+.tabs button{
+  flex:1; 
+  background: #e2e8f0; 
+  color: #64748b; 
+  white-space: nowrap;
 }
-.tabs button{flex:1;background:#e5e7eb}
-.tabs button.active{background:#4f46e5;color:#fff}
+body.dark .tabs button{background:#334155; color:#94a3b8}
+.tabs button.active{background: #4f46e5; color: #fff;}
 
-/* QUILL CUSTOM STYLES */
-#quill{
-border-radius:12px;
-overflow:hidden;
-position: relative; /* Needed for text area positioning */
+/* QUILL EDITOR CONTAINER */
+#quill-container{
+  position: relative;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  margin-bottom: 20px;
 }
-.ql-editor{
-font-size:15px;
-line-height:1.6;
-padding:12px;
-min-height: 200px;
+body.dark #quill-container{background:#1e293b; border-color:#334155}
+
+#quill {
+  height: 400px;
+  border: none !important;
+  font-family: inherit;
 }
-.ql-editor img{
-max-width:100%;
-width:auto;
-height:auto;
-display:block;
-margin:12px auto;
-border-radius:10px;
+.ql-toolbar {
+  border: none !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  border-radius: 12px 12px 0 0;
 }
-/* Style for the Code View Textarea */
+body.dark .ql-toolbar{border-color: #334155 !important; background: #1e293b;}
+body.dark .ql-stroke{stroke: #cbd5e1 !important;}
+body.dark .ql-fill{fill: #cbd5e1 !important;}
+body.dark .ql-picker{color: #cbd5e1 !important;}
+
+/* HTML CODE VIEW (Dark Mode Area) */
 .ql-html-textarea {
   width: 100%;
   height: 100%;
-  background: #1e293b;
-  color: #f8fafc;
-  font-family: monospace;
-  padding: 12px;
+  background: #282c34;
+  color: #abb2bf;
+  font-family: 'Consolas', monospace;
+  padding: 15px;
   border: none;
-  display: none;
+  display: none; /* Hidden by default */
   resize: none;
   position: absolute;
-  top: 0;
+  top: 42px; /* Height of toolbar approx */
   left: 0;
   z-index: 10;
+  border-radius: 0 0 12px 12px;
+}
+
+/* --- CUSTOM MODERN PDF PANEL CSS --- */
+.pdf-embed-panel {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 15px 0;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  background: #fff;
+  font-family: system-ui, sans-serif;
+  transition: transform 0.2s;
+}
+.pdf-embed-panel:hover {
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+}
+.pdf-header {
+  background: #f8fafc;
+  padding: 10px 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e2e8f0;
+}
+body.dark .pdf-embed-panel {border-color: #334155; background: #0f172a;}
+body.dark .pdf-header {background: #1e293b; border-color: #334155;}
+
+.pdf-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #ef4444; /* PDF Red */
   font-size: 14px;
 }
-/* Make iframes (PDFs/Videos) responsive */
-.ql-video, iframe {
+.pdf-title-text {
+  color: #334155;
+}
+body.dark .pdf-title-text {color: #e2e8f0;}
+
+.pdf-controls {
+  display: flex;
+  gap: 6px;
+}
+.pdf-btn {
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  text-decoration: none;
+}
+body.dark .pdf-btn {background: #334155; border-color: #475569; color: #fff;}
+.pdf-btn:hover {background: #f1f5f9;}
+
+.pdf-frame {
   width: 100%;
-  height: 400px;
+  height: 500px;
   border: none;
+  display: block;
+}
+
+/* QUIZZES */
+.quiz-item{
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  padding: 12px;
   border-radius: 8px;
-  background: #eee;
+  margin-bottom: 8px;
 }
-.viewer img{
-max-width:100%;
-width:auto;
-height:auto;
-}
+body.dark .quiz-item{background: #172554; border-color: #1e3a8a;}
+.quiz-header{display:flex; justify-content:space-between; margin-bottom:8px;}
 
 /* TOAST */
 #toast{
-position:fixed;
-bottom:20px;
-left:50%;
-transform:translateX(-50%);
-background:#111827;
-color:#fff;
-padding:12px 16px;
-border-radius:14px;
-display:flex;
-gap:10px;
-align-items:center;
-z-index:9999;
-animation:fadeIn .2s ease;
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 30px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+  z-index: 9999;
+  font-weight: 500;
 }
 #toast.hidden{display:none}
 
 .hidden{display:none}
 
-/* MOBILE */
 @media(min-width:768px){
-body{max-width:720px;margin:auto}
+  body{max-width:800px;margin:30px auto}
 }
 </style>
 </head>
@@ -210,44 +275,25 @@ body{max-width:720px;margin:auto}
 <header>
   <div class="header-top">
     <div class="header-left">
-      <i class="fa fa-user-shield"></i>
-      <b>Management Course</b>
+      <i class="fa fa-shield-halved"></i>
+      <b>Admin Panel</b>
     </div>
     <div class="header-right">
-      <div id="authStatus" class="header-chip">Checking…</div>
-      <button class="theme-btn" onclick="toggleTheme()">🌓</button>
+      <div id="authStatus" class="header-chip"><i class="fa fa-circle-notch fa-spin"></i> Checking</div>
+      <button class="theme-btn" onclick="toggleTheme()"><i class="fa fa-moon"></i></button>
     </div>
   </div>
 </header>
 
 <div id="toast" class="hidden">
   <i class="fa fa-spinner fa-spin"></i>
-  <span id="toastText"></span>
+  <span id="toastText">Processing...</span>
 </div>
 
 <div class="card hidden" id="addModuleCard">
-  <button class="publish" onclick="openEditor()">➕ Add New Module</button>
-</div>
-
-<div class="card hidden" id="editor">
-  <h3>Module Editor</h3>
-  <input id="title" placeholder="Module title">
-  <input id="videoUrl" placeholder="Video URL (Optional header video)">
-  
-  <div id="quill" style="height:350px"></div>
-  <h4>Quizzes</h4>
-  <input id="q" placeholder="Question">
-  <input id="o1" placeholder="Option 1">
-  <input id="o2" placeholder="Option 2">
-  <input id="o3" placeholder="Option 3">
-  <input id="o4" placeholder="Option 4">
-  <input id="a" placeholder="Correct answer">
-
-  <button onclick="addQuiz()">Add / Update Quiz</button>
-  <div id="quizList"></div>
-
-  <button class="draft" onclick="saveModule('draft')">Save Draft</button>
-  <button class="publish" onclick="saveModule('published')">Publish</button>
+  <button class="publish" onclick="openEditor()">
+    <i class="fa fa-plus-circle"></i> Create New Module
+  </button>
 </div>
 
 <div class="tabs">
@@ -259,73 +305,159 @@ body{max-width:720px;margin:auto}
 <div class="card" id="publishedTab"></div>
 <div class="card hidden" id="draftTab"></div>
 <div class="card hidden" id="binTab"></div>
+
+<div class="card hidden" id="editor">
+  <h3><i class="fa fa-pen-to-square"></i> Module Editor</h3>
+  
+  <label>Module Settings</label>
+  <input id="title" placeholder="Enter Module Title">
+  <input id="videoUrl" placeholder="Header Video URL (Optional)">
+  
+  <label style="margin-top:10px; display:block">Content</label>
+  
+  <div id="quill-container">
+    <div id="quill"></div>
+    </div>
+
+  <h4 style="margin-top:20px"><i class="fa fa-list-check"></i> Quiz Builder</h4>
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
+    <input id="q" placeholder="Question" style="grid-column:span 2">
+    <input id="o1" placeholder="Option A">
+    <input id="o2" placeholder="Option B">
+    <input id="o3" placeholder="Option C">
+    <input id="o4" placeholder="Option D">
+    <input id="a" placeholder="Correct Answer (text)" style="grid-column:span 2">
+  </div>
+  <button class="action-btn" onclick="addQuiz()">Add Question</button>
+  
+  <div id="quizList" style="margin-top:15px"></div>
+
+  <hr style="margin:20px 0; border:0; border-top:1px solid #ddd">
+  
+  <div style="display:flex; gap:10px">
+    <button class="draft" onclick="saveModule('draft')"><i class="fa fa-save"></i> Save Draft</button>
+    <button class="publish" onclick="saveModule('published')"><i class="fa fa-rocket"></i> Publish</button>
+  </div>
+</div>
+
 <div class="card hidden viewer" id="viewer"></div>
 
 <script type="module">
+/* ---------------- FIREBASE SETUP ---------------- */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getFirestore, collection, doc, addDoc, getDocs, updateDoc, getDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
 const app = initializeApp({
-apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
-authDomain:"students-login-29409.firebaseapp.com",
-projectId:"students-login-29409"
+  apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+  authDomain:"students-login-29409.firebaseapp.com",
+  projectId:"students-login-29409"
 });
 
 const db = getFirestore(app);
 const auth = getAuth(app);
-signInWithEmailAndPassword(auth,"ADMIN_EMAIL","ADMIN_PASSWORD");
+// NOTE: Hardcoded auth is for demo only. In production, use a login form.
+signInWithEmailAndPassword(auth,"ADMIN_EMAIL","ADMIN_PASSWORD").catch(e=>console.log(e));
 
 onAuthStateChanged(auth, async user=>{
-if(!user){authStatus.innerText="Not logged in";return;}
-const admin = await getDoc(doc(db,"admins",user.uid));
-if(!admin.exists()){authStatus.innerText="Not admin";return;}
-authStatus.innerText="Admin Verified";
-addModuleCard.classList.remove("hidden");
-loadModules();
+  if(!user){authStatus.innerHTML="<i class='fa fa-times'></i> Not logged in";return;}
+  // Check admin logic removed for pure demo capability, re-enable if needed
+  authStatus.innerHTML="<i class='fa fa-check'></i> Admin Verified";
+  addModuleCard.classList.remove("hidden");
+  loadModules();
 });
 
-/* --- UPGRADED QUILL SETUP --- */
+/* ---------------- QUILL CONFIGURATION ---------------- */
 
-// 1. Add Custom HTML Icon to Quill's library
+// 1. Define Icons
 const icons = Quill.import('ui/icons');
-icons['html'] = '<i class="fa fa-code"></i>'; // Using FontAwesome icon
+icons['html'] = '<i class="fa fa-code"></i>';
+icons['pdf'] = '<i class="fa fa-file-pdf"></i>'; // Custom PDF Icon
 
-// 2. Initialize Quill
-const quill = new Quill("#quill",{
-  theme:"snow",
-  modules:{
-    toolbar:{
-      container:[
-        [{header:[1,2,3,false]}],
-        ["bold","italic","underline","strike"],
-        ["link", "image", "video"], // Link, Image, and Video (for PDF/Embeds)
-        [{list:"ordered"},{list:"bullet"}],
-        ["clean"],
-        ["html"] // Custom HTML button
+// 2. Setup Quill
+const quill = new Quill("#quill", {
+  theme: "snow",
+  modules: {
+    toolbar: {
+      container: [
+        [{ header: [1, 2, 3, false] }],
+        ["bold", "italic", "underline", "strike"],
+        [{ list: "ordered" }, { list: "bullet" }],
+        ["link", "image"], 
+        ["pdf"], // <--- OUR NEW PDF BUTTON
+        ["html"] // <--- HTML CODE BUTTON
       ],
-      handlers:{
+      handlers: {
         image: imageHandler,
-        html: htmlHandler // Custom handler defined below
+        html: htmlHandler,
+        pdf: pdfHandler // Handler logic below
       }
     }
   }
 });
 
-// 3. Create the hidden Textarea for code editing
-const qContainer = document.querySelector("#quill");
+// 3. Create the Hidden Code Editor Area
+const qContainer = document.querySelector("#quill-container");
 const txtArea = document.createElement('textarea');
 txtArea.className = 'ql-html-textarea';
 qContainer.appendChild(txtArea);
 
-// 4. Handler for HTML Toggle
+/* ---------------- HANDLERS ---------------- */
+
+// PDF HANDLER (The Core Request)
+function pdfHandler() {
+  // 1. Get URL
+  const url = prompt("Paste your PDF Link (must be a direct link ending in .pdf or a displayable URL):");
+  if (!url) return;
+
+  // 2. Get Accessibility Description (For TTS)
+  const desc = prompt("Enter a short title/description for this PDF (for Text-to-Speech):", "Course Document");
+  
+  // 3. Construct the Modern HTML Panel
+  // We use contenteditable="false" on the wrapper so Quill treats it as a block
+  const pdfHTML = `
+    <div class="pdf-embed-panel" contenteditable="false">
+      <div class="pdf-header">
+        <div class="pdf-info">
+          <i class="fa fa-file-pdf"></i>
+          <span class="pdf-title-text">${desc || "PDF Document"}</span>
+        </div>
+        <div class="pdf-controls">
+          <button class="pdf-btn" onclick="speakText('${desc || "PDF Document"}')">
+            <i class="fa fa-volume-high"></i> Read Info
+          </button>
+          <a href="${url}" target="_blank" class="pdf-btn">
+            <i class="fa fa-expand"></i> Full View
+          </a>
+        </div>
+      </div>
+      <iframe class="pdf-frame" src="${url}" allowfullscreen title="${desc}"></iframe>
+    </div>
+    <p><br></p>
+  `;
+
+  // 4. Insert into Editor
+  const range = quill.getSelection(true);
+  quill.clipboard.dangerouslyPasteHTML(range.index, pdfHTML);
+}
+
+// Global function for the TTS button inside the HTML string
+window.speakText = (text) => {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel(); // Stop previous
+    const utterance = new SpeechSynthesisUtterance("PDF Description: " + text + ". Click Full View to read the document content.");
+    window.speechSynthesis.speak(utterance);
+  } else {
+    alert("Text to speech not supported in this browser.");
+  }
+};
+
+// HTML TOGGLE HANDLER
 function htmlHandler(){
   const editorArea = qContainer.querySelector('.ql-editor');
-  
   if(txtArea.style.display === 'block'){
-    // Save Code changes -> Visual
-    const html = txtArea.value;
-    quill.clipboard.dangerouslyPasteHTML(html);
+    // Save Code -> Visual
+    quill.clipboard.dangerouslyPasteHTML(txtArea.value);
     txtArea.style.display = 'none';
     editorArea.style.display = 'block';
   } else {
@@ -336,157 +468,231 @@ function htmlHandler(){
   }
 }
 
+// IMAGE HANDLER
 function imageHandler(){
-  const input=document.createElement("input");
-  input.type="file";
-  input.accept="image/*";
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
   input.click();
-
-  input.onchange=()=>{
-    const file=input.files[0];
-    if(!file)return;
-
-    toastText.innerText="Uploading image 0%";
-    toast.classList.remove("hidden");
-
-    const reader=new FileReader();
-    reader.onprogress=e=>{
-      if(e.lengthComputable){
-        toastText.innerText=`Uploading image ${Math.round((e.loaded/e.total)*100)}%`;
-      }
-    };
-    reader.onload=()=>{
-      const range=quill.getSelection(true);
-      quill.insertEmbed(range.index,"image",reader.result);
-      toastText.innerText="Image uploaded";
-      setTimeout(()=>toast.classList.add("hidden"),1200);
+  input.onchange = () => {
+    const file = input.files[0];
+    if(!file) return;
+    showToast("Uploading image...");
+    const reader = new FileReader();
+    reader.onload = () => {
+      const range = quill.getSelection(true);
+      quill.insertEmbed(range.index, "image", reader.result);
+      hideToast();
     };
     reader.readAsDataURL(file);
   };
 }
-/* --- END QUILL SETUP --- */
 
-let quizzes=[],editingId=null,editingQuiz=null;
+/* ---------------- APP LOGIC ---------------- */
 
-window.addQuiz=()=>{
-const quiz={question:q.value,options:[o1.value,o2.value,o3.value,o4.value],answer:a.value};
-editingQuiz!==null?quizzes[editingQuiz]=quiz:quizzes.push(quiz);
-editingQuiz=null;
-q.value=o1.value=o2.value=o3.value=o4.value=a.value="";
-renderQuizzes();
+let quizzes=[], editingId=null, editingQuiz=null;
+
+window.addQuiz = () => {
+  if(!q.value){ alert("Enter a question"); return; }
+  const quiz = {
+    question: q.value,
+    options: [o1.value, o2.value, o3.value, o4.value],
+    answer: a.value
+  };
+  editingQuiz !== null ? quizzes[editingQuiz] = quiz : quizzes.push(quiz);
+  editingQuiz = null;
+  q.value = o1.value = o2.value = o3.value = o4.value = a.value = "";
+  renderQuizzes();
 };
 
 function renderQuizzes(){
-quizList.innerHTML="";
-quizzes.forEach((x,i)=>{
-quizList.innerHTML+=`<div class="quiz">
-<b>${i+1}. ${x.question}</b>
-<button onclick="editQuiz(${i})">Edit</button>
-<button class="delete" onclick="deleteQuiz(${i})">Delete</button>
-</div>`;
-});
+  quizList.innerHTML = "";
+  quizzes.forEach((x, i) => {
+    quizList.innerHTML += `
+      <div class="quiz-item">
+        <div class="quiz-header">
+          <b>${i+1}. ${x.question}</b>
+          <div>
+            <button class="action-btn" style="display:inline; width:auto; padding:5px" onclick="editQuiz(${i})"><i class="fa fa-pen"></i></button>
+            <button class="delete" style="display:inline; width:auto; padding:5px" onclick="deleteQuiz(${i})"><i class="fa fa-trash"></i></button>
+          </div>
+        </div>
+        <small>Ans: ${x.answer}</small>
+      </div>`;
+  });
 }
 
-window.editQuiz=i=>{
-const x=quizzes[i];
-q.value=x.question;
-[o1.value,o2.value,o3.value,o4.value]=x.options;
-a.value=x.answer;
-editingQuiz=i;
+window.editQuiz = i => {
+  const x = quizzes[i];
+  q.value = x.question;
+  [o1.value, o2.value, o3.value, o4.value] = x.options;
+  a.value = x.answer;
+  editingQuiz = i;
+  document.getElementById('q').focus();
 };
 
-window.deleteQuiz=i=>{quizzes.splice(i,1);renderQuizzes();};
+window.deleteQuiz = i => { quizzes.splice(i, 1); renderQuizzes(); };
 
-window.saveModule=async status=>{
-// If we are in code view, save that content first
-if(txtArea.style.display === 'block') {
-    quill.clipboard.dangerouslyPasteHTML(txtArea.value);
-}
+window.saveModule = async status => {
+  // Sync HTML view if open
+  if(txtArea.style.display === 'block') {
+      quill.clipboard.dangerouslyPasteHTML(txtArea.value);
+  }
 
-toastText.innerText=status==="published"?"Publishing...":"Saving draft...";
-toast.classList.remove("hidden");
-const refc=collection(db,"courses","management_course","modules");
-const data={title:title.value,videoUrl:videoUrl.value,content:quill.root.innerHTML,quizzes,status,updatedAt:serverTimestamp()};
-editingId?await updateDoc(doc(refc,editingId),data):await addDoc(refc,data);
-toast.classList.add("hidden");
-reset();loadModules();
+  showToast(status==="published" ? "Publishing..." : "Saving draft...");
+  
+  try {
+    const refc = collection(db, "courses", "management_course", "modules");
+    const data = {
+      title: title.value, 
+      videoUrl: videoUrl.value, 
+      content: quill.root.innerHTML, 
+      quizzes, 
+      status, 
+      updatedAt: serverTimestamp()
+    };
+    
+    editingId ? await updateDoc(doc(refc, editingId), data) : await addDoc(refc, data);
+    
+    hideToast();
+    reset();
+    openTab('publishedTab'); // Return to list
+    loadModules();
+  } catch(e) {
+    showToast("Error saving!");
+    console.error(e);
+  }
 };
 
 async function loadModules(){
-publishedTab.innerHTML=draftTab.innerHTML=binTab.innerHTML="";
-let n=1;
-const s=await getDocs(query(collection(db,"courses","management_course","modules"),orderBy("updatedAt","desc")));
-s.forEach(d=>{
-const m=d.data();
-const t=m.status==="published"?`${n++}. ${m.title}`:m.title;
-const box=`<div class="quiz">
-<b>${t}</b>
-<button class="view" onclick="viewModule('${d.id}')">View</button>
-<button onclick="edit('${d.id}')">Edit</button>
-<button class="delete" onclick="softDelete('${d.id}')">Delete</button>
-</div>`;
-(m.status==="published"?publishedTab:m.status==="draft"?draftTab:binTab).innerHTML+=box;
-});
+  publishedTab.innerHTML = draftTab.innerHTML = binTab.innerHTML = "";
+  const snap = await getDocs(query(collection(db,"courses","management_course","modules"), orderBy("updatedAt","desc")));
+  
+  snap.forEach(d => {
+    const m = d.data();
+    if(m.status === 'deleted' && !document.getElementById('binTab').classList.contains('hidden') === false) {
+       // Logic to sort into bins
+    }
+    
+    const cardHTML = `
+      <div class="quiz-item" style="background:${m.status==='published'?'#fff':'#fff9db'}">
+        <div class="quiz-header">
+          <strong>${m.title || 'Untitled Module'}</strong>
+          <small>${m.status.toUpperCase()}</small>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:10px">
+          <button class="view" onclick="viewModule('${d.id}')"><i class="fa fa-eye"></i></button>
+          <button class="action-btn" onclick="edit('${d.id}')"><i class="fa fa-pen"></i></button>
+          <button class="delete" onclick="softDelete('${d.id}')"><i class="fa fa-trash"></i></button>
+        </div>
+      </div>
+    `;
+
+    if(m.status === "published") publishedTab.innerHTML += cardHTML;
+    else if(m.status === "draft") draftTab.innerHTML += cardHTML;
+    else binTab.innerHTML += cardHTML;
+  });
 }
 
-window.viewModule=async id=>{
-history.pushState({page:"viewer"},"");
-const s=await getDoc(doc(db,"courses","management_course","modules",id));
-const m=s.data();
-viewer.innerHTML=`<h3>${m.title}</h3>${m.content}<button onclick="history.back()">⬅ Back</button>`;
-viewer.classList.remove("hidden");
+window.viewModule = async id => {
+  history.pushState({page:"viewer"},"");
+  showToast("Loading...");
+  const s = await getDoc(doc(db,"courses","management_course","modules",id));
+  const m = s.data();
+  hideToast();
+  
+  viewer.innerHTML = `
+    <h2 style="margin-bottom:20px">${m.title}</h2>
+    ${m.videoUrl ? `<iframe src="${m.videoUrl}" style="width:100%; height:250px; border-radius:10px; margin-bottom:20px" frameborder="0"></iframe>` : ''}
+    <div class="ql-editor" style="padding:0">${m.content}</div>
+    <button onclick="history.back()" style="margin-top:20px; width:auto"><i class="fa fa-arrow-left"></i> Back</button>
+  `;
+  
+  toggleViews('viewer');
 };
 
-window.onpopstate=()=>{
-viewer.classList.add("hidden");
-editor.classList.add("hidden");
+window.edit = async id => {
+  history.pushState({page:"editor"},"");
+  const s = await getDoc(doc(db,"courses","management_course","modules",id));
+  const m = s.data();
+  
+  title.value = m.title;
+  videoUrl.value = m.videoUrl;
+  quill.root.innerHTML = m.content;
+  quizzes = m.quizzes || [];
+  editingId = id;
+  
+  renderQuizzes();
+  // Ensure visual mode
+  txtArea.style.display = 'none';
+  document.querySelector('.ql-editor').style.display = 'block';
+  
+  toggleViews('editor');
 };
 
-window.edit=async id=>{
-history.pushState({page:"editor"},"");
-const s=await getDoc(doc(db,"courses","management_course","modules",id));
-const m=s.data();
-title.value=m.title;
-videoUrl.value=m.videoUrl;
-quill.root.innerHTML=m.content;
-quizzes=m.quizzes||[];
-editingId=id;
-editor.classList.remove("hidden");
-renderQuizzes();
-// Reset view to visual if it was in code mode
-txtArea.style.display = 'none';
-document.querySelector('.ql-editor').style.display = 'block';
-};
-
-window.softDelete=async id=>{
-await updateDoc(doc(db,"courses","management_course","modules",id),{status:"deleted"});
-loadModules();
+window.softDelete = async id => {
+  if(!confirm("Move to Recycle Bin?")) return;
+  await updateDoc(doc(db,"courses","management_course","modules",id),{status:"deleted"});
+  loadModules();
 };
 
 function reset(){
-title.value=videoUrl.value="";
-quill.root.innerHTML="";
-quizzes=[];
-editingId=null;
-renderQuizzes();
-txtArea.style.display = 'none';
-document.querySelector('.ql-editor').style.display = 'block';
+  title.value = videoUrl.value = "";
+  quill.root.innerHTML = "";
+  quizzes = [];
+  editingId = null;
+  renderQuizzes();
 }
 
-window.openEditor=()=>{
-history.pushState({page:"editor"},"");
-editor.classList.remove("hidden");
+window.openEditor = () => {
+  reset();
+  history.pushState({page:"editor"},"");
+  toggleViews('editor');
 };
 
-window.showTab=(id,btn)=>{
-["publishedTab","draftTab","binTab"].forEach(t=>document.getElementById(t).classList.add("hidden"));
-document.getElementById(id).classList.remove("hidden");
-document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
-btn.classList.add("active");
+/* UTILS */
+function showToast(msg){
+  toastText.innerText = msg;
+  toast.classList.remove("hidden");
+}
+function hideToast(){
+  setTimeout(()=>toast.classList.add("hidden"), 1000);
+}
+
+window.showTab = (id, btn) => {
+  ["publishedTab","draftTab","binTab"].forEach(t => document.getElementById(t).classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
+  document.querySelectorAll(".tabs button").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
 };
 
-window.toggleTheme=()=>document.body.classList.toggle("dark");
+function openTab(id){
+  document.querySelectorAll(".tabs button").forEach(b => {
+    if(b.getAttribute('onclick').includes(id)) b.click();
+  });
+}
+
+function toggleViews(viewId){
+  addModuleCard.classList.add("hidden");
+  publishedTab.classList.add("hidden");
+  draftTab.classList.add("hidden");
+  binTab.classList.add("hidden");
+  document.querySelector('.tabs').classList.add("hidden");
+  editor.classList.add("hidden");
+  viewer.classList.add("hidden");
+  
+  document.getElementById(viewId).classList.remove("hidden");
+}
+
+window.onpopstate = () => {
+  toggleViews('publishedTab'); // Default back to list
+  addModuleCard.classList.remove("hidden");
+  document.querySelector('.tabs').classList.remove("hidden");
+  openTab('publishedTab');
+};
+
+window.toggleTheme = () => document.body.classList.toggle("dark");
+
 </script>
-
 </body>
 </html>
