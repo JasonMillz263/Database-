@@ -5,7 +5,7 @@
 <title>Food Business Academy | Student Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Outfit:wght@300;400;500;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
 <style>
@@ -15,8 +15,12 @@
   --bg:linear-gradient(180deg,#eef2ff,#f9fbff);
   --text:#1f2937;
   --soft:rgba(255,255,255,.95);
-  --green: #10b981;
-  --gold: #f59e0b;
+  
+  /* Course Card Specific Colors (From your other page) */
+  --accent-yellow: #f59e0b;
+  --accent-green: #10b981;
+  --accent-red: #dc2626;
+  --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 *{box-sizing:border-box;font-family:'Poppins',sans-serif}
@@ -34,11 +38,8 @@ body{margin:0;background:var(--bg);color:var(--text);overflow-x:hidden}
   background:linear-gradient(180deg,var(--blue),var(--purple));
   color:#fff;
   padding:25px;
-  position: sticky;
-  top: 0;
-  height: 100vh;
 }
-.sidebar h2{margin-bottom:20px; font-weight: 700;}
+.sidebar h2{margin-bottom:20px}
 .sidebar a{
   display:flex;gap:12px;align-items:center;
   color:#e5e7eb;text-decoration:none;
@@ -49,8 +50,7 @@ body{margin:0;background:var(--bg);color:var(--text);overflow-x:hidden}
   background:rgba(255,255,255,.2);
   transform:translateX(6px);
 }
-.sidebar .logout{background:rgba(239, 68, 68, 0.2); color:#fff; margin-top: 20px;}
-.sidebar .logout:hover{background:#ef4444;}
+.sidebar .logout{background:#ef4444;color:#fff}
 
 /* Main */
 .main{
@@ -69,13 +69,11 @@ body{margin:0;background:var(--bg);color:var(--text);overflow-x:hidden}
   color:#fff;
   padding:20px 24px;
   border-radius:20px;
-  box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.3);
 }
 .badge{
   background:rgba(255,255,255,.2);
   padding:6px 14px;border-radius:999px;
   font-size:14px;
-  backdrop-filter: blur(4px);
 }
 
 /* HERO SLIDER */
@@ -85,7 +83,6 @@ body{margin:0;background:var(--bg);color:var(--text);overflow-x:hidden}
   height:260px;
   border-radius:26px;
   overflow:hidden;
-  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
 }
 .slide{
   position:absolute;
@@ -99,140 +96,138 @@ body{margin:0;background:var(--bg);color:var(--text);overflow-x:hidden}
 .hero-overlay{
   position:absolute;
   inset:0;
-  background:linear-gradient(90deg,rgba(0,0,0,.7),transparent);
+  background:linear-gradient(90deg,rgba(0,0,0,.6),transparent);
   display:flex;
   align-items:center;
   padding:40px;
   color:#fff;
 }
-.hero h2{font-size:32px;margin:0; font-weight: 700;}
-.hero p{max-width:480px;margin-top:10px; font-weight: 300;}
+.hero h2{font-size:32px;margin:0}
+.hero p{max-width:480px;margin-top:10px}
 
 /* Stats */
 .glass{
-  background:rgba(255,255,255,.8);
+  background:rgba(255,255,255,.7);
   backdrop-filter:blur(14px);
   border-radius:22px;
-  box-shadow:0 10px 30px rgba(0,0,0,.05);
-  border: 1px solid rgba(255,255,255,0.5);
+  box-shadow:0 25px 45px rgba(0,0,0,.12);
 }
 
+/* Stats Grid */
 .stats{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
   gap:18px;
-  margin-bottom:40px;
+  margin-bottom:26px;
 }
 .stat-card{
   padding:22px;
   color:#111;
   position:relative;
-  transition: transform 0.3s ease;
 }
-.stat-card:hover { transform: translateY(-5px); }
 .stat-card i{
   font-size:28px;
-  background: linear-gradient(135deg, var(--blue), var(--purple));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-bottom: 10px;
-  display: block;
+  color:var(--purple);
 }
 .stat-value{
   font-size:32px;
   font-weight:700;
-  color: var(--text);
 }
-.stat-title{opacity:.7; font-size: 0.9rem;}
-
-/* --- COURSE GRID STYLES (NEW) --- */
-.section-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.course-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 25px;
-}
-
-.course-card {
-  padding: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.course-header {
-  height: 6px;
-  background: linear-gradient(90deg, var(--blue), var(--purple));
-  width: 100%;
-}
-
-.course-body { padding: 25px; flex-grow: 1; display: flex; flex-direction: column;}
-
-.course-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
-.course-icon {
-  width: 45px; height: 45px;
-  background: #f0f4ff;
-  border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--blue);
-  font-size: 1.2rem;
-}
-
-/* Status Badges */
-.status-badge { padding: 5px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;}
-.badge-new { background: #e0e7ff; color: var(--blue); }
-.badge-active { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
-.badge-pending { background: #fef3c7; color: #b45309; border: 1px solid #fcd34d; }
-
-.course-title { font-size: 1.1rem; font-weight: 700; margin: 0 0 10px 0; color: var(--text); }
-.course-desc { font-size: 0.85rem; color: #6b7280; line-height: 1.5; margin-bottom: 20px; flex-grow: 1;}
-
-.course-footer {
-  padding: 15px 25px 25px;
-  border-top: 1px solid #f3f4f6;
-  display: flex; justify-content: space-between; align-items: center;
-}
-
-.price { font-size: 1.2rem; font-weight: 800; color: var(--text); }
+.stat-title{opacity:.7}
 
 /* Buttons */
-.btn {
-  padding: 10px 18px; border: none; border-radius: 10px;
-  font-weight: 600; cursor: pointer; transition: .3s; font-size: 0.9rem;
-  text-decoration: none; display: inline-block;
+.link-btn{
+  padding:14px 20px;
+  border:none;
+  border-radius:16px;
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  color:#fff;
+  font-weight:600;
+  cursor:pointer;
+  transition:.3s;
 }
-.btn-enroll { background: var(--text); color: #fff; }
-.btn-enroll:hover { background: var(--blue); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(37, 99, 235, 0.3); }
-
-.btn-access { background: var(--green); color: #fff; width: 100%; text-align: center;}
-.btn-access:hover { filter: brightness(1.1); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3); }
-
-.btn-pending { background: #cbd5e1; color: #64748b; cursor: not-allowed; width: 100%; }
-
-.link-cancel {
-  display: block; text-align: center; color: #ef4444; 
-  font-size: 0.75rem; margin-top: 8px; cursor: pointer; 
-  text-decoration: underline; font-weight: 500;
+.link-btn:hover{
+  transform:scale(1.04);
+  box-shadow:0 18px 35px rgba(109,40,217,.4);
 }
+.link-btn i{margin-right:8px}
 
 /* Page transition overlay */
 #pageTransition{
-  position:fixed; inset:0; background:linear-gradient(135deg,var(--blue),var(--purple));
-  z-index:999; opacity:0; pointer-events:none; transition:opacity .45s ease;
+  position:fixed;
+  inset:0;
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  z-index:999;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .45s ease;
 }
-#pageTransition.active{ opacity:1; pointer-events:auto; }
+#pageTransition.active{
+  opacity:1;
+  pointer-events:auto;
+}
+
+/* --- ADDED: COURSE CARD STYLES (Integrated cleanly) --- */
+.section-heading { font-size: 1.25rem; font-weight: 700; margin-bottom: 20px; color: var(--text); }
+
+.courses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 25px;
+  margin-bottom: 40px;
+}
+
+.course-card {
+  background: #fff;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
+  border: 1px solid #e5e7eb;
+  transition: transform 0.3s ease;
+  display: flex; flex-direction: column;
+  position: relative;
+}
+.course-card:hover { transform: translateY(-5px); border-color: var(--blue); }
+
+.card-top-accent { height: 5px; background: linear-gradient(90deg, var(--blue), var(--purple)); width: 100%; }
+
+.card-body { padding: 25px; flex-grow: 1; }
+
+.status-badge {
+  position: absolute; top: 15px; right: 15px;
+  padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+}
+.status-badge.approved { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+.status-badge.pending { background: #fef3c7; color: #b45309; border: 1px solid #fcd34d; }
+
+.card-title {
+  font-size: 1.2rem; font-weight: 700; color: #1e1b4b;
+  margin: 0 0 10px 0; line-height: 1.3; font-family: 'Outfit', sans-serif;
+}
+.label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--blue); font-weight: 700; display: block; margin-bottom: 5px; }
+.overview-text { font-size: 0.9rem; color: #64748b; line-height: 1.5; margin-bottom: 20px; border-left: 3px solid #e2e8f0; padding-left: 10px; }
+
+.curriculum { list-style: none; padding: 0; margin: 0; }
+.curriculum li { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 0.85rem; color: var(--text); }
+.curriculum li::before { content: "✓"; display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; background: #ede9fe; color: var(--purple); border-radius: 50%; font-size: 10px; font-weight: bold; }
+
+.card-footer { padding: 15px 25px; background: #f8fafc; border-top: 1px solid #f1f5f9; }
+.price-area { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.price-val { font-size: 1.4rem; font-weight: 800; color: var(--accent-yellow); font-family: 'Outfit', sans-serif; }
+
+.btn { width: 100%; padding: 12px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 0.95rem; transition: 0.2s; }
+.btn-pay { background: linear-gradient(135deg, var(--blue), var(--purple)); color: white; }
+.btn-pay:hover { filter: brightness(110%); }
+.btn-access { background: var(--accent-green); color: white; }
+.btn-pending { background: #cbd5e1; color: #475569; cursor: not-allowed; }
+
+.link-cancel { display: block; text-align: center; margin-top: 8px; color: var(--accent-red); font-size: 0.8rem; cursor: pointer; }
+.link-cancel:hover { text-decoration: underline; }
+
+.loading-box { grid-column: 1/-1; text-align: center; padding: 30px; color: #64748b; }
 
 @media(max-width:900px){
   .layout{grid-template-columns:1fr}
-  .sidebar { position: relative; height: auto; }
 }
 </style>
 </head>
@@ -245,7 +240,7 @@ body{margin:0;background:var(--bg);color:var(--text);overflow-x:hidden}
 
 <aside class="sidebar">
   <h2>FBA Portal</h2>
-  <a href="dashboard.html" class="nav-link" style="background:rgba(255,255,255,.2); font-weight:600;"><i class="fa fa-home"></i> Dashboard</a>
+  <a href="https://foodprenuerbusinessacademdy.blogspot.com/" class="nav-link"><i class="fa fa-home"></i> Home</a>
   <a href="progress.html" class="nav-link"><i class="fa fa-chart-line"></i> Progress Tracking</a>
   <a href="courses.html" class="nav-link"><i class="fa fa-book"></i> Courses Offered</a>
   <a href="certificates.html" class="nav-link"><i class="fa fa-certificate"></i> Certificates</a>
@@ -271,220 +266,223 @@ body{margin:0;background:var(--bg);color:var(--text);overflow-x:hidden}
   <div class="hero-overlay">
     <div>
       <h2>Build a Profitable Food Business</h2>
-      <p>Master recipes, branding, costing & real-world entrepreneurship skills today.</p>
+      <p>Learn recipes, branding, costing, marketing & real-world food entrepreneurship skills.</p>
     </div>
   </div>
 </div>
 
+<h3 class="section-heading">Available Courses & Curriculum</h3>
+<div class="courses-grid" id="coursesGrid">
+  <div class="loading-box">Loading your personalized curriculum...</div>
+</div>
+
+<h3 class="section-heading">Your Progress</h3>
 <section class="stats">
   <div class="stat-card glass">
-    <i class="fa fa-book-open"></i>
+    <i class="fa fa-book"></i>
     <div class="stat-value" id="coursesEnrolled">0</div>
     <div class="stat-title">Courses Enrolled</div>
   </div>
 
   <div class="stat-card glass">
-    <i class="fa fa-chart-pie"></i>
+    <i class="fa fa-chart-line"></i>
     <div class="stat-value" id="completionRate">0%</div>
     <div class="stat-title">Completion Rate</div>
   </div>
 
   <div class="stat-card glass">
-    <i class="fa fa-award"></i>
+    <i class="fa fa-certificate"></i>
     <div class="stat-value" id="certificatesCount">0</div>
     <div class="stat-title">Certificates</div>
   </div>
 </section>
 
-<div class="section-title">
-  <i class="fa fa-layer-group" style="color:var(--blue)"></i> Available Courses
-</div>
-
-<div class="course-grid" id="coursesGrid">
-  <div style="grid-column:1/-1; text-align:center; padding:40px; color:#64748b;">
-    <i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Loading Courses...
-  </div>
-</div>
-
 </main>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import {
+  getFirestore, collection, addDoc, query, where, getDocs,
+  doc, getDoc, serverTimestamp, deleteDoc
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-<script>
-/* 🔥 FIREBASE INIT */
-firebase.initializeApp({
-  apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
-  authDomain:"students-login-29409.firebaseapp.com",
-  projectId:"students-login-29409"
-});
+/* Config */
+const firebaseConfig = {
+  apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+  authDomain: "students-login-29409.firebaseapp.com",
+  projectId: "students-login-29409",
+  storageBucket: "students-login-29409.firebasestorage.app",
+  messagingSenderId: "634331456872",
+  appId: "1:634331456872:web:6dae360c5e28d8356562dd",
+  measurementId: "G-96XXYG1VR2"
+};
 
-const auth = firebase.auth();
-const db = firebase.firestore();
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-/* 📚 COURSE DATA */
-const coursesData = [
+/* Course Data Definition */
+const courses = [
   {
     name: "Food Business Management Course",
     price: 49,
-    icon: "fa-briefcase",
-    desc: "The flagship program covering the ecosystem of running a compliant and profitable food business."
+    overview: "The flagship program for ecosystem compliance and profitability.",
+    curriculum: ["Business Model Canvas", "Operations & Compliance", "HACCP & Food Safety"]
   },
   {
     name: "Financial Management for Food Processors",
     price: 59,
-    icon: "fa-calculator",
-    desc: "Learn yield loss, unit costing, and cash flow specifically for food manufacturing economics."
+    overview: "Learn to manage yield loss, unit costs, and cash flow.",
+    curriculum: ["Unit Costing", "Pricing Strategies", "Cash Flow & Budgeting"]
   },
   {
     name: "Food Value Addition Course for Farmers",
     price: 45,
-    icon: "fa-tractor",
-    desc: "Stop selling raw produce. Learn to process, package, and brand your harvest for higher margins."
+    overview: "Process, package, and brand your harvest for higher value.",
+    curriculum: ["Post-Harvest Tech", "Processing Methods", "Packaging Laws"]
   },
   {
     name: "New Product Development and Management",
     price: 69,
-    icon: "fa-flask",
-    desc: "Masterclass in innovation. Take an idea from kitchen recipe to shelf-stable commercial product."
+    overview: "From kitchen recipe to shelf-stable commercial product.",
+    curriculum: ["Market Research", "Recipe Scaling", "Regulatory Approval"]
   },
   {
     name: "Management",
     price: 39,
-    icon: "fa-users",
-    desc: "Essential soft skills and hard tactics for managing teams in high-pressure food environments."
+    overview: "Leadership tactics for high-pressure food environments.",
+    curriculum: ["Leadership Dynamics", "Staff Scheduling", "Efficiency"]
   }
 ];
 
-/* 🔐 AUTH & LOGIC */
-auth.onAuthStateChanged(async user => {
-  if(!user){ location.href='index.html'; return; }
+/* Main Application Logic */
+onAuthStateChanged(auth, async (user) => {
+  if (!user) return location.href = "login.html";
 
-  // 1. Basic User Info
-  document.getElementById('studentId').textContent = user.uid.slice(0,6).toUpperCase();
-  document.getElementById('studentName').textContent = user.displayName || user.email.split('@')[0];
+  // 1. Populate User Info in Header
+  document.getElementById("studentName").textContent = user.displayName || user.email.split('@')[0];
+  document.getElementById("studentId").textContent = user.uid.substring(0,8).toUpperCase();
 
-  // 2. Fetch Student Data (For Stats & Access)
-  const studentRef = db.collection('students').doc(user.uid);
-  const studentSnap = await studentRef.get();
+  // 2. Fetch User Data (for Enrollment)
+  const studentRef = doc(db, "students", user.uid);
+  const studentSnap = await getDoc(studentRef);
   
+  // Handle case where student doc might not exist yet
   let coursesPaid = [];
-  
-  if (studentSnap.exists) {
-    const data = studentSnap.data();
-    coursesPaid = data.coursesPaid || [];
-    
-    // Stats Update
-    const enrolledCount = coursesPaid.length;
-    document.getElementById('coursesEnrolled').textContent = enrolledCount;
-
-    // Fetch Certificates subcollection size
-    const certsSnap = await studentRef.collection('certificates').get();
-    const certCount = certsSnap.size;
-    document.getElementById('certificatesCount').textContent = certCount;
-
-    // Calc Completion
-    if(enrolledCount > 0) {
-      const rate = (certCount / enrolledCount) * 100;
-      document.getElementById('completionRate').textContent = `${Math.round(rate)}%`;
-    }
+  if (studentSnap.exists()) {
+    coursesPaid = studentSnap.data().coursesPaid || [];
+  } else {
+    // Optional: Create doc if missing
+    // await setDoc(studentRef, { email: user.email });
   }
 
   // 3. Fetch Pending Payments
-  const paymentsSnap = await db.collection('payments')
-    .where('studentId', '==', user.uid)
-    .get();
-  
+  const paymentsQ = query(collection(db,"payments"), where("studentId","==",user.uid));
+  const paymentsSnap = await getDocs(paymentsQ);
   const paymentMap = {};
-  paymentsSnap.forEach(doc => {
-    paymentMap[doc.data().courseName] = { ...doc.data(), id: doc.id };
-  });
+  paymentsSnap.forEach(d => paymentMap[d.data().courseName] = {...d.data(), id: d.id});
 
-  // 4. Render Course Grid
-  renderCourses(coursesPaid, paymentMap);
-});
+  // 4. Fetch Certificates (For Stats)
+  // Assuming certificates are stored in a subcollection 'certificates' under the student
+  const certRef = collection(db, "students", user.uid, "certificates");
+  const certSnap = await getDocs(certRef);
+  const certificateCount = certSnap.size;
 
-/* 🎨 RENDER FUNCTION */
-function renderCourses(coursesPaid, paymentMap) {
-  const grid = document.getElementById('coursesGrid');
+  // 5. UPDATE STATS CARDS (Correct Calculation)
+  const enrolledCount = coursesPaid.length;
+  document.getElementById("coursesEnrolled").textContent = enrolledCount;
+  document.getElementById("certificatesCount").textContent = certificateCount;
+  
+  // Completion Rate: (Certificates / Enrolled Courses) * 100
+  let rate = 0;
+  if (enrolledCount > 0) {
+    rate = (certificateCount / enrolledCount) * 100;
+  }
+  document.getElementById("completionRate").textContent = `${rate.toFixed(1)}%`;
+
+
+  // 6. RENDER COURSE CARDS
+  const grid = document.getElementById("coursesGrid");
   grid.innerHTML = "";
 
-  coursesData.forEach(course => {
+  courses.forEach(course => {
     const hasAccess = coursesPaid.includes(course.name);
     const payment = paymentMap[course.name];
 
-    let statusHtml = `<span class="status-badge badge-new">New</span>`;
-    let footerHtml = "";
+    let badge = "", button = "";
 
     if (hasAccess) {
-      // ✅ Enrolled
-      statusHtml = `<span class="status-badge badge-active"><i class="fa fa-check"></i> Active</span>`;
-      footerHtml = `<button class="btn btn-access" onclick="startCourse('${course.name}')">Enter Classroom</button>`;
-    } else if (payment && payment.status === "pending") {
-      // ⏳ Pending
-      statusHtml = `<span class="status-badge badge-pending">Processing</span>`;
-      footerHtml = `
-        <div style="width:100%">
-          <button class="btn btn-pending" disabled>Pending Approval...</button>
-          <span class="link-cancel" onclick="cancelInvoice('${payment.id}')">Cancel Request</span>
-        </div>
+      badge = `<div class="status-badge approved">Active</div>`;
+      button = `<button class="btn btn-access" onclick="startCourse('${course.name}')">Enter Classroom</button>`;
+    } else if (payment?.status === "pending") {
+      badge = `<div class="status-badge pending">Pending</div>`;
+      button = `
+        <button class="btn btn-pending" disabled>Processing...</button>
+        <a class="link-cancel" onclick="cancelInvoice('${payment.id}')">Cancel invoice</a>
       `;
     } else {
-      // 🛒 Available
-      footerHtml = `
-        <div class="price">$${course.price}</div>
-        <button class="btn btn-enroll" onclick="createInvoice('${course.name}', ${course.price})">Enroll Now</button>
-      `;
+      button = `<button class="btn btn-pay" onclick="createInvoice('${course.name}', ${course.price})">Enroll Now</button>`;
     }
 
+    // Limit curriculum to 3 items for dashboard view
+    const curriculumDisplay = course.curriculum.slice(0, 3).map(m => `<li>${m}</li>`).join("");
+
     grid.innerHTML += `
-      <div class="course-card glass">
-        <div class="course-header"></div>
-        <div class="course-body">
-          <div class="course-top">
-            <div class="course-icon"><i class="fa ${course.icon}"></i></div>
-            ${statusHtml}
-          </div>
-          <h3 class="course-title">${course.name}</h3>
-          <p class="course-desc">${course.desc}</p>
+      <div class="course-card">
+        <div class="card-top-accent"></div>
+        ${badge}
+        <div class="card-body">
+          <h3 class="card-title">${course.name}</h3>
+          <span class="label">Included</span>
+          <ul class="curriculum">${curriculumDisplay}</ul>
         </div>
-        <div class="course-footer">
-          ${footerHtml}
+        <div class="card-footer">
+          <div class="price-area">
+            <span class="label" style="color:#64748b; margin:0;">Tuition</span>
+            <div class="price-val">$${course.price}</div>
+          </div>
+          ${button}
         </div>
       </div>
     `;
   });
-}
+});
 
-/* 🧾 ACTIONS */
+/* Global Window Functions for Buttons */
+window.logout = () => signOut(auth).then(() => location.href='index.html');
+
 window.createInvoice = async (courseName, price) => {
   const user = auth.currentUser;
-  if (!confirm(`Generate enrollment invoice for:\n${courseName}\nPrice: $${price}`)) return;
+  if (!confirm(`Confirm enrollment for:\n${courseName}\nPrice: $${price}`)) return;
 
-  try {
-    const docRef = await db.collection('payments').add({
-      studentId: user.uid,
-      studentName: user.displayName || user.email,
-      email: user.email,
-      courseName: courseName,
-      price: price,
-      paymentMethod: "Manual",
-      invoiceNumber: `FBA-${Date.now()}`,
-      status: "pending",
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    // Redirect to invoice details
-    window.location.href = `student-details.html?invoiceId=${docRef.id}`;
-  } catch (error) {
-    alert("Error creating invoice: " + error.message);
+  // Check duplicate pending
+  const q = query(collection(db,"payments"), where("studentId","==",user.uid), where("courseName","==",courseName), where("status","==","pending"));
+  const snap = await getDocs(q);
+
+  if (!snap.empty) {
+    window.location.href = `student-details.html?invoiceId=${snap.docs[0].id}`;
+    return;
   }
+
+  const docRef = await addDoc(collection(db,"payments"), {
+    studentId: user.uid,
+    studentName: user.displayName || "Student",
+    email: user.email,
+    courseName, price,
+    paymentMethod: "Manual",
+    invoiceNumber: `FBA-${Date.now()}`,
+    status: "pending",
+    createdAt: serverTimestamp()
+  });
+
+  window.location.href = `student-details.html?invoiceId=${docRef.id}`;
 };
 
 window.cancelInvoice = async (invoiceId) => {
-  if (!confirm("Cancel this pending request?")) return;
-  await db.collection('payments').doc(invoiceId).delete();
+  if (!confirm("Cancel this pending invoice?")) return;
+  await deleteDoc(doc(db,"payments",invoiceId));
   location.reload();
 };
 
@@ -498,14 +496,10 @@ window.startCourse = (courseName) => {
   };
   const page = coursePages[courseName];
   if (page) window.location.href = page;
-  else alert("Course page not found.");
+  else alert("Course page not linked.");
 };
 
-function logout(){
-  auth.signOut().then(()=>location.href='index.html');
-}
-
-/* UI UTILS */
+/* Slider Logic */
 let slides = document.querySelectorAll('.slide');
 let i = 0;
 setInterval(() => {
@@ -513,14 +507,6 @@ setInterval(() => {
   i = (i + 1) % slides.length;
   slides[i].classList.add('active');
 }, 4500);
-
-document.querySelectorAll('.nav-link').forEach(link => {
-  link.addEventListener('click', e => {
-    e.preventDefault();
-    document.getElementById('pageTransition').classList.add('active');
-    setTimeout(() => window.location = link.href, 420);
-  });
-});
 </script>
 
 </body>
