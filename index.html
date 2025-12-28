@@ -1,377 +1,509 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FoodPreneurs Business Academy | Login</title>
-    <style>
-        /* --- General Reset & Fonts --- */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+<meta charset="UTF-8">
+<title>FoodPreneurs Business Academy | Access Portal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-        body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-        /* --- Card Container --- */
-        .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            overflow: hidden;
-            width: 100%;
-            max-width: 450px;
-            position: relative;
-            min-height: 600px;
-            display: flex;
-            flex-direction: column;
-        }
+<style>
+/* --- VARIABLES & RESET --- */
+:root {
+  --primary: #059669; /* Emerald Green for Food/Business */
+  --primary-dark: #065f46;
+  --accent: #d97706; /* Gold/Amber for Prestige */
+  --text-main: #1f2937;
+  --text-light: #6b7280;
+  --bg-gradient: linear-gradient(135deg, #ecfdf5 0%, #fef3c7 100%);
+  --white: #ffffff;
+  --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
 
-        /* --- Branding Section --- */
-        .brand-header {
-            text-align: center;
-            padding: 30px 20px 10px 20px;
-            background-color: #fff;
-        }
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
 
-        .logo {
-            max-width: 120px;
-            height: auto;
-            margin-bottom: 15px;
-            border-radius: 10px; /* Optional: adds softness to logo */
-        }
+body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-gradient);
+  padding: 20px;
+}
 
-        .academy-name {
-            color: #2c3e50;
-            font-size: 1.4rem;
-            font-weight: 700;
-            margin-bottom: 5px;
-            letter-spacing: 0.5px;
-        }
+/* --- MAIN CONTAINER --- */
+.container {
+  background: var(--white);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  width: 100%;
+  max-width: 900px;
+  min-height: 600px;
+  display: flex;
+  position: relative;
+}
 
-        /* --- Form Sections --- */
-        .form-container {
-            padding: 20px 40px;
-            flex-grow: 1;
-            transition: opacity 0.4s ease-in-out;
-        }
+/* --- LEFT SIDE (Visual) --- */
+.info-side {
+  width: 45%;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
 
-        .hidden {
-            display: none;
-            opacity: 0;
-        }
+/* Decorative circles */
+.info-side::before, .info-side::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+}
+.info-side::before { width: 200px; height: 200px; top: -50px; left: -50px; }
+.info-side::after { width: 300px; height: 300px; bottom: -100px; right: -50px; }
 
-        .fade-in {
-            animation: fadeIn 0.5s forwards;
-        }
+.logo-img {
+  width: 120px;
+  height: auto;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+  animation: float 6s ease-in-out infinite;
+}
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+.brand-name {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
 
-        h2 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 1.5rem;
-        }
+.brand-tagline {
+  font-size: 14px;
+  opacity: 0.9;
+  font-weight: 300;
+}
 
-        .instruction-text {
-            color: #666;
-            font-size: 0.95rem;
-            margin-bottom: 25px;
-            line-height: 1.4;
-        }
+/* --- RIGHT SIDE (Forms) --- */
+.form-side {
+  width: 55%;
+  padding: 40px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
 
-        /* --- Inputs --- */
-        .input-group {
-            margin-bottom: 15px;
-            position: relative;
-        }
+/* --- FORM ELEMENTS --- */
+.form-container {
+  transition: all 0.4s ease-in-out;
+  opacity: 1;
+  transform: translateX(0);
+}
 
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #555;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
+.form-container.hidden {
+  display: none;
+  opacity: 0;
+  transform: translateX(20px);
+}
 
-        input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.3s;
-        }
+h2 {
+  color: var(--text-main);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 28px;
+  margin-bottom: 8px;
+}
 
-        input:focus {
-            outline: none;
-            border-color: #4facfe;
-        }
+.instruction {
+  color: var(--text-light);
+  font-size: 14px;
+  margin-bottom: 32px;
+  line-height: 1.5;
+}
 
-        /* --- Error Handling --- */
-        .error-message {
-            color: #e74c3c;
-            font-size: 0.85rem;
-            margin-top: 5px;
-            display: none; /* Hidden by default */
-            font-weight: 600;
-        }
+.input-group {
+  position: relative;
+  margin-bottom: 20px;
+}
 
-        .error-visible {
-            display: block;
-            animation: shake 0.3s ease-in-out;
-        }
+.input-group i.field-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  transition: 0.3s;
+}
 
-        @keyframes shake {
-            0% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            50% { transform: translateX(5px); }
-            75% { transform: translateX(-5px); }
-            100% { transform: translateX(0); }
-        }
+.input-group input {
+  width: 100%;
+  padding: 16px 16px 16px 45px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.3s;
+  background: #f9fafb;
+}
 
-        /* --- Buttons & Animations --- */
-        .btn {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(to right, #43e97b 0%, #38f9d7 100%);
-            border: none;
-            border-radius: 8px;
-            color: #0d3824; /* Dark green for contrast */
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(56, 249, 215, 0.4);
-            
-            /* Animation Setup */
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
+.input-group input:focus {
+  border-color: var(--primary);
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.1);
+}
 
-        .btn:hover {
-            transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 6px 20px rgba(56, 249, 215, 0.6);
-        }
+.input-group input:focus + i.field-icon {
+  color: var(--primary);
+}
 
-        .btn:active {
-            transform: translateY(1px);
-        }
+.toggle-pass {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: var(--text-light);
+}
 
-        /* --- Toggle Link --- */
-        .toggle-text {
-            text-align: center;
-            font-size: 0.9rem;
-            color: #666;
-            margin-top: auto;
-        }
+/* --- BUTTONS --- */
+.btn-primary {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  background: var(--primary);
+  color: white;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+  margin-top: 10px;
+}
 
-        .toggle-text a {
-            color: #007bff;
-            text-decoration: none;
-            font-weight: 700;
-            cursor: pointer;
-        }
+.btn-primary:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(5, 150, 105, 0.3);
+}
 
-        .toggle-text a:hover {
-            text-decoration: underline;
-        }
+.btn-primary:active {
+  transform: scale(0.98);
+}
 
-        /* --- Footer --- */
-        .footer {
-            text-align: center;
-            padding: 15px;
-            background: #f9f9f9;
-            font-size: 0.8rem;
-            color: #888;
-            border-top: 1px solid #eee;
-        }
-    </style>
+/* Loading Spinner for button */
+.spinner {
+  display: none;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+  margin: 0 auto;
+}
+
+/* --- EXTRAS --- */
+.options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  font-size: 13px;
+  color: var(--text-light);
+}
+
+.forgot-link {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.switch-text {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 14px;
+  color: var(--text-light);
+}
+
+.switch-link {
+  color: var(--primary);
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* --- ALERTS --- */
+.alert-box {
+  background: #fee2e2;
+  border-left: 4px solid #ef4444;
+  color: #b91c1c;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 20px;
+  display: none;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer-copy {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 768px) {
+  .container { flex-direction: column; min-height: auto; }
+  .info-side { width: 100%; padding: 30px; }
+  .form-side { width: 100%; padding: 30px; }
+  .logo-img { width: 80px; }
+  .brand-name { font-size: 20px; }
+}
+
+/* --- ANIMATIONS --- */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+</style>
 </head>
 <body>
 
 <div class="container">
-    
-    <div class="brand-header">
-        <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhIuGx_Tl93TWp5OZYxIn7iCPb3FhwXGTZTr_xVjfUAOy4dt2YzXq0c7H4VizrvCBNkCO12IlSymo4R-7Nq9mSffdpB9w6Yge3O2i0UovqE45XIW1jEyvZJg6sOjDfUUhdRJs2x_Bqui6goNnXmcV8hguXwcIUqsvMv5-kY-yNeo-Onr9TVspl88fBfiEsV/s1600/IMG-20251223-WA0001.png" alt="Logo" class="logo">
-        <div class="academy-name">FoodPreneurs Business Academy</div>
+  <div class="info-side">
+    <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhIuGx_Tl93TWp5OZYxIn7iCPb3FhwXGTZTr_xVjfUAOy4dt2YzXq0c7H4VizrvCBNkCO12IlSymo4R-7Nq9mSffdpB9w6Yge3O2i0UovqE45XIW1jEyvZJg6sOjDfUUhdRJs2x_Bqui6goNnXmcV8hguXwcIUqsvMv5-kY-yNeo-Onr9TVspl88fBfiEsV/s1600/IMG-20251223-WA0001.png" alt="Logo" class="logo-img">
+    <div class="brand-name">FoodPreneurs<br>Business Academy</div>
+    <div class="brand-tagline">Empowering Culinary Leaders</div>
+  </div>
+
+  <div class="form-side">
+
+    <div id="alertBox" class="alert-box">
+      <i class="fa fa-exclamation-circle"></i>
+      <span id="alertMessage">Error message here</span>
     </div>
 
-    <div id="login-view" class="form-container fade-in">
-        <h2>Welcome Back</h2>
-        <p class="instruction-text">
-            Please login to access courses and start learning.
-        </p>
+    <div id="loginForm" class="form-container">
+      <h2>Welcome Back</h2>
+      <p class="instruction">Please login to access your courses and continue your learning journey.</p>
 
-        <form id="loginForm" onsubmit="handleLogin(event)">
-            <div class="input-group">
-                <label for="login-email">Email Address</label>
-                <input type="email" id="login-email" placeholder="you@example.com">
-                <div id="login-email-error" class="error-message">⚠ Please enter a valid email address.</div>
-            </div>
+      <div class="input-group">
+        <i class="fa fa-envelope field-icon"></i>
+        <input type="email" id="loginEmail" placeholder="Email Address">
+      </div>
 
-            <div class="input-group">
-                <label for="login-password">Password</label>
-                <input type="password" id="login-password" placeholder="••••••••">
-                <div id="login-pass-error" class="error-message">⚠ Incorrect password or field is empty.</div>
-            </div>
+      <div class="input-group">
+        <i class="fa fa-lock field-icon"></i>
+        <input type="password" id="loginPassword" placeholder="Password">
+        <i class="fa fa-eye toggle-pass" onclick="toggleVisibility('loginPassword')"></i>
+      </div>
 
-            <button type="submit" class="btn">Login Now</button>
-        </form>
+      <div class="options">
+        <label><input type="checkbox" id="rememberMe"> Remember me</label>
+        <span class="forgot-link" onclick="forgotPassword()">Forgot Password?</span>
+      </div>
 
-        <div class="toggle-text">
-            Don't have an account? <br>
-            <a onclick="switchView('register')">Create an account here</a>
-        </div>
+      <button class="btn-primary" onclick="handleLogin()" id="btnLogin">
+        <span class="btn-text">Login Now</span>
+        <div class="spinner"></div>
+      </button>
+
+      <div class="switch-text">
+        New to the Academy? 
+        <span class="switch-link" onclick="switchView('signup')">Create Account</span>
+      </div>
     </div>
 
-    <div id="register-view" class="form-container hidden">
-        <h2>Create Account</h2>
-        <p class="instruction-text">
-            Join the academy today. Fill in the details below to get started.
-        </p>
+    <div id="signupForm" class="form-container hidden">
+      <h2>Create Account</h2>
+      <p class="instruction">Don't have an account? Sign up today to start your journey with FoodPreneurs.</p>
 
-        <form id="registerForm" onsubmit="handleRegister(event)">
-            <div class="input-group">
-                <label for="reg-name">Full Name</label>
-                <input type="text" id="reg-name" placeholder="John Doe">
-            </div>
+      <div class="input-group">
+        <i class="fa fa-envelope field-icon"></i>
+        <input type="email" id="signupEmail" placeholder="Enter your Email">
+      </div>
 
-            <div class="input-group">
-                <label for="reg-email">Email Address</label>
-                <input type="email" id="reg-email" placeholder="you@example.com">
-                <div id="reg-email-error" class="error-message">⚠ Invalid email format.</div>
-            </div>
+      <div class="input-group">
+        <i class="fa fa-lock field-icon"></i>
+        <input type="password" id="signupPassword" placeholder="Create Password">
+        <i class="fa fa-eye toggle-pass" onclick="toggleVisibility('signupPassword')"></i>
+      </div>
 
-            <div class="input-group">
-                <label for="reg-password">Create Password</label>
-                <input type="password" id="reg-password" placeholder="Min 6 characters">
-                <div id="reg-pass-error" class="error-message">⚠ Password must be at least 6 characters.</div>
-            </div>
+       <div class="input-group">
+        <i class="fa fa-lock field-icon"></i>
+        <input type="password" id="signupConfirmPassword" placeholder="Confirm Password">
+      </div>
 
-            <button type="submit" class="btn">Create Account</button>
-        </form>
+      <button class="btn-primary" onclick="handleSignup()" id="btnSignup">
+        <span class="btn-text">Create Account</span>
+        <div class="spinner"></div>
+      </button>
 
-        <div class="toggle-text">
-            Already have an account? <br>
-            <a onclick="switchView('login')">Login to access courses</a>
-        </div>
+      <div class="switch-text">
+        Already a student? 
+        <span class="switch-link" onclick="switchView('login')">Login here</span>
+      </div>
     </div>
 
-    <div class="footer">
-        &copy; 2026 FoodPreneurs Business Academy. All rights reserved.
+    <div class="footer-copy">
+      &copy; 2026 FoodPreneurs Business Academy. All Rights Reserved.
     </div>
 
+  </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
 <script>
-    // --- View Switching Logic ---
-    function switchView(viewName) {
-        const loginView = document.getElementById('login-view');
-        const regView = document.getElementById('register-view');
+  // --- FIREBASE CONFIG ---
+  const firebaseConfig = {
+    apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+    authDomain: "students-login-29409.firebaseapp.com",
+    projectId: "students-login-29409"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
 
-        // Clear errors when switching
-        clearErrors();
+  // --- UI FUNCTIONS ---
 
-        if (viewName === 'register') {
-            loginView.classList.add('hidden');
-            loginView.classList.remove('fade-in');
-            
-            regView.classList.remove('hidden');
-            regView.classList.add('fade-in');
-        } else {
-            regView.classList.add('hidden');
-            regView.classList.remove('fade-in');
+  function switchView(view) {
+    const loginForm = document.getElementById('loginForm');
+    const signupForm = document.getElementById('signupForm');
+    const alertBox = document.getElementById('alertBox');
+    
+    // Clear errors when switching
+    alertBox.style.display = 'none';
 
-            loginView.classList.remove('hidden');
-            loginView.classList.add('fade-in');
-        }
+    if (view === 'signup') {
+      loginForm.classList.add('hidden');
+      setTimeout(() => {
+        loginForm.style.display = 'none';
+        signupForm.style.display = 'block';
+        setTimeout(() => signupForm.classList.remove('hidden'), 50);
+      }, 300);
+    } else {
+      signupForm.classList.add('hidden');
+      setTimeout(() => {
+        signupForm.style.display = 'none';
+        loginForm.style.display = 'block';
+        setTimeout(() => loginForm.classList.remove('hidden'), 50);
+      }, 300);
     }
+  }
 
-    // --- Utility: Clear all error messages ---
-    function clearErrors() {
-        const errors = document.querySelectorAll('.error-message');
-        errors.forEach(el => el.classList.remove('error-visible'));
+  function toggleVisibility(fieldId) {
+    const field = document.getElementById(fieldId);
+    field.type = field.type === 'password' ? 'text' : 'password';
+  }
+
+  function setLoading(btnId, isLoading) {
+    const btn = document.getElementById(btnId);
+    const text = btn.querySelector('.btn-text');
+    const spinner = btn.querySelector('.spinner');
+
+    if (isLoading) {
+      text.style.display = 'none';
+      spinner.style.display = 'block';
+      btn.disabled = true;
+    } else {
+      text.style.display = 'block';
+      spinner.style.display = 'none';
+      btn.disabled = false;
     }
+  }
 
-    // --- Login Handler ---
-    function handleLogin(e) {
-        e.preventDefault();
-        clearErrors();
+  function showError(msg) {
+    const box = document.getElementById('alertBox');
+    const txt = document.getElementById('alertMessage');
+    
+    // Parse common Firebase errors into clean English
+    if(msg.includes('user-not-found')) msg = "No account found with this email.";
+    else if(msg.includes('wrong-password')) msg = "Incorrect password. Please try again.";
+    else if(msg.includes('email-already-in-use')) msg = "An account already exists with this email.";
+    else if(msg.includes('weak-password')) msg = "Password should be at least 6 characters.";
+    else if(msg.includes('invalid-email')) msg = "Please enter a valid email address.";
+    
+    txt.textContent = msg;
+    box.style.display = 'flex';
+  }
 
-        const email = document.getElementById('login-email').value;
-        const pass = document.getElementById('login-password').value;
-        let isValid = true;
+  // --- LOGIC FUNCTIONS ---
 
-        // Simple Email Validation
-        if (!email.includes('@') || !email.includes('.')) {
-            document.getElementById('login-email-error').classList.add('error-visible');
-            isValid = false;
-        }
+  function handleLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const pass = document.getElementById('loginPassword').value.trim();
+    const remember = document.getElementById('rememberMe').checked;
 
-        // Simple Password Validation
-        if (pass.length < 1) {
-            document.getElementById('login-pass-error').classList.add('error-visible');
-            isValid = false;
-        }
+    if (!email || !pass) return showError("Please enter both email and password.");
 
-        if (isValid) {
-            // Here you would normally send data to server
-            // For now, we simulate success
-            const btn = document.querySelector('#loginForm .btn');
-            btn.innerHTML = "Logging in...";
-            setTimeout(() => {
-                alert("Login Successful! Welcome to FoodPreneurs.");
-                btn.innerHTML = "Login Now";
-            }, 1000);
-        }
+    setLoading('btnLogin', true);
+
+    const persistence = remember ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION;
+
+    auth.setPersistence(persistence)
+      .then(() => auth.signInWithEmailAndPassword(email, pass))
+      .then(() => {
+        // Success Animation/Redirect
+        window.location.href = 'student.html';
+      })
+      .catch(err => {
+        setLoading('btnLogin', false);
+        showError(err.message);
+      });
+  }
+
+  function handleSignup() {
+    const email = document.getElementById('signupEmail').value.trim();
+    const pass = document.getElementById('signupPassword').value.trim();
+    const confirm = document.getElementById('signupConfirmPassword').value.trim();
+
+    if (!email || !pass) return showError("Please fill in all fields.");
+    if (pass !== confirm) return showError("Passwords do not match.");
+
+    setLoading('btnSignup', true);
+
+    auth.createUserWithEmailAndPassword(email, pass)
+      .then(() => {
+        alert("Account created successfully! You are now logged in.");
+        window.location.href = 'student.html';
+      })
+      .catch(err => {
+        setLoading('btnSignup', false);
+        showError(err.message);
+      });
+  }
+
+  function forgotPassword() {
+    const email = document.getElementById('loginEmail').value.trim();
+    if (!email) {
+      showError("Please enter your email address in the login box first.");
+      return;
     }
-
-    // --- Register Handler ---
-    function handleRegister(e) {
-        e.preventDefault();
-        clearErrors();
-
-        const email = document.getElementById('reg-email').value;
-        const pass = document.getElementById('reg-password').value;
-        let isValid = true;
-
-        // Email Validation
-        if (!email.includes('@') || !email.includes('.')) {
-            document.getElementById('reg-email-error').classList.add('error-visible');
-            isValid = false;
-        }
-
-        // Password Validation (Length check)
-        if (pass.length < 6) {
-            document.getElementById('reg-pass-error').classList.add('error-visible');
-            isValid = false;
-        }
-
-        if (isValid) {
-            const btn = document.querySelector('#registerForm .btn');
-            btn.innerHTML = "Creating...";
-            setTimeout(() => {
-                alert("Account Created! Please Login.");
-                btn.innerHTML = "Create Account";
-                switchView('login');
-            }, 1000);
-        }
-    }
+    auth.sendPasswordResetEmail(email)
+      .then(() => alert("Password reset link sent to your email."))
+      .catch(err => showError(err.message));
+  }
 </script>
 
 </body>
