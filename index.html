@@ -2,508 +2,460 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>FoodPreneurs Business Academy | Access Portal</title>
+<title>FoodPreneurs Business Academy | 2026</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
-/* --- VARIABLES & RESET --- */
+/* --- VARIABLES --- */
 :root {
-  --primary: #059669; /* Emerald Green for Food/Business */
-  --primary-dark: #065f46;
-  --accent: #d97706; /* Gold/Amber for Prestige */
-  --text-main: #1f2937;
-  --text-light: #6b7280;
-  --bg-gradient: linear-gradient(135deg, #ecfdf5 0%, #fef3c7 100%);
-  --white: #ffffff;
-  --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    /* Requested Palette */
+    --primary-grad: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); /* Blue to Purple */
+    --primary-solid: #6366f1;
+    --accent-yellow: #f59e0b; /* Yellow for specific highlights */
+    --alert-red: #ef4444;     /* Red for errors */
+    --bg-page: #f3f4f6;
+    --white: #ffffff;
+    --text-dark: #1e293b;
+    --text-gray: #64748b;
+    --input-bg: #f8fafc;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
 
 body {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg-gradient);
-  padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #e0e7ff; /* Very light blue/purple tint */
+    background-image: 
+        radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+        radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
+        radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+    background-size: cover;
+    padding: 20px;
 }
 
-/* --- MAIN CONTAINER --- */
-.container {
-  background: var(--white);
-  border-radius: 24px;
-  box-shadow: var(--shadow);
-  overflow: hidden;
-  width: 100%;
-  max-width: 900px;
-  min-height: 600px;
-  display: flex;
-  position: relative;
+/* --- CARD CONTAINER --- */
+.main-card {
+    background: var(--white);
+    width: 100%;
+    max-width: 950px;
+    height: 650px; /* Fixed height for neatness */
+    border-radius: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    display: flex;
+    overflow: hidden;
+    position: relative;
 }
 
-/* --- LEFT SIDE (Visual) --- */
-.info-side {
-  width: 45%;
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-  padding: 40px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  color: white;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
+/* --- LEFT SIDE (BRANDING) --- */
+.brand-panel {
+    width: 45%;
+    background: var(--primary-grad);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    color: var(--white);
+    text-align: center;
+    position: relative;
 }
 
-/* Decorative circles */
-.info-side::before, .info-side::after {
-  content: '';
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.1);
+/* Abstract shapes for visual interest */
+.brand-panel::before {
+    content: '';
+    position: absolute;
+    top: -50px; left: -50px;
+    width: 150px; height: 150px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
 }
-.info-side::before { width: 200px; height: 200px; top: -50px; left: -50px; }
-.info-side::after { width: 300px; height: 300px; bottom: -100px; right: -50px; }
+.brand-panel::after {
+    content: '';
+    position: absolute;
+    bottom: 50px; right: -30px;
+    width: 100px; height: 100px;
+    background: rgba(245, 158, 11, 0.2); /* Yellow tint */
+    border-radius: 50%;
+}
 
 .logo-img {
-  width: 120px;
-  height: auto;
-  margin-bottom: 20px;
-  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
-  animation: float 6s ease-in-out infinite;
+    width: 130px;
+    margin-bottom: 25px;
+    filter: drop-shadow(0 10px 10px rgba(0,0,0,0.2));
+    animation: floating 4s ease-in-out infinite;
 }
 
-.brand-name {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 24px;
-  font-weight: 700;
-  margin-bottom: 10px;
-  line-height: 1.2;
+.brand-title {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 10px;
 }
 
-.brand-tagline {
-  font-size: 14px;
-  opacity: 0.9;
-  font-weight: 300;
+.brand-year {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--accent-yellow);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    background: rgba(255,255,255,0.1);
+    padding: 5px 15px;
+    border-radius: 20px;
 }
 
-/* --- RIGHT SIDE (Forms) --- */
-.form-side {
-  width: 55%;
-  padding: 40px;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+/* --- RIGHT SIDE (FORMS) --- */
+.form-panel {
+    width: 55%;
+    padding: 50px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow-y: auto; /* Scroll if screen is tiny */
 }
 
-/* --- FORM ELEMENTS --- */
-.form-container {
-  transition: all 0.4s ease-in-out;
-  opacity: 1;
-  transform: translateX(0);
+/* Error Box */
+.error-banner {
+    background: #fef2f2;
+    border: 1px solid #fee2e2;
+    color: var(--alert-red);
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    display: none; /* Hidden by default */
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    animation: slideDown 0.3s ease;
 }
 
-.form-container.hidden {
-  display: none;
-  opacity: 0;
-  transform: translateX(20px);
+.form-wrapper {
+    flex: 1; /* Pushes footer down */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: opacity 0.3s ease;
+}
+
+.form-wrapper.hidden {
+    display: none;
 }
 
 h2 {
-  color: var(--text-main);
-  font-family: 'Montserrat', sans-serif;
-  font-size: 28px;
-  margin-bottom: 8px;
+    color: var(--text-dark);
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
 }
 
-.instruction {
-  color: var(--text-light);
-  font-size: 14px;
-  margin-bottom: 32px;
-  line-height: 1.5;
+p.subtitle {
+    color: var(--text-gray);
+    font-size: 14px;
+    margin-bottom: 35px;
+    line-height: 1.5;
 }
 
-.input-group {
-  position: relative;
-  margin-bottom: 20px;
+/* Input Styling */
+.input-box {
+    position: relative;
+    margin-bottom: 20px;
 }
 
-.input-group i.field-icon {
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #9ca3af;
-  transition: 0.3s;
+.input-box i.icon {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 16px;
 }
 
-.input-group input {
-  width: 100%;
-  padding: 16px 16px 16px 45px;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  font-size: 14px;
-  outline: none;
-  transition: all 0.3s;
-  background: #f9fafb;
+.input-box input {
+    width: 100%;
+    padding: 15px 15px 15px 50px; /* Space for icon */
+    border: 2px solid #e2e8f0;
+    background: var(--input-bg);
+    border-radius: 12px;
+    font-size: 15px;
+    color: var(--text-dark);
+    transition: 0.3s;
+    outline: none;
 }
 
-.input-group input:focus {
-  border-color: var(--primary);
-  background: #fff;
-  box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.1);
-}
-
-.input-group input:focus + i.field-icon {
-  color: var(--primary);
+.input-box input:focus {
+    border-color: var(--primary-solid);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
 }
 
 .toggle-pass {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  cursor: pointer;
-  color: var(--text-light);
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #94a3b8;
+}
+.toggle-pass:hover { color: var(--primary-solid); }
+
+/* Helpers (Remember/Forgot) */
+.form-helpers {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    font-size: 13px;
+    color: var(--text-gray);
 }
 
-/* --- BUTTONS --- */
-.btn-primary {
-  width: 100%;
-  padding: 16px;
-  border: none;
-  border-radius: 12px;
-  background: var(--primary);
-  color: white;
-  font-weight: 600;
-  font-size: 16px;
-  cursor: pointer;
-  transition: all 0.3s;
-  position: relative;
-  overflow: hidden;
-  margin-top: 10px;
+.link {
+    color: var(--primary-solid);
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+}
+.link:hover { text-decoration: underline; }
+
+/* Buttons */
+.btn-submit {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    background: var(--primary-grad);
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);
 }
 
-.btn-primary:hover {
-  background: var(--primary-dark);
-  transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(5, 150, 105, 0.3);
+.btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 25px -5px rgba(99, 102, 241, 0.5);
 }
 
-.btn-primary:active {
-  transform: scale(0.98);
-}
-
-/* Loading Spinner for button */
-.spinner {
-  display: none;
-  width: 20px;
-  height: 20px;
-  border: 3px solid rgba(255,255,255,0.3);
-  border-radius: 50%;
-  border-top-color: #fff;
-  animation: spin 1s ease-in-out infinite;
-  margin: 0 auto;
-}
-
-/* --- EXTRAS --- */
-.options {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-  font-size: 13px;
-  color: var(--text-light);
-}
-
-.forgot-link {
-  color: var(--primary);
-  text-decoration: none;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.switch-text {
-  text-align: center;
-  margin-top: 24px;
-  font-size: 14px;
-  color: var(--text-light);
-}
-
-.switch-link {
-  color: var(--primary);
-  font-weight: 700;
-  cursor: pointer;
-  text-decoration: underline;
-}
-
-/* --- ALERTS --- */
-.alert-box {
-  background: #fee2e2;
-  border-left: 4px solid #ef4444;
-  color: #b91c1c;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 13px;
-  margin-bottom: 20px;
-  display: none;
-  align-items: center;
-  gap: 10px;
+/* Bottom Section (The Fix for Crowding) */
+.switch-account {
+    text-align: center;
+    margin-top: 35px; /* Added significant space here */
+    padding-top: 20px;
+    border-top: 1px solid #e2e8f0;
+    font-size: 14px;
+    color: var(--text-gray);
 }
 
 .footer-copy {
-  position: absolute;
-  bottom: 20px;
-  left: 0;
-  right: 0;
-  text-align: center;
-  font-size: 12px;
-  color: #9ca3af;
+    text-align: center;
+    font-size: 12px;
+    color: #cbd5e1;
+    margin-top: auto; /* Pushes to very bottom */
+    padding-top: 10px;
 }
 
-/* --- RESPONSIVE --- */
-@media (max-width: 768px) {
-  .container { flex-direction: column; min-height: auto; }
-  .info-side { width: 100%; padding: 30px; }
-  .form-side { width: 100%; padding: 30px; }
-  .logo-img { width: 80px; }
-  .brand-name { font-size: 20px; }
+/* Animations */
+@keyframes floating {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+@keyframes slideDown {
+    from { transform: translateY(-10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
 
-/* --- ANIMATIONS --- */
-@keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
-}
-@keyframes spin {
-  to { transform: rotate(360deg); }
+/* Mobile Responsive */
+@media (max-width: 850px) {
+    .main-card { flex-direction: column; height: auto; min-height: 100vh; border-radius: 0; }
+    .brand-panel { width: 100%; padding: 30px; min-height: 250px; }
+    .form-panel { width: 100%; padding: 30px; border-radius: 20px 20px 0 0; margin-top: -20px; background: white; }
+    .logo-img { width: 100px; }
 }
 </style>
 </head>
 <body>
 
-<div class="container">
-  <div class="info-side">
-    <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhIuGx_Tl93TWp5OZYxIn7iCPb3FhwXGTZTr_xVjfUAOy4dt2YzXq0c7H4VizrvCBNkCO12IlSymo4R-7Nq9mSffdpB9w6Yge3O2i0UovqE45XIW1jEyvZJg6sOjDfUUhdRJs2x_Bqui6goNnXmcV8hguXwcIUqsvMv5-kY-yNeo-Onr9TVspl88fBfiEsV/s1600/IMG-20251223-WA0001.png" alt="Logo" class="logo-img">
-    <div class="brand-name">FoodPreneurs<br>Business Academy</div>
-    <div class="brand-tagline">Empowering Culinary Leaders</div>
-  </div>
-
-  <div class="form-side">
-
-    <div id="alertBox" class="alert-box">
-      <i class="fa fa-exclamation-circle"></i>
-      <span id="alertMessage">Error message here</span>
+<div class="main-card">
+    
+    <div class="brand-panel">
+        <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhIuGx_Tl93TWp5OZYxIn7iCPb3FhwXGTZTr_xVjfUAOy4dt2YzXq0c7H4VizrvCBNkCO12IlSymo4R-7Nq9mSffdpB9w6Yge3O2i0UovqE45XIW1jEyvZJg6sOjDfUUhdRJs2x_Bqui6goNnXmcV8hguXwcIUqsvMv5-kY-yNeo-Onr9TVspl88fBfiEsV/s1600/IMG-20251223-WA0001.png" alt="FoodPreneurs Logo" class="logo-img">
+        <div class="brand-title">FoodPreneurs<br>Business Academy</div>
+        <div style="margin-top:15px;">
+            <span class="brand-year">2026</span>
+        </div>
     </div>
 
-    <div id="loginForm" class="form-container">
-      <h2>Welcome Back</h2>
-      <p class="instruction">Please login to access your courses and continue your learning journey.</p>
+    <div class="form-panel">
+        
+        <div id="errorAlert" class="error-banner">
+            <i class="fa fa-circle-exclamation"></i>
+            <span id="errorText">Error message goes here</span>
+        </div>
 
-      <div class="input-group">
-        <i class="fa fa-envelope field-icon"></i>
-        <input type="email" id="loginEmail" placeholder="Email Address">
-      </div>
+        <div id="loginView" class="form-wrapper">
+            <h2>Welcome Back</h2>
+            <p class="subtitle">Log in to access your courses and continue learning.</p>
 
-      <div class="input-group">
-        <i class="fa fa-lock field-icon"></i>
-        <input type="password" id="loginPassword" placeholder="Password">
-        <i class="fa fa-eye toggle-pass" onclick="toggleVisibility('loginPassword')"></i>
-      </div>
+            <div class="input-box">
+                <i class="fa fa-envelope icon"></i>
+                <input type="email" id="loginEmail" placeholder="Email Address">
+            </div>
 
-      <div class="options">
-        <label><input type="checkbox" id="rememberMe"> Remember me</label>
-        <span class="forgot-link" onclick="forgotPassword()">Forgot Password?</span>
-      </div>
+            <div class="input-box">
+                <i class="fa fa-lock icon"></i>
+                <input type="password" id="loginPassword" placeholder="Password">
+                <i class="fa fa-eye toggle-pass" onclick="togglePass('loginPassword')"></i>
+            </div>
 
-      <button class="btn-primary" onclick="handleLogin()" id="btnLogin">
-        <span class="btn-text">Login Now</span>
-        <div class="spinner"></div>
-      </button>
+            <div class="form-helpers">
+                <label style="display:flex; align-items:center; gap:5px;">
+                    <input type="checkbox" id="rememberMe"> Remember Me
+                </label>
+                <span class="link" onclick="forgotPassword()">Forgot Password?</span>
+            </div>
 
-      <div class="switch-text">
-        New to the Academy? 
-        <span class="switch-link" onclick="switchView('signup')">Create Account</span>
-      </div>
+            <button class="btn-submit" onclick="performLogin()">Login to Academy</button>
+
+            <div class="switch-account">
+                Don't have an account? 
+                <span class="link" onclick="toggleViews('signup')">Create Account</span>
+            </div>
+        </div>
+
+        <div id="signupView" class="form-wrapper hidden">
+            <h2>Create Account</h2>
+            <p class="subtitle">Join FoodPreneurs today and start your business journey.</p>
+
+            <div class="input-box">
+                <i class="fa fa-envelope icon"></i>
+                <input type="email" id="signupEmail" placeholder="Your Email Address">
+            </div>
+
+            <div class="input-box">
+                <i class="fa fa-lock icon"></i>
+                <input type="password" id="signupPassword" placeholder="Create Password">
+                <i class="fa fa-eye toggle-pass" onclick="togglePass('signupPassword')"></i>
+            </div>
+
+            <button class="btn-submit" onclick="performSignup()" style="margin-top: 10px;">Register New Student</button>
+
+            <div class="switch-account">
+                Already have an account? 
+                <span class="link" onclick="toggleViews('login')">Login Here</span>
+            </div>
+        </div>
+
+        <div class="footer-copy">
+            &copy; 2026 FoodPreneurs Business Academy
+        </div>
+
     </div>
-
-    <div id="signupForm" class="form-container hidden">
-      <h2>Create Account</h2>
-      <p class="instruction">Don't have an account? Sign up today to start your journey with FoodPreneurs.</p>
-
-      <div class="input-group">
-        <i class="fa fa-envelope field-icon"></i>
-        <input type="email" id="signupEmail" placeholder="Enter your Email">
-      </div>
-
-      <div class="input-group">
-        <i class="fa fa-lock field-icon"></i>
-        <input type="password" id="signupPassword" placeholder="Create Password">
-        <i class="fa fa-eye toggle-pass" onclick="toggleVisibility('signupPassword')"></i>
-      </div>
-
-       <div class="input-group">
-        <i class="fa fa-lock field-icon"></i>
-        <input type="password" id="signupConfirmPassword" placeholder="Confirm Password">
-      </div>
-
-      <button class="btn-primary" onclick="handleSignup()" id="btnSignup">
-        <span class="btn-text">Create Account</span>
-        <div class="spinner"></div>
-      </button>
-
-      <div class="switch-text">
-        Already a student? 
-        <span class="switch-link" onclick="switchView('login')">Login here</span>
-      </div>
-    </div>
-
-    <div class="footer-copy">
-      &copy; 2026 FoodPreneurs Business Academy. All Rights Reserved.
-    </div>
-
-  </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-
 <script>
-  // --- FIREBASE CONFIG ---
-  const firebaseConfig = {
-    apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
-    authDomain: "students-login-29409.firebaseapp.com",
-    projectId: "students-login-29409"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
+    // 1. Initialize Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
+        authDomain: "students-login-29409.firebaseapp.com",
+        projectId: "students-login-29409"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
 
-  // --- UI FUNCTIONS ---
-
-  function switchView(view) {
-    const loginForm = document.getElementById('loginForm');
-    const signupForm = document.getElementById('signupForm');
-    const alertBox = document.getElementById('alertBox');
-    
-    // Clear errors when switching
-    alertBox.style.display = 'none';
-
-    if (view === 'signup') {
-      loginForm.classList.add('hidden');
-      setTimeout(() => {
-        loginForm.style.display = 'none';
-        signupForm.style.display = 'block';
-        setTimeout(() => signupForm.classList.remove('hidden'), 50);
-      }, 300);
-    } else {
-      signupForm.classList.add('hidden');
-      setTimeout(() => {
-        signupForm.style.display = 'none';
-        loginForm.style.display = 'block';
-        setTimeout(() => loginForm.classList.remove('hidden'), 50);
-      }, 300);
+    // 2. UI Helpers
+    function togglePass(id) {
+        const input = document.getElementById(id);
+        input.type = input.type === 'password' ? 'text' : 'password';
     }
-  }
 
-  function toggleVisibility(fieldId) {
-    const field = document.getElementById(fieldId);
-    field.type = field.type === 'password' ? 'text' : 'password';
-  }
+    function toggleViews(view) {
+        const login = document.getElementById('loginView');
+        const signup = document.getElementById('signupView');
+        const error = document.getElementById('errorAlert');
+        
+        // Hide Error when switching
+        error.style.display = 'none';
 
-  function setLoading(btnId, isLoading) {
-    const btn = document.getElementById(btnId);
-    const text = btn.querySelector('.btn-text');
-    const spinner = btn.querySelector('.spinner');
-
-    if (isLoading) {
-      text.style.display = 'none';
-      spinner.style.display = 'block';
-      btn.disabled = true;
-    } else {
-      text.style.display = 'block';
-      spinner.style.display = 'none';
-      btn.disabled = false;
+        if(view === 'signup') {
+            login.classList.add('hidden');
+            signup.classList.remove('hidden');
+        } else {
+            signup.classList.add('hidden');
+            login.classList.remove('hidden');
+        }
     }
-  }
 
-  function showError(msg) {
-    const box = document.getElementById('alertBox');
-    const txt = document.getElementById('alertMessage');
-    
-    // Parse common Firebase errors into clean English
-    if(msg.includes('user-not-found')) msg = "No account found with this email.";
-    else if(msg.includes('wrong-password')) msg = "Incorrect password. Please try again.";
-    else if(msg.includes('email-already-in-use')) msg = "An account already exists with this email.";
-    else if(msg.includes('weak-password')) msg = "Password should be at least 6 characters.";
-    else if(msg.includes('invalid-email')) msg = "Please enter a valid email address.";
-    
-    txt.textContent = msg;
-    box.style.display = 'flex';
-  }
+    function showError(message) {
+        const banner = document.getElementById('errorAlert');
+        const text = document.getElementById('errorText');
+        
+        // Friendly Error Mapping
+        let friendlyMsg = message;
+        if(message.includes('user-not-found')) friendlyMsg = "We couldn't find an account with that email.";
+        if(message.includes('wrong-password')) friendlyMsg = "Incorrect password. Please try again.";
+        if(message.includes('invalid-email')) friendlyMsg = "Please enter a valid email address.";
+        if(message.includes('email-already-in-use')) friendlyMsg = "That email is already registered. Please Login.";
+        if(message.includes('weak-password')) friendlyMsg = "Password is too weak. Use at least 6 characters.";
 
-  // --- LOGIC FUNCTIONS ---
-
-  function handleLogin() {
-    const email = document.getElementById('loginEmail').value.trim();
-    const pass = document.getElementById('loginPassword').value.trim();
-    const remember = document.getElementById('rememberMe').checked;
-
-    if (!email || !pass) return showError("Please enter both email and password.");
-
-    setLoading('btnLogin', true);
-
-    const persistence = remember ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION;
-
-    auth.setPersistence(persistence)
-      .then(() => auth.signInWithEmailAndPassword(email, pass))
-      .then(() => {
-        // Success Animation/Redirect
-        window.location.href = 'student.html';
-      })
-      .catch(err => {
-        setLoading('btnLogin', false);
-        showError(err.message);
-      });
-  }
-
-  function handleSignup() {
-    const email = document.getElementById('signupEmail').value.trim();
-    const pass = document.getElementById('signupPassword').value.trim();
-    const confirm = document.getElementById('signupConfirmPassword').value.trim();
-
-    if (!email || !pass) return showError("Please fill in all fields.");
-    if (pass !== confirm) return showError("Passwords do not match.");
-
-    setLoading('btnSignup', true);
-
-    auth.createUserWithEmailAndPassword(email, pass)
-      .then(() => {
-        alert("Account created successfully! You are now logged in.");
-        window.location.href = 'student.html';
-      })
-      .catch(err => {
-        setLoading('btnSignup', false);
-        showError(err.message);
-      });
-  }
-
-  function forgotPassword() {
-    const email = document.getElementById('loginEmail').value.trim();
-    if (!email) {
-      showError("Please enter your email address in the login box first.");
-      return;
+        text.textContent = friendlyMsg;
+        banner.style.display = 'flex';
     }
-    auth.sendPasswordResetEmail(email)
-      .then(() => alert("Password reset link sent to your email."))
-      .catch(err => showError(err.message));
-  }
+
+    // 3. Auth Logic
+    function performLogin() {
+        const email = document.getElementById('loginEmail').value.trim();
+        const pass = document.getElementById('loginPassword').value.trim();
+        const remember = document.getElementById('rememberMe').checked;
+
+        if(!email || !pass) {
+            showError("Please enter both email and password.");
+            return;
+        }
+
+        const persistence = remember ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION;
+
+        auth.setPersistence(persistence)
+            .then(() => auth.signInWithEmailAndPassword(email, pass))
+            .then(() => {
+                window.location.href = 'student.html';
+            })
+            .catch(err => showError(err.message));
+    }
+
+    function performSignup() {
+        const email = document.getElementById('signupEmail').value.trim();
+        const pass = document.getElementById('signupPassword').value.trim();
+
+        if(!email || !pass) {
+            showError("Please enter an email and create a password.");
+            return;
+        }
+
+        auth.createUserWithEmailAndPassword(email, pass)
+            .then(() => {
+                alert("Account created! Logging you in...");
+                window.location.href = 'student.html';
+            })
+            .catch(err => showError(err.message));
+    }
+
+    function forgotPassword() {
+        const email = document.getElementById('loginEmail').value.trim();
+        if(!email) {
+            showError("Please enter your email in the box above first.");
+            return;
+        }
+        auth.sendPasswordResetEmail(email)
+            .then(() => alert("Password reset link sent to " + email))
+            .catch(err => showError(err.message));
+    }
 </script>
 
 </body>
