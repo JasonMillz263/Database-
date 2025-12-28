@@ -300,37 +300,37 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* 2. DEFINE COURSES DATA */
+/* 2. DEFINE COURSES DATA (UPDATED) */
 const coursesData = [
   {
     name: "Food Business Management Course",
     price: 49,
-    overview: "The flagship program for ecosystem compliance and profitability.",
-    curriculum: ["Business Model Canvas", "Operations & Compliance", "HACCP & Food Safety"]
+    overview: "The flagship program for aspiring entrepreneurs. This course covers the entire ecosystem of running a compliant and profitable food business.",
+    curriculum: ["Business Model Canvas", "Operations & Compliance", "HACCP & Food Safety", "Supply Chain Logistics", "Digital Marketing Strategy"]
   },
   {
     name: "Financial Management for Food Processors",
     price: 59,
-    overview: "Learn to manage yield loss, unit costs, and cash flow.",
-    curriculum: ["Unit Costing", "Pricing Strategies", "Cash Flow & Budgeting"]
+    overview: "Understand the unique economics of food processing. Learn to manage yield loss, calculate unit costs accurately, and forecast cash flow.",
+    curriculum: ["Unit Costing & Yield Analysis", "Pricing for Retail vs Wholesale", "Cash Flow Management", "Budgeting for Seasonality", "Profit Maximization"]
   },
   {
     name: "Food Value Addition Course for Farmers",
     price: 45,
-    overview: "Process, package, and brand your harvest for higher value.",
-    curriculum: ["Post-Harvest Tech", "Processing Methods", "Packaging Laws"]
+    overview: "Stop selling raw produce for low margins. Learn the techniques to process, package, and brand your harvest for higher market value.",
+    curriculum: ["Post-Harvest Technology", "Processing Methods (Drying/Canning)", "Packaging & Labeling Laws", "Storage & Shelf Life", "Direct-to-Consumer Sales"]
   },
   {
     name: "New Product Development and Management",
     price: 69,
-    overview: "From kitchen recipe to shelf-stable commercial product.",
-    curriculum: ["Market Research", "Recipe Scaling", "Regulatory Approval"]
+    overview: "A masterclass in innovation. Take an idea from a kitchen recipe to a shelf-stable commercial product ready for supermarkets.",
+    curriculum: ["Concept & Market Research", "Recipe Scaling & Prototyping", "Sensory Evaluation", "Regulatory Approval Steps", "Launch Strategy"]
   },
   {
     name: "Management",
     price: 39,
-    overview: "Leadership tactics for high-pressure food environments.",
-    curriculum: ["Leadership Dynamics", "Staff Scheduling", "Efficiency"]
+    overview: "Essential soft skills and hard tactics for managing teams in high-pressure food environments like kitchens and factories.",
+    curriculum: ["Leadership Dynamics", "Conflict Resolution", "Staff Scheduling & Efficiency", "Business Ethics", "Decision Making Frameworks"]
   }
 ];
 
@@ -360,8 +360,8 @@ function renderCourses(enrolledList = [], pendingMap = {}) {
       button = `<button class="btn btn-pay" onclick="createInvoice('${course.name}', ${course.price})">Enroll Now</button>`;
     }
 
-    // Limit curriculum to 3 items
-    const curriculumDisplay = course.curriculum.slice(0, 3).map(m => `<li>${m}</li>`).join("");
+    // Limit curriculum to 5 items (Increased from 3 to 5 to show new data)
+    const curriculumDisplay = course.curriculum.slice(0, 5).map(m => `<li>${m}</li>`).join("");
 
     grid.innerHTML += `
       <div class="course-card">
@@ -370,6 +370,7 @@ function renderCourses(enrolledList = [], pendingMap = {}) {
         <div class="card-body">
           <h3 class="card-title">${course.name}</h3>
           <span class="label">Included</span>
+          <p style="font-size:0.85rem; color:#4b5563; margin-bottom:15px; line-height:1.5;">${course.overview}</p>
           <ul class="curriculum">${curriculumDisplay}</ul>
         </div>
         <div class="card-footer">
