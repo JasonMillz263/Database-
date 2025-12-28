@@ -122,10 +122,7 @@
 
 </div>  <div id="imgModal" class="modal" onclick="this.style.display='none'">  
     <img id="modalImg" src="">  
-</div>  
-    
-    
-    <script type="module">  
+</div>  <script type="module">  
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";  
     import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";  
     import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";  
@@ -263,258 +260,113 @@
               
             // This update works because of your Security Rules allowing 'messages' and 'lastUpdated'  
             await updateDoc(ticketRef, {  
-                <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-
-    // --- FIREBASE CONFIGURATION (Keep your own keys!) ---
-    const firebaseConfig = {
-        apiKey: "AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
-        authDomain: "students-login-29409.firebaseapp.com",
-        projectId: "students-login-29409",
-        storageBucket: "students-login-29409.firebasestorage.app",
-        messagingSenderId: "634331456872",
-        appId: "1:634331456872:web:6dae360c5e28d8356562dd"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    // --- AUTHENTICATION ---
-    window.login = () => signInWithPopup(auth, new GoogleAuthProvider());
-
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            document.getElementById('authOverlay').style.display = 'none';
-            document.getElementById('userInfo').innerText = user.displayName;
-            loadMyTickets(user);
-        } else {
-            document.getElementById('authOverlay').style.display = 'flex';
-        }
-    });
-
-    // --- TAB SWITCHING ---
-    window.switchTab = (tab) => {
-        document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-        
-        document.getElementById(`view-${tab}`).classList.add('active');
-        
-        if(tab === 'new') document.getElementById('tab-new').classList.add('active');
-        else document.getElementById('tab-history').classList.add('active');
-    };
-
-    // --- IMAGE COMPRESSION ---
-    const compressImage = (file) => {
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = (e) => {
-                const img = new Image();
-                img.src = e.target.result;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 800;
-                    const scale = MAX_WIDTH / img.width;
-                    canvas.width = MAX_WIDTH;
-                    canvas.height = img.height * scale;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    resolve(canvas.toDataURL('image/jpeg', 0.6));
-                };
-            };
-        });
-    };
-
-    // --- CREATE TICKET ---
-    window.createTicket = async () => {
-        const user = auth.currentUser;
-        if (!user) return alert("Please log in.");
-
-        const btn = document.getElementById('submitBtn');
-        const subject = document.getElementById('subject').value;
-        const category = document.getElementById('category').value;
-        const message = document.getElementById('message').value;
-        const fileInput = document.getElementById('attachment');
-
-        if (!subject || !message) return alert("Please fill in the Subject and Description.");
-
-        btn.innerText = "Processing...";
-        btn.disabled = true;
-
-        try {
-            let base64Img = null;
-            if (fileInput.files.length > 0) {
-                btn.innerText = "Compressing Image...";
-                base64Img = await compressImage(fileInput.files[0]);
-            }
-
-            btn.innerText = "Sending...";
-
-            // Ensure lastUpdated is a Number (Date.now())
-            const now = Date.now();
-
-            const initialMsg = {
-                sender: 'student',
-                message: message,
-                attachment: base64Img,
-                timestamp: now
-            };
-
-            await addDoc(collection(db, "tickets"), {
-                studentId: user.uid,
-                studentName: user.displayName,
-                studentEmail: user.email,
-                subject,
-                category,
-                status: "open",
-                messages: [initialMsg],
-                createdAt: now,
-                lastUpdated: now
-            });
-
-            alert("Ticket Submitted Successfully!");
-            // Clear Form
-            document.getElementById('subject').value = "";
-            document.getElementById('message').value = "";
-            document.getElementById('attachment').value = "";
-            
-            // Go to history
-            window.switchTab('history');
-
-        } catch (error) {
-            console.error(error);
-            alert("Error: " + error.message);
-        } finally {
-            btn.innerText = "Create Ticket";
-            btn.disabled = false;
-        }
-    };
-
-    // --- REPLY TO TICKET ---
-    window.sendReply = async (ticketId) => {
-        const input = document.getElementById(`reply-${ticketId}`);
-        const text = input.value.trim();
-        if (!text) return;
-
-        try {
-            const ticketRef = doc(db, "tickets", ticketId);
-            
-            await updateDoc(ticketRef, {
-                messages: arrayUnion({
-                    sender: 'student',
-                    message: text,
-                    timestamp: Date.now()
-                }),
-                lastUpdated: Date.now()
-            });
-            input.value = ""; 
-        } catch (e) {
-            console.error("Reply Error:", e);
-            alert("Could not send reply. " + e.message);
-        }
-    };
-
-    // --- LOAD TICKETS (DEBUGGED) ---
-    function loadMyTickets(user) {
-        const list = document.getElementById("ticketList");
-        list.innerHTML = `<p style="text-align:center; color:#94a3b8; margin-top:50px;">Attempting to load tickets...</p>`;
-
-        // FIX: REMOVED orderBy("lastUpdated") TEMPORARILY
-        // This bypasses the need for an Index. If this works, your Index was the problem.
-        const q = query(
-            collection(db, "tickets"), 
-            where("studentId", "==", user.uid)
-        );
-        
-        onSnapshot(q, (snapshot) => {
-            if (snapshot.empty) {
-                list.innerHTML = `
-                    <div style="text-align:center; padding:50px; color:#94a3b8;">
-                        <div style="font-size:40px; margin-bottom:15px;">📭</div>
-                        <p>No tickets found for your ID.</p>
-                        <button onclick="switchTab('new')" style="color:var(--primary); background:none; border:none; cursor:pointer; font-weight:bold;">Create your first ticket</button>
-                    </div>`;
-                return;
-            }
-
-            // Manually sort since we removed orderBy from query
-            const tickets = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
-            tickets.sort((a, b) => b.lastUpdated - a.lastUpdated);
-
-            list.innerHTML = tickets.map(t => {
-                const id = t.id;
-                
-                // Status Logic
-                const statusMap = { open: "Open", in_review: "In Review", closed: "Closed" };
-                const stLabel = statusMap[t.status] || t.status;
-
-                // Build Messages
-                let chatHtml = '';
-                if (t.messages && Array.isArray(t.messages)) {
-                    chatHtml = t.messages.map(m => {
-                        const isMe = m.sender === 'student';
-                        const timeStr = m.timestamp ? new Date(m.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
-                        
-                        return `
-                        <div class="msg ${isMe ? 'msg-me' : 'msg-admin'}">
-                            ${m.message}
-                            ${m.attachment ? `<img src="${m.attachment}" class="img-att" onclick="viewImg(this.src)">` : ''}
-                            <span class="msg-time">${timeStr}</span>
-                        </div>`;
-                    }).join("");
-                } else {
-                    chatHtml = `<div class="msg msg-me">${t.message || 'No content'}</div>`;
-                }
-
-                return `
-                <div class="ticket-card">
-                    <div class="t-header">
-                        <div>
-                            <div class="t-title">${t.subject}</div>
-                            <div class="t-cat">${t.category}</div>
-                        </div>
-                        <span class="badge st-${t.status}">${stLabel}</span>
-                    </div>
-
-                    <div class="chat-area" id="chat-${id}">
-                        ${chatHtml}
-                    </div>
-
-                    ${t.status === 'closed' 
-                        ? `<div class="closed-notice">⛔ This ticket is closed. Reply is disabled.</div>`
-                        : `<div class="reply-bar">
-                             <input type="text" class="reply-input" id="reply-${id}" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendReply('${id}')">
-                             <button class="btn-send" onclick="sendReply('${id}')">➤</button>
-                           </div>`
-                    }
-                </div>`;
-            }).join("");
-
-            // Auto-scroll
-            document.querySelectorAll('.chat-area').forEach(div => {
-                div.scrollTop = div.scrollHeight;
-            });
-
-        }, (error) => {
-            console.error("Firebase Error:", error);
-            // PRINT ERROR TO SCREEN
-            list.innerHTML = `
-                <div style="background:#fee2e2; color:#b91c1c; padding:20px; border-radius:10px; margin-top:20px;">
-                    <strong>⚠️ Error Loading Tickets:</strong><br>
-                    ${error.message}
-                    <br><br>
-                    <em>Open Console (F12) for more details.</em>
-                </div>
-            `;
-        });
-    }
-
-    // --- MODAL VIEWER ---
-    window.viewImg = (src) => {
-        document.getElementById('modalImg').src = src;
-        document.getElementById('imgModal').style.display = 'flex';
-    };
-</script>
+                messages: arrayUnion({  
+                    sender: 'student',  
+                    message: text,  
+                    timestamp: Date.now()  
+                }),  
+                lastUpdated: Date.now()  
+            });  
+            input.value = ""; // Clear input on success  
+        } catch (e) {  
+            console.error("Reply Error:", e);  
+            alert("Could not send reply. " + e.message);  
+        }  
+    };  
+  
+    // --- LOAD TICKETS (WITH INDEX ERROR HANDLING) ---  
+    function loadMyTickets(user) {  
+        // NOTE: This query requires a Firestore Index because it uses 'where' and 'orderBy' on different fields.  
+        const q = query(  
+            collection(db, "tickets"),   
+            where("studentId", "==", user.uid),   
+            orderBy("lastUpdated", "desc")  
+        );  
+          
+        onSnapshot(q, (snapshot) => {  
+            const list = document.getElementById("ticketList");  
+            if (snapshot.empty) {  
+                list.innerHTML = `  
+                    <div style="text-align:center; padding:50px; color:#94a3b8;">  
+                        <div style="font-size:40px; margin-bottom:15px;">📭</div>  
+                        <p>No tickets found.</p>  
+                        <button onclick="switchTab('new')" style="color:var(--primary); background:none; border:none; cursor:pointer; font-weight:bold;">Create your first ticket</button>  
+                    </div>`;  
+                return;  
+            }  
+  
+            list.innerHTML = snapshot.docs.map(docSnap => {  
+                const t = docSnap.data();  
+                const id = docSnap.id;  
+                  
+                // Status Logic  
+                const statusMap = { open: "Open", in_review: "In Review", closed: "Closed" };  
+                const stLabel = statusMap[t.status] || t.status;  
+  
+                // Build Messages (Handle array format or old format)  
+                let chatHtml = '';  
+                if (t.messages && Array.isArray(t.messages)) {  
+                    chatHtml = t.messages.map(m => {  
+                        const isMe = m.sender === 'student';  
+                        const timeStr = new Date(m.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});  
+                          
+                        return `  
+                        <div class="msg ${isMe ? 'msg-me' : 'msg-admin'}">  
+                            ${m.message}  
+                            ${m.attachment ? `<img src="${m.attachment}" class="img-att" onclick="viewImg(this.src)">` : ''}  
+                            <span class="msg-time">${timeStr}</span>  
+                        </div>`;  
+                    }).join("");  
+                } else {  
+                    // Backwards compatibility for old data  
+                    chatHtml = `<div class="msg msg-me">${t.message}</div>`;  
+                }  
+  
+                return `  
+                <div class="ticket-card">  
+                    <div class="t-header">  
+                        <div>  
+                            <div class="t-title">${t.subject}</div>  
+                            <div class="t-cat">${t.category}</div>  
+                        </div>  
+                        <span class="badge st-${t.status}">${stLabel}</span>  
+                    </div>  
+  
+                    <div class="chat-area" id="chat-${id}">  
+                        ${chatHtml}  
+                    </div>  
+  
+                    ${t.status === 'closed'   
+                        ? `<div class="closed-notice">⛔ This ticket is closed. Reply is disabled.</div>`  
+                        : `<div class="reply-bar">  
+                             <input type="text" class="reply-input" id="reply-${id}" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendReply('${id}')">  
+                             <button class="btn-send" onclick="sendReply('${id}')">➤</button>  
+                           </div>`  
+                    }  
+                </div>`;  
+            }).join("");  
+  
+            // Auto-scroll all chat boxes to the bottom  
+            document.querySelectorAll('.chat-area').forEach(div => {  
+                div.scrollTop = div.scrollHeight;  
+            });  
+  
+        }, (error) => {  
+            // --- IMPORTANT: CATCH INDEX ERRORS HERE ---  
+            console.error("Firebase Error:", error);  
+              
+            if (error.message.includes("indexes")) {  
+                alert("⚠️ ACTION REQUIRED: Open your browser console (F12) and click the link from Firebase to create the required Index.");  
+            } else {  
+                alert("Error loading tickets: " + error.message);  
+            }  
+        });  
+    }  
+  
+    // --- MODAL VIEWER ---  
+    window.viewImg = (src) => {  
+        document.getElementById('modalImg').src = src;  
+        document.getElementById('imgModal').style.display = 'flex';  
+    };  
+</script>  </body>  
+</html>  
