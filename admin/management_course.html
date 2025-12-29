@@ -131,7 +131,7 @@ margin-top:14px;
 #quill{
 border-radius:12px;
 overflow:hidden;
-position: relative; /* Needed for text area positioning */
+background: #fff;
 }
 .ql-editor{
 font-size:15px;
@@ -141,42 +141,29 @@ min-height: 200px;
 }
 .ql-editor img{
 max-width:100%;
-width:auto;
 height:auto;
 display:block;
 margin:12px auto;
 border-radius:10px;
 }
-/* Style for the Code View Textarea */
-.ql-html-textarea {
+
+/* IFRAME & VIDEO SUPPORT */
+.ql-editor iframe, .ql-video {
   width: 100%;
-  height: 100%;
-  background: #1e293b;
-  color: #f8fafc;
-  font-family: monospace;
-  padding: 12px;
+  height: 250px;
   border: none;
-  display: none;
-  resize: none;
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 10;
-  font-size: 14px;
+  border-radius: 10px;
+  margin: 10px 0;
+  background: #000;
 }
-/* Make iframes (PDFs/Videos) responsive */
-.ql-video, iframe {
-  width: 100%;
-  height: 400px;
-  border: none;
-  border-radius: 8px;
-  background: #eee;
-}
-.viewer img{
+body.dark #quill { color: #000; }
+
+.viewer img, .viewer iframe{
 max-width:100%;
-width:auto;
+width:100%;
 height:auto;
 }
+.viewer iframe { height: 250px; }
 
 /* TOAST */
 #toast{
@@ -234,7 +221,8 @@ body{max-width:720px;margin:auto}
   <input id="title" placeholder="Module title">
   <input id="videoUrl" placeholder="Video URL (Optional header video)">
   
-  <div id="quill" style="height:350px"></div>
+  <div id="quill" style="height:auto"></div>
+
   <h4>Quizzes</h4>
   <input id="q" placeholder="Question">
   <input id="o1" placeholder="Option 1">
@@ -266,6 +254,9 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebas
 import { getFirestore, collection, doc, addDoc, getDocs, updateDoc, getDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
+/* 🔒 STRICTLY KEEPS MANAGEMENT COURSE ID */
+const COURSE_ID = "management_course";
+
 const app = initializeApp({
 apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
 authDomain:"students-login-29409.firebaseapp.com",
@@ -285,56 +276,41 @@ addModuleCard.classList.remove("hidden");
 loadModules();
 });
 
-/* --- UPGRADED QUILL SETUP --- */
-
-// 1. Add Custom HTML Icon to Quill's library
-const icons = Quill.import('ui/icons');
-icons['html'] = '<i class="fa fa-code"></i>'; // Using FontAwesome icon
-
-// 2. Initialize Quill
+/* --- UPDATED QUILL SETUP (MATCHING OTHER FILE) --- */
 const quill = new Quill("#quill",{
   theme:"snow",
   modules:{
     toolbar:{
       container:[
         [{header:[1,2,3,false]}],
-        ["bold","italic","underline","strike"],
-        ["link", "image", "video"], // Link, Image, and Video (for PDF/Embeds)
+        ["bold","italic","underline"],
         [{list:"ordered"},{list:"bullet"}],
-        ["clean"],
-        ["html"] // Custom HTML button
+        ["link", "image", "video"], /* Video button = Iframe */
+        ["code-block"] /* Code block button = Paste HTML */
       ],
       handlers:{
         image: imageHandler,
-        html: htmlHandler // Custom handler defined below
+        /* Custom Handler: Video button acts as 'Insert Iframe from Link' */
+        video: function() {
+            const url = prompt("Enter the link/URL you want to display in an iframe:");
+            if(url){
+               const html = `<iframe class="ql-video" frameborder="0" allowfullscreen="true" src="${url}"></iframe>`;
+               const range = this.quill.getSelection(true);
+               this.quill.clipboard.dangerouslyPasteHTML(range.index, html);
+            }
+        },
+        /* Custom Handler: Code-block button acts as 'Insert Raw HTML' */
+        'code-block': function() {
+            const html = prompt("Paste your HTML code here:");
+            if(html){
+                const range = this.quill.getSelection(true);
+                this.quill.clipboard.dangerouslyPasteHTML(range.index, html);
+            }
+        }
       }
     }
   }
 });
-
-// 3. Create the hidden Textarea for code editing
-const qContainer = document.querySelector("#quill");
-const txtArea = document.createElement('textarea');
-txtArea.className = 'ql-html-textarea';
-qContainer.appendChild(txtArea);
-
-// 4. Handler for HTML Toggle
-function htmlHandler(){
-  const editorArea = qContainer.querySelector('.ql-editor');
-  
-  if(txtArea.style.display === 'block'){
-    // Save Code changes -> Visual
-    const html = txtArea.value;
-    quill.clipboard.dangerouslyPasteHTML(html);
-    txtArea.style.display = 'none';
-    editorArea.style.display = 'block';
-  } else {
-    // Show Code View
-    txtArea.value = quill.root.innerHTML;
-    editorArea.style.display = 'none';
-    txtArea.style.display = 'block';
-  }
-}
 
 function imageHandler(){
   const input=document.createElement("input");
@@ -398,14 +374,10 @@ editingQuiz=i;
 window.deleteQuiz=i=>{quizzes.splice(i,1);renderQuizzes();};
 
 window.saveModule=async status=>{
-// If we are in code view, save that content first
-if(txtArea.style.display === 'block') {
-    quill.clipboard.dangerouslyPasteHTML(txtArea.value);
-}
-
 toastText.innerText=status==="published"?"Publishing...":"Saving draft...";
 toast.classList.remove("hidden");
-const refc=collection(db,"courses","management_course","modules");
+// Uses COURSE_ID to ensure we save to Management Course
+const refc=collection(db,"courses",COURSE_ID,"modules");
 const data={title:title.value,videoUrl:videoUrl.value,content:quill.root.innerHTML,quizzes,status,updatedAt:serverTimestamp()};
 editingId?await updateDoc(doc(refc,editingId),data):await addDoc(refc,data);
 toast.classList.add("hidden");
@@ -415,7 +387,8 @@ reset();loadModules();
 async function loadModules(){
 publishedTab.innerHTML=draftTab.innerHTML=binTab.innerHTML="";
 let n=1;
-const s=await getDocs(query(collection(db,"courses","management_course","modules"),orderBy("updatedAt","desc")));
+// Uses COURSE_ID to ensure we load from Management Course
+const s=await getDocs(query(collection(db,"courses",COURSE_ID,"modules"),orderBy("updatedAt","desc")));
 s.forEach(d=>{
 const m=d.data();
 const t=m.status==="published"?`${n++}. ${m.title}`:m.title;
@@ -431,7 +404,8 @@ const box=`<div class="quiz">
 
 window.viewModule=async id=>{
 history.pushState({page:"viewer"},"");
-const s=await getDoc(doc(db,"courses","management_course","modules",id));
+// Uses COURSE_ID
+const s=await getDoc(doc(db,"courses",COURSE_ID,"modules",id));
 const m=s.data();
 viewer.innerHTML=`<h3>${m.title}</h3>${m.content}<button onclick="history.back()">⬅ Back</button>`;
 viewer.classList.remove("hidden");
@@ -444,7 +418,8 @@ editor.classList.add("hidden");
 
 window.edit=async id=>{
 history.pushState({page:"editor"},"");
-const s=await getDoc(doc(db,"courses","management_course","modules",id));
+// Uses COURSE_ID
+const s=await getDoc(doc(db,"courses",COURSE_ID,"modules",id));
 const m=s.data();
 title.value=m.title;
 videoUrl.value=m.videoUrl;
@@ -453,13 +428,11 @@ quizzes=m.quizzes||[];
 editingId=id;
 editor.classList.remove("hidden");
 renderQuizzes();
-// Reset view to visual if it was in code mode
-txtArea.style.display = 'none';
-document.querySelector('.ql-editor').style.display = 'block';
 };
 
 window.softDelete=async id=>{
-await updateDoc(doc(db,"courses","management_course","modules",id),{status:"deleted"});
+// Uses COURSE_ID
+await updateDoc(doc(db,"courses",COURSE_ID,"modules",id),{status:"deleted"});
 loadModules();
 };
 
@@ -469,8 +442,6 @@ quill.root.innerHTML="";
 quizzes=[];
 editingId=null;
 renderQuizzes();
-txtArea.style.display = 'none';
-document.querySelector('.ql-editor').style.display = 'block';
 }
 
 window.openEditor=()=>{
