@@ -127,29 +127,45 @@ margin-top:14px;
 .tabs button{flex:1;background:#e5e7eb}
 .tabs button.active{background:#4f46e5;color:#fff}
 
-/* QUILL */
+/* QUILL CUSTOMIZATION */
 #quill{
 border-radius:12px;
 overflow:hidden;
+background: #fff; /* Ensure white background for editor */
 }
 .ql-editor{
 font-size:15px;
 line-height:1.6;
 padding:12px;
+min-height: 150px;
 }
 .ql-editor img{
 max-width:100%;
-width:auto;
 height:auto;
 display:block;
 margin:12px auto;
 border-radius:10px;
 }
-.viewer img{
+/* IFRAME SUPPORT */
+.ql-editor iframe, .ql-video {
+width: 100%;
+height: 250px; /* Default height for iframes */
+border: none;
+border-radius: 10px;
+margin: 10px 0;
+background: #000;
+}
+body.dark #quill {
+color: #000; /* Keep editor text black in edit mode for visibility */
+}
+
+/* VIEWER */
+.viewer img, .viewer iframe{
 max-width:100%;
-width:auto;
+width:100%;
 height:auto;
 }
+.viewer iframe { height: 250px; }
 
 /* TOAST */
 #toast{
@@ -205,8 +221,9 @@ body{max-width:720px;margin:auto}
 <div class="card hidden" id="editor">
   <h3>Module Editor</h3>
   <input id="title" placeholder="Module title">
-  <input id="videoUrl" placeholder="Video URL">
-  <div id="quill" style="height:220px"></div>
+  <input id="videoUrl" placeholder="Video URL (Optional Header Video)">
+  
+  <div id="quill" style="height:auto;"></div>
 
   <h4>Quizzes</h4>
   <input id="q" placeholder="Question">
@@ -261,18 +278,41 @@ addModuleCard.classList.remove("hidden");
 loadModules();
 });
 
-/* QUILL IMAGE HANDLER WITH TOAST */
+/* ------------------------------------------
+   MODIFIED QUILL CONFIGURATION 
+   ------------------------------------------
+*/
 const quill = new Quill("#quill",{
 theme:"snow",
 modules:{
 toolbar:{
-container:[
-[{header:[1,2,3,false]}],
-["bold","italic","underline"],
-[{list:"ordered"},{list:"bullet"}],
-["link","image"],["clean"]
-],
-handlers:{image:imageHandler}
+  container:[
+    [{header:[1,2,3,false]}],
+    ["bold","italic","underline"],
+    [{list:"ordered"},{list:"bullet"}],
+    ["link", "image", "video"], /* Added video for iframe */
+    ["code-block"] /* Icon we will use for HTML insert */
+  ],
+  handlers:{
+    image: imageHandler,
+    /* Custom Handler: Video button acts as 'Insert Iframe from Link' */
+    video: function() {
+        const url = prompt("Enter the link/URL you want to display in an iframe:");
+        if(url){
+           const html = `<iframe class="ql-video" frameborder="0" allowfullscreen="true" src="${url}"></iframe>`;
+           const range = this.quill.getSelection(true);
+           this.quill.clipboard.dangerouslyPasteHTML(range.index, html);
+        }
+    },
+    /* Custom Handler: Code-block button acts as 'Insert Raw HTML' */
+    'code-block': function() {
+        const html = prompt("Paste your HTML code here:");
+        if(html){
+            const range = this.quill.getSelection(true);
+            this.quill.clipboard.dangerouslyPasteHTML(range.index, html);
+        }
+    }
+  }
 }
 }
 });
