@@ -6,199 +6,202 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 
 <style>
-/* --- GLOBAL THEME --- */
-:root {
-  --primary: #4f46e5;
-  --bg: #f8fafc;
-  --card-bg: #ffffff;
-  --text: #1e293b;
-  --border: #e2e8f0;
-}
-body.dark {
-  --primary: #6366f1;
-  --bg: #0f172a;
-  --card-bg: #1e293b;
-  --text: #f1f5f9;
-  --border: #334155;
-}
-
 *{box-sizing:border-box}
 html,body{overflow-x:hidden}
 body{
-  font-family: 'Inter', system-ui, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  padding: 10px;
-  margin: 0;
-  transition: background 0.3s, color 0.3s;
+  font-family:Segoe UI,system-ui;
+  background:#f1f5f9;
+  padding:10px;
+  margin:0;
 }
+body.dark{background:#0f172a;color:#f8fafc}
 
-/* --- HEADER --- */
+/* HEADER */
 header{
-  background: var(--primary);
-  color: #fff;
-  padding: 16px;
-  border-radius: 16px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+background:#4f46e5;
+color:#fff;
+padding:14px;
+border-radius:14px;
+display:flex;
+flex-direction:column;
+gap:10px;
 }
-.header-top{ display:flex; justify-content:space-between; align-items:center; }
-.header-left{ display:flex; gap:12px; align-items:center; font-size: 1.1rem; }
-.header-right{ display:flex; gap:10px; align-items:center; }
-.header-chip{ background:rgba(255,255,255,0.2); padding:5px 12px; border-radius:20px; font-size:12px; font-weight: 500;}
-.theme-btn{ background:rgba(255,255,255,0.2); border:none; border-radius:50%; width:36px; height:36px; cursor:pointer; color:#fff; transition:0.2s;}
-.theme-btn:hover{ background:rgba(255,255,255,0.3); }
+.header-top{
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+.header-left{
+display:flex;
+gap:10px;
+align-items:center;
+}
+.header-left i{font-size:22px}
+.header-right{
+display:flex;
+gap:10px;
+align-items:center;
+}
+.header-chip{
+background:rgba(255,255,255,.15);
+padding:6px 10px;
+border-radius:20px;
+font-size:12px;
+white-space:nowrap;
+}
+.theme-btn{
+background:rgba(255,255,255,.2);
+border:none;
+border-radius:50%;
+width:36px;
+height:36px;
+font-size:16px;
+cursor:pointer;
+color:#fff;
+}
 
-/* --- CARDS & INPUTS --- */
+/* CARDS */
 .card{
-  background: var(--card-bg);
-  padding: 20px;
-  border-radius: 16px;
-  margin-top: 16px;
-  border: 1px solid var(--border);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  animation: fadeIn 0.3s ease;
+background:#fff;
+padding:14px;
+border-radius:14px;
+margin-top:12px;
+animation:fadeIn .25s ease;
+overflow:hidden;
 }
-@keyframes fadeIn{ from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+body.dark .card{background:#1e293b}
 
-input, button { width:100%; padding:12px; margin:6px 0; font-size:15px; border-radius:10px; outline:none; }
-input { background: var(--bg); border: 1px solid var(--border); color: var(--text); }
-input:focus { border-color: var(--primary); }
-
-button { border:none; font-weight:600; cursor:pointer; transition:transform 0.1s; }
-button:active { transform:scale(0.98); }
-
-/* Button Variants */
-.publish{ background:#10b981; color:#fff; }
-.draft{ background:#f59e0b; color:#fff; }
-.delete{ background:#ef4444; color:#fff; }
-.view{ background:#0ea5e9; color:#fff; }
-.action-btn { background: var(--bg); color: var(--text); border:1px solid var(--border); }
-
-/* --- TABS --- */
-.tabs{ display:flex; gap:10px; margin-top:20px; }
-.tabs button{ flex:1; background: var(--card-bg); border: 1px solid var(--border); color: var(--text); opacity: 0.7; }
-.tabs button.active{ background: var(--primary); color: #fff; border-color: var(--primary); opacity: 1; }
-
-/* --- QUIZ LIST --- */
-.quiz-item{
-  background: var(--bg);
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 8px;
-  border: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+@keyframes fadeIn{
+from{opacity:0;transform:translateY(6px)}
+to{opacity:1;transform:none}
 }
-.quiz-actions { display: flex; gap: 8px; }
 
-/* --- QUILL & SMART EMBED STYLES --- */
-#quill-container {
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  background: var(--card-bg);
-  position: relative;
+/* INPUTS */
+input,button{
+width:100%;
+padding:12px;
+margin:6px 0;
+font-size:15px;
 }
-.ql-toolbar { background: var(--bg); border-bottom: 1px solid var(--border) !important; border:none !important; }
-.ql-container { border: none !important; font-size: 16px; }
-.ql-editor { min-height: 250px; padding: 20px; }
-
-/* SMART EMBED (The Iframe Panel) */
-.smart-embed {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
-  margin: 15px 0;
-  background: var(--bg);
-  transition: box-shadow 0.2s;
+input{
+border:1px solid #e5e7eb;
+border-radius:10px;
 }
-.smart-embed:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-
-.embed-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  background: #e2e8f0;
-  border-bottom: 1px solid var(--border);
-  color: #334155;
-  font-size: 13px;
-  font-weight: 600;
+button{
+border:none;
+border-radius:12px;
+font-weight:600;
+cursor:pointer;
+transition:transform .15s ease,box-shadow .15s ease;
 }
-body.dark .embed-header { background: #334155; color: #cbd5e1; }
+button:active{transform:scale(.96)}
 
-.embed-title { display: flex; align-items: center; gap: 8px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.embed-actions { display: flex; gap: 6px; }
+/* BUTTON COLORS */
+.publish{background:#16a34a;color:#fff}
+.draft{background:#f59e0b;color:#000}
+.delete{background:#dc2626;color:#fff}
+.view{background:#0ea5e9;color:#fff}
 
-.embed-btn {
-  background: rgba(0,0,0,0.05);
-  border: none;
-  padding: 4px 8px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: inherit;
-  width: auto; /* Override global button width */
-  margin: 0;
+/* QUIZ */
+.quiz{
+background:#eef2ff;
+padding:10px;
+border-radius:10px;
+margin:8px 0;
+display:flex;
+flex-direction:column;
+gap:6px;
 }
-.embed-btn:hover { background: rgba(0,0,0,0.1); }
+body.dark .quiz{background:#334155}
 
-.embed-body {
-  position: relative;
-  width: 100%;
-  height: 450px; /* Fixed height for consistency */
-  background: #000;
+/* TABS */
+.tabs{
+display:flex;
+gap:8px;
+margin-top:14px;
 }
-.embed-body iframe {
+.tabs button{flex:1;background:#e5e7eb}
+.tabs button.active{background:#4f46e5;color:#fff}
+
+/* QUILL CUSTOM STYLES */
+#quill{
+border-radius:12px;
+overflow:hidden;
+position: relative; /* Needed for text area positioning */
+}
+.ql-editor{
+font-size:15px;
+line-height:1.6;
+padding:12px;
+min-height: 200px;
+}
+.ql-editor img{
+max-width:100%;
+width:auto;
+height:auto;
+display:block;
+margin:12px auto;
+border-radius:10px;
+}
+/* Style for the Code View Textarea */
+.ql-html-textarea {
   width: 100%;
   height: 100%;
+  background: #1e293b;
+  color: #f8fafc;
+  font-family: monospace;
+  padding: 12px;
   border: none;
+  display: none;
+  resize: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  font-size: 14px;
 }
-
-/* Fullscreen Mode */
-.smart-embed.fullscreen {
-  position: fixed;
-  top: 0; left: 0; width: 100vw; height: 100vh;
-  z-index: 9999;
-  border-radius: 0;
+/* Make iframes (PDFs/Videos) responsive */
+.ql-video, iframe {
+  width: 100%;
+  height: 400px;
   border: none;
+  border-radius: 8px;
+  background: #eee;
 }
-.smart-embed.fullscreen .embed-body { height: calc(100vh - 40px); }
-
-/* Code View Textarea */
-.ql-html-textarea {
-  width: 100%; height: 100%;
-  background: #0f172a; color: #10b981;
-  font-family: 'Courier New', monospace;
-  padding: 15px; border: none; resize: none;
-  display: none; position: absolute; top: 42px; left: 0; z-index: 10;
+.viewer img{
+max-width:100%;
+width:auto;
+height:auto;
 }
 
 /* TOAST */
 #toast{
-  position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
-  background: #1e293b; color: #fff;
-  padding: 12px 20px; border-radius: 30px;
-  display: flex; gap: 10px; align-items: center;
-  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-  z-index:9999; transition: 0.3s;
+position:fixed;
+bottom:20px;
+left:50%;
+transform:translateX(-50%);
+background:#111827;
+color:#fff;
+padding:12px 16px;
+border-radius:14px;
+display:flex;
+gap:10px;
+align-items:center;
+z-index:9999;
+animation:fadeIn .2s ease;
 }
-#toast.hidden{ opacity: 0; pointer-events: none; transform: translate(-50%, 20px); }
+#toast.hidden{display:none}
 
-.hidden{ display:none !important; }
+.hidden{display:none}
 
-/* RESPONSIVE */
-@media(min-width:768px){ body{ max-width: 800px; margin: auto; } }
+/* MOBILE */
+@media(min-width:768px){
+body{max-width:720px;margin:auto}
+}
 </style>
 </head>
 
@@ -207,60 +210,44 @@ body.dark .embed-header { background: #334155; color: #cbd5e1; }
 <header>
   <div class="header-top">
     <div class="header-left">
-      <i class="fa fa-graduation-cap"></i>
-      <span>Admin Console</span>
+      <i class="fa fa-user-shield"></i>
+      <b>Management Course</b>
     </div>
     <div class="header-right">
-      <div id="authStatus" class="header-chip"><i class="fa fa-circle-notch fa-spin"></i> Checking</div>
-      <button class="theme-btn" onclick="toggleTheme()"><i class="fa fa-adjust"></i></button>
+      <div id="authStatus" class="header-chip">Checking…</div>
+      <button class="theme-btn" onclick="toggleTheme()">🌓</button>
     </div>
   </div>
 </header>
 
 <div id="toast" class="hidden">
-  <i class="fa fa-info-circle"></i>
+  <i class="fa fa-spinner fa-spin"></i>
   <span id="toastText"></span>
 </div>
 
 <div class="card hidden" id="addModuleCard">
-  <button class="publish" onclick="openEditor()"><i class="fa fa-plus"></i> Create New Module</button>
+  <button class="publish" onclick="openEditor()">➕ Add New Module</button>
 </div>
 
 <div class="card hidden" id="editor">
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-    <h3><i class="fa fa-edit"></i> Module Editor</h3>
-    <button onclick="closeEditor()" class="action-btn" style="width:auto; padding:8px 15px;">Close</button>
-  </div>
+  <h3>Module Editor</h3>
+  <input id="title" placeholder="Module title">
+  <input id="videoUrl" placeholder="Video URL (Optional header video)">
   
-  <input id="title" placeholder="Module Title (e.g. Leadership 101)">
-  <input id="videoUrl" placeholder="Optional Header Video URL (YouTube/MP4)">
-  
-  <div id="quill-container">
-    <div id="quill"></div>
-  </div>
+  <div id="quill" style="height:350px"></div>
+  <h4>Quizzes</h4>
+  <input id="q" placeholder="Question">
+  <input id="o1" placeholder="Option 1">
+  <input id="o2" placeholder="Option 2">
+  <input id="o3" placeholder="Option 3">
+  <input id="o4" placeholder="Option 4">
+  <input id="a" placeholder="Correct answer">
 
-  <h4 style="margin-top:20px; border-bottom:1px solid var(--border); padding-bottom:10px;">
-    <i class="fa fa-list-check"></i> Assessment Quizzes
-  </h4>
-  
-  <div class="quiz-item" style="background:var(--card-bg)">
-    <input id="q" placeholder="Question Text">
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-      <input id="o1" placeholder="Option A">
-      <input id="o2" placeholder="Option B">
-      <input id="o3" placeholder="Option C">
-      <input id="o4" placeholder="Option D">
-    </div>
-    <input id="a" placeholder="Correct Answer (Match text exactly)">
-    <button class="action-btn" onclick="addQuiz()"><i class="fa fa-plus-circle"></i> Add Quiz Question</button>
-  </div>
-  
+  <button onclick="addQuiz()">Add / Update Quiz</button>
   <div id="quizList"></div>
 
-  <div style="display:flex; gap:10px; margin-top:20px;">
-    <button class="draft" onclick="saveModule('draft')"><i class="fa fa-save"></i> Save Draft</button>
-    <button class="publish" onclick="saveModule('published')"><i class="fa fa-rocket"></i> Publish Live</button>
-  </div>
+  <button class="draft" onclick="saveModule('draft')">Save Draft</button>
+  <button class="publish" onclick="saveModule('published')">Publish</button>
 </div>
 
 <div class="tabs">
@@ -272,16 +259,13 @@ body.dark .embed-header { background: #334155; color: #cbd5e1; }
 <div class="card" id="publishedTab"></div>
 <div class="card hidden" id="draftTab"></div>
 <div class="card hidden" id="binTab"></div>
-
 <div class="card hidden viewer" id="viewer"></div>
 
-<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getFirestore, collection, doc, addDoc, getDocs, updateDoc, getDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-// --- FIREBASE CONFIG (Placeholder) ---
 const app = initializeApp({
 apiKey:"AIzaSyC_lKWa4cM4cT337KkRw4sp7raQHl9aZWk",
 authDomain:"students-login-29409.firebaseapp.com",
@@ -290,310 +274,218 @@ projectId:"students-login-29409"
 
 const db = getFirestore(app);
 const auth = getAuth(app);
-signInWithEmailAndPassword(auth,"ADMIN_EMAIL","ADMIN_PASSWORD").catch(e=>console.log(e));
+signInWithEmailAndPassword(auth,"ADMIN_EMAIL","ADMIN_PASSWORD");
 
 onAuthStateChanged(auth, async user=>{
-  if(!user){authStatus.innerHTML="<i class='fa fa-times'></i> Not logged in";return;}
-  // In real app, check admin doc. For now assuming true to fix code
-  authStatus.innerHTML="<i class='fa fa-check-circle'></i> Admin Active";
-  authStatus.style.background = "#10b981";
-  addModuleCard.classList.remove("hidden");
-  loadModules();
+if(!user){authStatus.innerText="Not logged in";return;}
+const admin = await getDoc(doc(db,"admins",user.uid));
+if(!admin.exists()){authStatus.innerText="Not admin";return;}
+authStatus.innerText="Admin Verified";
+addModuleCard.classList.remove("hidden");
+loadModules();
 });
 
-/* =========================================
-   CUSTOM "SMART EMBED" BLOT (The Core Fix)
-   ========================================= */
-const BlockEmbed = Quill.import('blots/block/embed');
+/* --- UPGRADED QUILL SETUP --- */
 
-class SmartEmbed extends BlockEmbed {
-  static create(value) {
-    let node = super.create();
-    node.setAttribute('contenteditable', false);
-    
-    // Structure: Header (Title+Btns) + Body (Iframe)
-    node.innerHTML = `
-      <div class="embed-header">
-        <div class="embed-title">
-          <i class="fa fa-link"></i> 
-          <span>${value.caption || 'Embedded Content'}</span>
-        </div>
-        <div class="embed-actions">
-          <button class="embed-btn" onclick="speakEmbed(this)" title="Read Caption">
-            <i class="fa fa-volume-up"></i>
-          </button>
-          <button class="embed-btn" onclick="toggleFullscreen(this)" title="Fullscreen">
-            <i class="fa fa-expand"></i>
-          </button>
-          <a href="${value.url}" target="_blank" class="embed-btn" title="Open New Tab">
-            <i class="fa fa-external-link-alt"></i>
-          </a>
-        </div>
-      </div>
-      <div class="embed-body">
-        <iframe src="${value.url}" allowfullscreen sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
-      </div>
-    `;
-    // Store data for Quill to retrieve later
-    node.dataset.url = value.url;
-    node.dataset.caption = value.caption;
-    return node;
-  }
-
-  static value(node) {
-    return {
-      url: node.dataset.url,
-      caption: node.dataset.caption
-    };
-  }
-}
-
-SmartEmbed.blotName = 'smartEmbed';
-SmartEmbed.tagName = 'div';
-SmartEmbed.className = 'smart-embed';
-Quill.register(SmartEmbed);
-
-// Global window functions for the embedded buttons to work
-window.toggleFullscreen = (btn) => {
-  const wrapper = btn.closest('.smart-embed');
-  if (wrapper.classList.contains('fullscreen')) {
-    wrapper.classList.remove('fullscreen');
-    btn.innerHTML = '<i class="fa fa-expand"></i>';
-  } else {
-    wrapper.classList.add('fullscreen');
-    btn.innerHTML = '<i class="fa fa-compress"></i>';
-  }
-};
-
-window.speakEmbed = (btn) => {
-  const wrapper = btn.closest('.smart-embed');
-  const text = wrapper.dataset.caption || "Embedded content";
-  const speech = new SpeechSynthesisUtterance("Embedded content: " + text);
-  window.speechSynthesis.cancel(); // Stop previous
-  window.speechSynthesis.speak(speech);
-};
-
-/* --- QUILL SETUP --- */
+// 1. Add Custom HTML Icon to Quill's library
 const icons = Quill.import('ui/icons');
-icons['html'] = '<i class="fa fa-code"></i>';
-icons['smartEmbed'] = '<i class="fa fa-paperclip"></i>'; // New Icon for your embeds
+icons['html'] = '<i class="fa fa-code"></i>'; // Using FontAwesome icon
 
+// 2. Initialize Quill
 const quill = new Quill("#quill",{
   theme:"snow",
   modules:{
     toolbar:{
       container:[
         [{header:[1,2,3,false]}],
-        ["bold","italic","underline"],
+        ["bold","italic","underline","strike"],
+        ["link", "image", "video"], // Link, Image, and Video (for PDF/Embeds)
         [{list:"ordered"},{list:"bullet"}],
-        ["link", "image", "smartEmbed"], // Replaced video with smartEmbed
-        ["html"]
+        ["clean"],
+        ["html"] // Custom HTML button
       ],
       handlers:{
         image: imageHandler,
-        html: htmlHandler,
-        smartEmbed: smartEmbedHandler // Our custom handler
+        html: htmlHandler // Custom handler defined below
       }
     }
   }
 });
 
-// Create HTML View Textarea
-const qContainer = document.querySelector("#quill-container");
+// 3. Create the hidden Textarea for code editing
+const qContainer = document.querySelector("#quill");
 const txtArea = document.createElement('textarea');
 txtArea.className = 'ql-html-textarea';
 qContainer.appendChild(txtArea);
 
+// 4. Handler for HTML Toggle
 function htmlHandler(){
+  const editorArea = qContainer.querySelector('.ql-editor');
+  
   if(txtArea.style.display === 'block'){
-    quill.clipboard.dangerouslyPasteHTML(txtArea.value);
+    // Save Code changes -> Visual
+    const html = txtArea.value;
+    quill.clipboard.dangerouslyPasteHTML(html);
     txtArea.style.display = 'none';
+    editorArea.style.display = 'block';
   } else {
+    // Show Code View
     txtArea.value = quill.root.innerHTML;
+    editorArea.style.display = 'none';
     txtArea.style.display = 'block';
   }
 }
 
 function imageHandler(){
   const input=document.createElement("input");
-  input.type="file"; input.accept="image/*";
+  input.type="file";
+  input.accept="image/*";
+  input.click();
+
   input.onchange=()=>{
     const file=input.files[0];
     if(!file)return;
-    showToast("Uploading image...", 0);
+
+    toastText.innerText="Uploading image 0%";
+    toast.classList.remove("hidden");
+
     const reader=new FileReader();
+    reader.onprogress=e=>{
+      if(e.lengthComputable){
+        toastText.innerText=`Uploading image ${Math.round((e.loaded/e.total)*100)}%`;
+      }
+    };
     reader.onload=()=>{
       const range=quill.getSelection(true);
       quill.insertEmbed(range.index,"image",reader.result);
-      showToast("Image uploaded");
+      toastText.innerText="Image uploaded";
+      setTimeout(()=>toast.classList.add("hidden"),1200);
     };
     reader.readAsDataURL(file);
   };
-  input.click();
 }
+/* --- END QUILL SETUP --- */
 
-function smartEmbedHandler() {
-  // Simple prompt flow. You could replace this with a nice modal later.
-  const url = prompt("Enter the URL (PDF link, YouTube, Website):");
-  if (!url) return;
-  
-  const caption = prompt("Enter a short caption/summary for Text-to-Speech:");
-  
-  const range = quill.getSelection(true);
-  quill.insertEmbed(range.index, 'smartEmbed', {
-    url: url,
-    caption: caption || "External Content"
-  });
-  quill.setSelection(range.index + 1);
-}
-
-/* --- APP LOGIC --- */
-let quizzes=[], editingId=null;
+let quizzes=[],editingId=null,editingQuiz=null;
 
 window.addQuiz=()=>{
-  if(!q.value || !a.value) { alert("Question and Answer required"); return; }
-  const quiz={question:q.value,options:[o1.value,o2.value,o3.value,o4.value],answer:a.value};
-  quizzes.push(quiz);
-  q.value=o1.value=o2.value=o3.value=o4.value=a.value="";
-  renderQuizzes();
+const quiz={question:q.value,options:[o1.value,o2.value,o3.value,o4.value],answer:a.value};
+editingQuiz!==null?quizzes[editingQuiz]=quiz:quizzes.push(quiz);
+editingQuiz=null;
+q.value=o1.value=o2.value=o3.value=o4.value=a.value="";
+renderQuizzes();
+};
+
+function renderQuizzes(){
+quizList.innerHTML="";
+quizzes.forEach((x,i)=>{
+quizList.innerHTML+=`<div class="quiz">
+<b>${i+1}. ${x.question}</b>
+<button onclick="editQuiz(${i})">Edit</button>
+<button class="delete" onclick="deleteQuiz(${i})">Delete</button>
+</div>`;
+});
+}
+
+window.editQuiz=i=>{
+const x=quizzes[i];
+q.value=x.question;
+[o1.value,o2.value,o3.value,o4.value]=x.options;
+a.value=x.answer;
+editingQuiz=i;
 };
 
 window.deleteQuiz=i=>{quizzes.splice(i,1);renderQuizzes();};
 
-function renderQuizzes(){
-  quizList.innerHTML="";
-  quizzes.forEach((x,i)=>{
-    quizList.innerHTML+=`
-    <div class="quiz-item">
-      <div style="font-weight:bold; color:var(--primary)">Q${i+1}: ${x.question}</div>
-      <div style="font-size:0.9em; opacity:0.8">Ans: ${x.answer}</div>
-      <button class="delete" style="width:auto; padding:5px 10px; font-size:12px;" onclick="deleteQuiz(${i})">Remove</button>
-    </div>`;
-  });
+window.saveModule=async status=>{
+// If we are in code view, save that content first
+if(txtArea.style.display === 'block') {
+    quill.clipboard.dangerouslyPasteHTML(txtArea.value);
 }
 
-window.saveModule=async status=>{
-  if(txtArea.style.display === 'block') quill.clipboard.dangerouslyPasteHTML(txtArea.value);
-  
-  showToast(status==="published"?"Publishing...":"Saving Draft...");
-  
-  const refc=collection(db,"courses","management_course","modules");
-  const data={
-    title:title.value,
-    videoUrl:videoUrl.value,
-    content:quill.root.innerHTML,
-    quizzes,
-    status,
-    updatedAt:serverTimestamp()
-  };
-  
-  try {
-    editingId ? await updateDoc(doc(refc,editingId),data) : await addDoc(refc,data);
-    showToast("Success!");
-    closeEditor();
-    loadModules();
-  } catch(e) {
-    showToast("Error saving");
-    console.error(e);
-  }
+toastText.innerText=status==="published"?"Publishing...":"Saving draft...";
+toast.classList.remove("hidden");
+const refc=collection(db,"courses","management_course","modules");
+const data={title:title.value,videoUrl:videoUrl.value,content:quill.root.innerHTML,quizzes,status,updatedAt:serverTimestamp()};
+editingId?await updateDoc(doc(refc,editingId),data):await addDoc(refc,data);
+toast.classList.add("hidden");
+reset();loadModules();
 };
 
 async function loadModules(){
-  publishedTab.innerHTML=draftTab.innerHTML=binTab.innerHTML="";
-  const s=await getDocs(query(collection(db,"courses","management_course","modules"),orderBy("updatedAt","desc")));
-  
-  s.forEach(d=>{
-    const m=d.data();
-    if(m.status === "deleted" && d.status !== "deleted") {} // logic check
-    
-    const card = document.createElement('div');
-    card.className = "quiz-item";
-    card.style.background = "var(--card-bg)";
-    card.innerHTML = `
-      <div style="font-weight:600; font-size:1.1em">${m.title || 'Untitled Module'}</div>
-      <div style="font-size:0.85em; opacity:0.6; margin-bottom:8px">Status: ${m.status.toUpperCase()}</div>
-      <div class="quiz-actions">
-        <button class="view" onclick="viewModule('${d.id}')"><i class="fa fa-eye"></i></button>
-        <button class="draft" onclick="edit('${d.id}')"><i class="fa fa-pen"></i></button>
-        <button class="delete" onclick="softDelete('${d.id}')"><i class="fa fa-trash"></i></button>
-      </div>
-    `;
-    
-    if(m.status==="published") publishedTab.appendChild(card);
-    else if(m.status==="draft") draftTab.appendChild(card);
-    else binTab.appendChild(card);
-  });
+publishedTab.innerHTML=draftTab.innerHTML=binTab.innerHTML="";
+let n=1;
+const s=await getDocs(query(collection(db,"courses","management_course","modules"),orderBy("updatedAt","desc")));
+s.forEach(d=>{
+const m=d.data();
+const t=m.status==="published"?`${n++}. ${m.title}`:m.title;
+const box=`<div class="quiz">
+<b>${t}</b>
+<button class="view" onclick="viewModule('${d.id}')">View</button>
+<button onclick="edit('${d.id}')">Edit</button>
+<button class="delete" onclick="softDelete('${d.id}')">Delete</button>
+</div>`;
+(m.status==="published"?publishedTab:m.status==="draft"?draftTab:binTab).innerHTML+=box;
+});
 }
 
 window.viewModule=async id=>{
-  history.pushState({page:"viewer"},"");
-  const s=await getDoc(doc(db,"courses","management_course","modules",id));
-  const m=s.data();
-  viewer.innerHTML=`
-    <h2>${m.title}</h2>
-    ${m.videoUrl ? `<video src="${m.videoUrl}" controls style="width:100%; border-radius:10px; margin-bottom:20px"></video>` : ''}
-    <div class="ql-editor" style="padding:0">${m.content}</div>
-    <button class="action-btn" onclick="history.back()" style="margin-top:20px">⬅ Back</button>
-  `;
-  viewer.classList.remove("hidden");
-  // Re-attach listeners for dynamically added buttons in viewer
-  // Note: OnClick attributes in HTML string work automatically
+history.pushState({page:"viewer"},"");
+const s=await getDoc(doc(db,"courses","management_course","modules",id));
+const m=s.data();
+viewer.innerHTML=`<h3>${m.title}</h3>${m.content}<button onclick="history.back()">⬅ Back</button>`;
+viewer.classList.remove("hidden");
+};
+
+window.onpopstate=()=>{
+viewer.classList.add("hidden");
+editor.classList.add("hidden");
 };
 
 window.edit=async id=>{
-  openEditor();
-  const s=await getDoc(doc(db,"courses","management_course","modules",id));
-  const m=s.data();
-  title.value=m.title;
-  videoUrl.value=m.videoUrl;
-  quill.root.innerHTML=m.content;
-  quizzes=m.quizzes||[];
-  editingId=id;
-  renderQuizzes();
+history.pushState({page:"editor"},"");
+const s=await getDoc(doc(db,"courses","management_course","modules",id));
+const m=s.data();
+title.value=m.title;
+videoUrl.value=m.videoUrl;
+quill.root.innerHTML=m.content;
+quizzes=m.quizzes||[];
+editingId=id;
+editor.classList.remove("hidden");
+renderQuizzes();
+// Reset view to visual if it was in code mode
+txtArea.style.display = 'none';
+document.querySelector('.ql-editor').style.display = 'block';
 };
 
 window.softDelete=async id=>{
-  if(!confirm("Move to recycle bin?")) return;
-  await updateDoc(doc(db,"courses","management_course","modules",id),{status:"deleted"});
-  loadModules();
-};
-
-window.openEditor=()=>{
-  history.pushState({page:"editor"},"");
-  reset();
-  editor.classList.remove("hidden");
-  window.scrollTo(0,0);
-};
-
-window.closeEditor=()=>{
-  editor.classList.add("hidden");
-  reset();
+await updateDoc(doc(db,"courses","management_course","modules",id),{status:"deleted"});
+loadModules();
 };
 
 function reset(){
-  title.value=videoUrl.value="";
-  quill.root.innerHTML="";
-  quizzes=[];
-  editingId=null;
-  renderQuizzes();
-  txtArea.style.display = 'none';
+title.value=videoUrl.value="";
+quill.root.innerHTML="";
+quizzes=[];
+editingId=null;
+renderQuizzes();
+txtArea.style.display = 'none';
+document.querySelector('.ql-editor').style.display = 'block';
 }
 
-function showToast(msg){
-  toastText.innerText=msg;
-  toast.classList.remove("hidden");
-  setTimeout(()=>toast.classList.add("hidden"), 2000);
-}
-
-window.toggleTheme=()=>{
-  document.body.classList.toggle("dark");
+window.openEditor=()=>{
+history.pushState({page:"editor"},"");
+editor.classList.remove("hidden");
 };
 
-// Handle browser back button
-window.onpopstate=()=>{
-  viewer.classList.add("hidden");
-  editor.classList.add("hidden");
+window.showTab=(id,btn)=>{
+["publishedTab","draftTab","binTab"].forEach(t=>document.getElementById(t).classList.add("hidden"));
+document.getElementById(id).classList.remove("hidden");
+document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
+btn.classList.add("active");
 };
+
+window.toggleTheme=()=>document.body.classList.toggle("dark");
 </script>
 
 </body>
