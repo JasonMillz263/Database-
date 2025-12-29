@@ -127,29 +127,64 @@ margin-top:14px;
 .tabs button{flex:1;background:#e5e7eb}
 .tabs button.active{background:#4f46e5;color:#fff}
 
-/* QUILL */
+/* --- UPDATED QUILL STYLES (MATCHING FILE 1) --- */
 #quill{
 border-radius:12px;
 overflow:hidden;
+position: relative; /* Needed for absolute positioning of textarea */
+background: #fff;
 }
 .ql-editor{
 font-size:15px;
 line-height:1.6;
 padding:12px;
+min-height: 200px;
 }
 .ql-editor img{
 max-width:100%;
-width:auto;
 height:auto;
 display:block;
 margin:12px auto;
 border-radius:10px;
 }
-.viewer img{
+
+/* IFRAME & VIDEO SUPPORT */
+.ql-editor iframe, .ql-video {
+  width: 100%;
+  height: 250px;
+  border: none;
+  border-radius: 10px;
+  margin: 10px 0;
+  background: #000;
+}
+
+/* RAW HTML TEXTAREA STYLE */
+.ql-html-textarea {
+  width: 100%;
+  height: 100%;
+  background: #1e293b;
+  color: #f8fafc;
+  font-family: monospace;
+  padding: 12px;
+  border: none;
+  display: none;
+  resize: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  font-size: 14px;
+}
+
+body.dark #quill { color: #000; }
+/* --- END UPDATED QUILL STYLES --- */
+
+.viewer img, .viewer iframe{
 max-width:100%;
-width:auto;
+width:100%;
 height:auto;
 }
+.viewer iframe { height: 250px; }
 
 /* TOAST */
 #toast{
@@ -205,8 +240,9 @@ body{max-width:720px;margin:auto}
 <div class="card hidden" id="editor">
   <h3>Module Editor</h3>
   <input id="title" placeholder="Module title">
-  <input id="videoUrl" placeholder="Video URL">
-  <div id="quill" style="height:220px"></div>
+  <input id="videoUrl" placeholder="Video URL (Optional header video)">
+  
+  <div id="quill" style="height:auto"></div>
 
   <h4>Quizzes</h4>
   <input id="q" placeholder="Question">
@@ -239,7 +275,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebas
 import { getFirestore, collection, doc, addDoc, getDocs, updateDoc, getDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-/* 🔒 ONLY CHANGE */
+/* 🔒 STRICTLY KEEPS FOOD BUSINESS MANAGEMENT COURSE ID */
 const COURSE_ID = "food_business_management_course";
 
 const app = initializeApp({
@@ -261,29 +297,94 @@ addModuleCard.classList.remove("hidden");
 loadModules();
 });
 
-/* QUILL IMAGE HANDLER */
-const quill = new Quill("#quill",{theme:"snow",modules:{toolbar:{container:[
-[{header:[1,2,3,false]}],
-["bold","italic","underline"],
-[{list:"ordered"},{list:"bullet"}],
-["link","image"],["clean"]
-],handlers:{image:imageHandler}}}});
+/* --- UPGRADED QUILL SETUP (MATCHING FILE 1) --- */
+
+// 1. Add Custom HTML Icon
+const icons = Quill.import('ui/icons');
+icons['html'] = '<i class="fa fa-code"></i>';
+
+// 2. Initialize Quill
+const quill = new Quill("#quill",{
+  theme:"snow",
+  modules:{
+    toolbar:{
+      container:[
+        [{header:[1,2,3,false]}],
+        ["bold","italic","underline"],
+        [{list:"ordered"},{list:"bullet"}],
+        ["link", "image", "video"], /* Link, Image, Video (iframe) */
+        ["html"] /* Custom HTML button */
+      ],
+      handlers:{
+        image: imageHandler,
+        /* Video handler: Prompts for URL -> inserts Iframe */
+        video: function() {
+            const url = prompt("Enter the link/URL you want to display in an iframe:");
+            if(url){
+               const html = `<iframe class="ql-video" frameborder="0" allowfullscreen="true" src="${url}"></iframe>`;
+               const range = this.quill.getSelection(true);
+               this.quill.clipboard.dangerouslyPasteHTML(range.index, html);
+            }
+        },
+        html: htmlHandler
+      }
+    }
+  }
+});
+
+// 3. Create the hidden Textarea for code editing
+const qContainer = document.querySelector("#quill");
+const txtArea = document.createElement('textarea');
+txtArea.className = 'ql-html-textarea';
+qContainer.appendChild(txtArea);
+
+// 4. Handler for HTML Toggle
+function htmlHandler(){
+  const editorArea = qContainer.querySelector('.ql-editor');
+  
+  if(txtArea.style.display === 'block'){
+    // Code -> Visual
+    const html = txtArea.value;
+    quill.clipboard.dangerouslyPasteHTML(html);
+    txtArea.style.display = 'none';
+    editorArea.style.display = 'block';
+  } else {
+    // Visual -> Code
+    txtArea.value = quill.root.innerHTML;
+    editorArea.style.display = 'none';
+    txtArea.style.display = 'block';
+  }
+}
 
 function imageHandler(){
-const i=document.createElement("input");
-i.type="file";i.accept="image/*";i.click();
-i.onchange=()=>{
-const f=i.files[0];if(!f)return;
-toastText.innerText="Uploading image…";toast.classList.remove("hidden");
-const r=new FileReader();
-r.onload=()=>{
-const s=quill.getSelection(true);
-quill.insertEmbed(s.index,"image",r.result);
-toast.classList.add("hidden");
-};
-r.readAsDataURL(f);
-};
+  const input=document.createElement("input");
+  input.type="file";
+  input.accept="image/*";
+  input.click();
+
+  input.onchange=()=>{
+    const file=input.files[0];
+    if(!file)return;
+
+    toastText.innerText="Uploading image 0%";
+    toast.classList.remove("hidden");
+
+    const reader=new FileReader();
+    reader.onprogress=e=>{
+      if(e.lengthComputable){
+        toastText.innerText=`Uploading image ${Math.round((e.loaded/e.total)*100)}%`;
+      }
+    };
+    reader.onload=()=>{
+      const range=quill.getSelection(true);
+      quill.insertEmbed(range.index,"image",reader.result);
+      toastText.innerText="Image uploaded";
+      setTimeout(()=>toast.classList.add("hidden"),1200);
+    };
+    reader.readAsDataURL(file);
+  };
 }
+/* --- END QUILL SETUP --- */
 
 let quizzes=[],editingId=null,editingQuiz=null;
 
@@ -316,9 +417,19 @@ editingQuiz=i;
 window.deleteQuiz=i=>{quizzes.splice(i,1);renderQuizzes();};
 
 window.saveModule=async status=>{
+// Save changes if user is still in code mode
+if(txtArea.style.display === 'block') {
+    quill.clipboard.dangerouslyPasteHTML(txtArea.value);
+}
+
+toastText.innerText=status==="published"?"Publishing...":"Saving draft...";
+toast.classList.remove("hidden");
+
 const refc=collection(db,"courses",COURSE_ID,"modules");
 const data={title:title.value,videoUrl:videoUrl.value,content:quill.root.innerHTML,quizzes,status,updatedAt:serverTimestamp()};
 editingId?await updateDoc(doc(refc,editingId),data):await addDoc(refc,data);
+
+toast.classList.add("hidden");
 reset();loadModules();
 };
 
@@ -342,11 +453,18 @@ const box=`<div class="quiz">
 window.viewModule=async id=>{
 history.pushState({page:"viewer"},"");
 const s=await getDoc(doc(db,"courses",COURSE_ID,"modules",id));
-viewer.innerHTML=`<h3>${s.data().title}</h3>${s.data().content}<button onclick="history.back()">⬅ Back</button>`;
+const m=s.data();
+viewer.innerHTML=`<h3>${m.title}</h3>${m.content}<button onclick="history.back()">⬅ Back</button>`;
 viewer.classList.remove("hidden");
 };
 
+window.onpopstate=()=>{
+viewer.classList.add("hidden");
+editor.classList.add("hidden");
+};
+
 window.edit=async id=>{
+history.pushState({page:"editor"},"");
 const s=await getDoc(doc(db,"courses",COURSE_ID,"modules",id));
 const m=s.data();
 title.value=m.title;videoUrl.value=m.videoUrl;
@@ -354,6 +472,10 @@ quill.root.innerHTML=m.content;
 quizzes=m.quizzes||[];editingId=id;
 editor.classList.remove("hidden");
 renderQuizzes();
+
+// Reset view to visual mode
+txtArea.style.display = 'none';
+document.querySelector('.ql-editor').style.display = 'block';
 };
 
 window.softDelete=async id=>{
@@ -366,9 +488,16 @@ title.value=videoUrl.value="";
 quill.root.innerHTML="";
 quizzes=[];editingId=null;
 renderQuizzes();
+// Reset view to visual mode
+txtArea.style.display = 'none';
+document.querySelector('.ql-editor').style.display = 'block';
 }
 
-window.openEditor=()=>editor.classList.remove("hidden");
+window.openEditor=()=>{
+history.pushState({page:"editor"},"");
+editor.classList.remove("hidden");
+};
+
 window.showTab=(id,b)=>{
 ["publishedTab","draftTab","binTab"].forEach(t=>document.getElementById(t).classList.add("hidden"));
 document.getElementById(id).classList.remove("hidden");
