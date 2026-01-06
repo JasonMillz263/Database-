@@ -11,49 +11,37 @@
 <style>
 /* --- VARIABLES --- */
 :root {
-    /* --- DEFAULT: LIGHT MODE (Lavender/Blue/Yellow Theme) --- */
-    --bg-body: #f3f4f6; /* Clean Light Grey/White */
+    /* DEFAULT: LIGHT MODE */
+    --bg-body: #f3f4f6;
     --bg-sidebar: #ffffff;
-    
     --surface-glass: #ffffff;
-    --surface-glass-hover: #f0fdf4; /* Very subtle tint */
+    --surface-glass-hover: #f0fdf4;
     --border-glass: #e5e7eb;
-    
-    --text-main: #111827; /* Dark Grey/Black for main text */
+    --text-main: #111827;
     --text-muted: #6b7280;
-    
-    --primary-accent: #4f46e5; /* Indigo */
-    --secondary-accent: #db2777; /* Pink */
+    --primary-accent: #4f46e5;
+    --secondary-accent: #db2777;
     --accent-yellow: #d97706; 
     --success-accent: #10b981;
-    
-    --nav-icon-bg: #f3f4f6; /* Background for the icon box in light mode */
+    --nav-icon-bg: #f3f4f6;
     --nav-icon-color: #4b5563;
-    
-    --glow: 0 10px 30px rgba(79, 70, 229, 0.1);
     --mesh-opacity: 0.4;
 }
 
-/* --- DARK MODE OVERRIDES --- */
+/* DARK MODE OVERRIDES */
 [data-theme="dark"] {
     --bg-body: #09090b;
     --bg-sidebar: rgba(0, 0, 0, 0.3);
-    
     --surface-glass: rgba(255, 255, 255, 0.08);
     --surface-glass-hover: rgba(255, 255, 255, 0.12);
     --border-glass: rgba(255, 255, 255, 0.15);
-    
     --text-main: #ffffff;
     --text-muted: #a1a1aa;
-    
     --primary-accent: #6366f1;
     --secondary-accent: #ec4899;
     --accent-yellow: #fbbf24;
-    
     --nav-icon-bg: rgba(255,255,255,0.1);
     --nav-icon-color: #ffffff;
-    
-    --glow: 0 0 20px rgba(99, 102, 241, 0.3);
     --mesh-opacity: 0.8;
 }
 
@@ -69,7 +57,6 @@ body {
     transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* --- BACKGROUND ANIMATION --- */
 .ambient-mesh {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1;
     background: radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.15), transparent 25%),
@@ -79,9 +66,9 @@ body {
     transition: opacity 0.5s ease;
 }
 
-/* --- SIDEBAR --- */
+/* --- SIDEBAR (Desktop) --- */
 .sidebar {
-    width: 260px; /* Slightly narrower to look neat */
+    width: 260px;
     height: 100vh;
     background: var(--bg-sidebar);
     border-right: 1px solid var(--border-glass);
@@ -106,96 +93,63 @@ body {
     color: white; font-size: 1.1rem;
 }
 
-/* --- NAVIGATION STYLES (MATCHING REFERENCE IMAGE) --- */
 .nav-menu { flex-grow: 1; display: flex; flex-direction: column; gap: 15px; }
 
 .nav-link {
-    display: flex; 
-    flex-direction: column; /* Stacks Icon on Top, Text Below */
-    align-items: center; 
-    justify-content: center;
-    gap: 8px; /* Space between icon box and text */
-    
-    padding: 10px;
-    color: var(--text-muted);
-    text-decoration: none;
-    border-radius: 16px;
-    font-weight: 600;
-    font-size: 0.8rem; /* Smaller text for clean look */
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 8px; padding: 10px;
+    color: var(--text-muted); text-decoration: none;
+    border-radius: 16px; font-weight: 600; font-size: 0.8rem;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     text-align: center;
 }
 
-/* The Icon Box (Rounded Square) */
 .nav-link i { 
-    width: 50px; 
-    height: 50px; 
-    background: var(--nav-icon-bg);
-    color: var(--nav-icon-color);
-    border-radius: 18px; /* Smooth rounded corners */
-    display: flex; 
-    align-items: center; 
-    justify-content: center;
-    font-size: 1.25rem; 
-    transition: 0.3s;
-    border: 1px solid transparent;
+    width: 50px; height: 50px; 
+    background: var(--nav-icon-bg); color: var(--nav-icon-color);
+    border-radius: 18px; 
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.25rem; transition: 0.3s;
 }
 
-/* Hover Effects */
 .nav-link:hover i, .nav-link.active i {
-    background: var(--primary-accent);
-    color: white;
+    background: var(--primary-accent); color: white;
     transform: translateY(-3px);
     box-shadow: 0 8px 20px -6px rgba(99, 102, 241, 0.4);
 }
+.nav-link:hover span, .nav-link.active span { color: var(--text-main); }
 
-.nav-link:hover span, .nav-link.active span {
-    color: var(--text-main);
-}
+/* Whatsapp Green Hover Effect for Community Button */
+.nav-link.community-btn:hover i { background: #25D366; color: white; }
 
 .logout-btn { margin-top: auto; }
 .logout-btn:hover i { background: #fee2e2; color: #ef4444; }
 [data-theme="dark"] .logout-btn:hover i { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
 
 /* --- MAIN CONTENT --- */
-.main-wrapper {
-    flex-grow: 1;
-    padding: 40px 50px;
-    max-width: 1600px;
-    margin: 0 auto;
-}
+.main-wrapper { flex-grow: 1; padding: 40px 50px; max-width: 1600px; margin: 0 auto; }
 
-/* Header */
 .top-bar {
     display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 50px;
-    animation: slideDown 0.6s ease-out;
+    margin-bottom: 50px; animation: slideDown 0.6s ease-out;
 }
 .welcome-msg h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: 5px; }
 .welcome-msg p { color: var(--text-muted); font-size: 1rem; }
 
-/* Controls Area */
 .controls-area { display: flex; align-items: center; gap: 20px; }
 
 .theme-btn {
-    width: 45px; height: 45px;
-    border-radius: 50%;
-    border: 1px solid var(--border-glass);
-    background: var(--surface-glass);
-    color: var(--accent-yellow);
-    cursor: pointer;
-    font-size: 1.2rem;
-    display: flex; align-items: center; justify-content: center;
-    transition: 0.3s;
+    width: 45px; height: 45px; border-radius: 50%;
+    border: 1px solid var(--border-glass); background: var(--surface-glass);
+    color: var(--accent-yellow); cursor: pointer; font-size: 1.2rem;
+    display: flex; align-items: center; justify-content: center; transition: 0.3s;
 }
 .theme-btn:hover { background: var(--surface-glass-hover); transform: rotate(15deg); }
 
 .user-profile {
     display: flex; align-items: center; gap: 15px;
-    background: var(--surface-glass);
-    padding: 8px 10px 8px 20px;
-    border-radius: 50px;
-    border: 1px solid var(--border-glass);
+    background: var(--surface-glass); padding: 8px 10px 8px 20px;
+    border-radius: 50px; border: 1px solid var(--border-glass);
 }
 .user-info { text-align: right; }
 .user-info span { display: block; font-weight: 600; font-size: 0.9rem; }
@@ -203,8 +157,7 @@ body {
 .avatar-circle {
     width: 42px; height: 42px; border-radius: 50%;
     background: var(--primary-accent); color: white;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 700;
+    display: flex; align-items: center; justify-content: center; font-weight: 700;
 }
 
 /* --- COURSE GRID --- */
@@ -212,125 +165,76 @@ body {
 .section-title::after { content: ''; flex-grow: 1; height: 1px; background: var(--border-glass); }
 
 .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 30px;
-    padding-bottom: 50px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 30px; padding-bottom: 50px;
 }
-
 .course-card {
-    background: var(--surface-glass);
-    border: 1px solid var(--border-glass);
-    border-radius: 24px;
-    padding: 6px;
-    transition: transform 0.4s, box-shadow 0.4s;
-    position: relative;
-    overflow: hidden;
+    background: var(--surface-glass); border: 1px solid var(--border-glass);
+    border-radius: 24px; padding: 6px;
+    transition: transform 0.4s, box-shadow 0.4s; position: relative; overflow: hidden;
 }
-.course-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1);
-    border-color: var(--primary-accent);
-}
-
+.course-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1); border-color: var(--primary-accent); }
 .card-inner {
-    background: rgba(255,255,255,0.5);
-    border-radius: 20px;
-    padding: 25px;
-    height: 100%;
-    display: flex; flex-direction: column;
+    background: rgba(255,255,255,0.5); border-radius: 20px;
+    padding: 25px; height: 100%; display: flex; flex-direction: column;
 }
 [data-theme="dark"] .card-inner { background: rgba(0,0,0,0.2); }
 
 .status-chip {
     position: absolute; top: 25px; right: 25px;
     background: rgba(16, 185, 129, 0.1); color: var(--success-accent);
-    padding: 5px 12px; border-radius: 20px;
-    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    padding: 5px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
 }
-
-.card-icon-3d {
-    font-size: 2.2rem;
-    margin-bottom: 20px;
-    color: var(--primary-accent);
-}
-
+.card-icon-3d { font-size: 2.2rem; margin-bottom: 20px; color: var(--primary-accent); }
 .card-title { font-size: 1.2rem; margin: 0 0 10px 0; font-weight: 700; line-height: 1.3; }
 .card-desc { font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 25px; flex-grow: 1; }
 
-/* BUTTON FIX FOR DARK MODE */
 .btn-start {
-    width: 100%;
-    padding: 16px;
-    border-radius: 14px;
-    border: none;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s;
+    width: 100%; padding: 16px; border-radius: 14px; border: none; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
     display: flex; justify-content: center; align-items: center; gap: 8px;
-    
-    /* Light Mode Styles */
-    background: var(--primary-accent);
-    color: white;
+    background: var(--primary-accent); color: white;
 }
+[data-theme="dark"] .btn-start { background: #ffffff; color: #000000; }
+.btn-start:hover { opacity: 0.9; transform: scale(0.98); }
 
-/* Dark Mode Button Specific Override */
-[data-theme="dark"] .btn-start {
-    background: #ffffff; /* White Button */
-    color: #000000;      /* BLACK TEXT (Fixing the invisible text issue) */
-}
-
-.btn-start:hover {
-    opacity: 0.9;
-    transform: scale(0.98);
-}
-
-/* Animation */
 @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-/* --- RESPONSIVE MOBILE (Horizontal Scroll like Image) --- */
+/* --- 8 ICON GRID LAYOUT FOR MOBILE --- */
 @media(max-width: 900px) {
     body { flex-direction: column; }
     
     .sidebar { 
-        width: 100%; 
-        height: auto; 
-        padding: 15px 10px; 
-        border-right: none; 
+        width: 100%; height: auto; 
+        padding: 15px 10px; border-right: none; 
         border-bottom: 1px solid var(--border-glass); 
-        background: var(--bg-body); /* Blend with body */
+        background: var(--bg-body);
     }
     
-    .brand-logo { display: none; /* Hide logo on mobile to save space, or keep small */ }
+    .brand-logo { display: none; }
 
+    /* The Logic for 4x2 Grid */
     .nav-menu { 
         flex-direction: row; 
-        overflow-x: auto; 
-        padding-bottom: 5px; 
-        gap: 15px;
-        /* Hide scrollbar */
-        -ms-overflow-style: none;  
-        scrollbar-width: none;  
+        flex-wrap: wrap; 
+        justify-content: center; 
+        gap: 10px; /* Slight gap */
+        padding-bottom: 5px;
     }
-    .nav-menu::-webkit-scrollbar { display: none; }
     
     .nav-link { 
-        min-width: 80px; /* Ensure buttons have width */
+        /* 22% width ensures 4 icons fit on top row perfectly with gap */
+        width: 22%; 
         padding: 0;
+        margin-bottom: 5px;
     }
     
-    .nav-link i {
-        width: 45px; height: 45px;
-        font-size: 1.1rem;
-    }
+    .nav-link i { width: 40px; height: 40px; font-size: 1rem; border-radius: 12px; }
+    /* Smaller font for "Join Community" to fit */
+    .nav-link span { font-size: 0.65rem; white-space: nowrap; }
     
-    .nav-link span {
-        font-size: 0.75rem;
-        white-space: nowrap;
-    }
-    
-    .logout-btn { margin-left: auto; margin-top: 0; }
+    .logout-btn { margin-left: 0; margin-top: 0; }
     
     .main-wrapper { padding: 20px; }
     .top-bar { flex-direction: column-reverse; gap: 20px; align-items: flex-start; }
@@ -374,6 +278,11 @@ body {
             <span>Profile</span>
         </a>
         
+        <a href="community.html" class="nav-link community-btn">
+            <i class="fa-brands fa-whatsapp"></i> 
+            <span>Join Community</span>
+        </a>
+        
         <a href="#" onclick="logout()" class="nav-link logout-btn">
             <i class="fa-solid fa-power-off"></i> 
             <span>Logout</span>
@@ -391,7 +300,8 @@ body {
         
         <div class="controls-area">
             <button class="theme-btn" id="themeSwitch" onclick="toggleTheme()" title="Switch Theme">
-                <i class="fa-solid fa-moon"></i> </button>
+                <i class="fa-solid fa-moon"></i>
+            </button>
 
             <div class="user-profile">
                 <div class="user-info">
@@ -420,7 +330,6 @@ function toggleTheme() {
     const html = document.documentElement;
     const btnIcon = document.querySelector('#themeSwitch i');
     
-    // Logic reversed because default is now Light
     if (html.getAttribute('data-theme') === 'dark') {
         html.setAttribute('data-theme', 'light');
         btnIcon.classList.remove('fa-sun');
@@ -516,21 +425,8 @@ function renderCourses(paidList) {
 
     const myCourses = coursesDB.filter(c => paidList.includes(c.name));
 
-    // DEMO PURPOSE: If user has no courses, show them all so you can see the UI design
-    // Remove this "if (myCourses.length === 0)" block in production if you want strictly empty state
+    // DEMO: Show all if empty, for design verification
     if (myCourses.length === 0) {
-        // Fallback for demo: show all courses just to display UI
-        // In real app, un-comment the empty-box code below
-        /*
-        grid.innerHTML = `
-            <div style="grid-column:1/-1; text-align:center; padding:50px; color:var(--text-muted);">
-                <i class="fa-solid fa-folder-open" style="font-size:3rem; margin-bottom:15px;"></i>
-                <p>No enrolled courses found.</p>
-            </div>
-        `;
-        return; 
-        */
-       // Showing DB courses for visual verification of buttons
        coursesDB.forEach(c => myCourses.push(c));
     }
 
